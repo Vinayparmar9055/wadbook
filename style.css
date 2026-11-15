@@ -55,3 +55,18 @@ nav button{flex:1;border:0;background:none;padding:7px;font:inherit;font-size:12
 #dl em{display:inline-block;margin-top:5px;font-style:normal;font-size:11px;font-weight:700;background:#f5f5f4;color:#78716c;border-radius:99px;padding:2px 9px}
 #df{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #f5f5f4;text-align:center;font-size:13px;color:#78716c}
 #ts{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:30;background:#292524;color:#fff;border-radius:99px;padding:10px 18px;font-size:14px;font-weight:700}
+
+#pf{padding:0 0 28px}.pad{padding:22px 16px}
+.cv{height:124px;background:linear-gradient(135deg,#b45309,#7f1d1d 70%,#451a03);position:relative}
+.chip{position:absolute;top:12px;left:12px;background:#00000040;color:#fef3c7;border:1px solid #ffffff2e;border-radius:99px;padding:5px 12px;font-size:12px;font-weight:700}
+.pr{padding:0 16px;margin-top:-48px}.pr .r.big{box-shadow:0 6px 16px #0003}
+.pr h2{margin:10px 0 2px;font-size:22px;line-height:1.3}.ln{margin:2px 0;color:#9a3412;font-weight:700;font-size:13px}.bio{margin:2px 0 14px;color:#57534e;font-size:13px}
+.st{display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border:1px solid #fde68a;border-radius:18px;text-align:center;padding:10px 0;margin-bottom:14px}
+.st div+div{border-left:1px solid #f5f5f4}.st b{display:block;font-size:16px;color:#78350f}.st .gr b{color:#15803d}.st small{font-size:11px;color:#78716c}
+.ac2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.ac2 button{border:1px solid #c2410c;border-radius:14px;padding:12px 6px;background:#fff;color:#9a3412;font:inherit;font-weight:700;font-size:14px}
+.ac2 .pm{background:linear-gradient(135deg,#d97706,#c2410c);color:#fff;border:0}
+.fh{margin:18px 0 8px;font-size:15px;color:#78350f}
+.fm{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #f5e6c8;border-radius:16px;padding:12px;margin-bottom:8px;color:#292524}
+.fm div{flex:1}.fm b{display:block;font-size:15px}.fm small{color:#78716c;font-size:12px}.fm span{color:#c2410c;font-weight:700;font-size:13px}
+.fm .r{width:44px;height:44px;font-size:17px;border-width:3px;margin:0}
