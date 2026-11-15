@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="gu"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14301f"><link rel="manifest" href="manifest.json">
+<title>વડબૂક</title><link rel="stylesheet" href="style.css"></head><body>
+<header><div><h1>વડબૂક</h1><p>Wadbook</p></div><div class="hr"><div id="sub"></div><button id="mb" onclick="menu(1)" aria-label="મેનૂ">☰</button></div></header>
+<main>
+<section id="tv" hidden><div id="flt"></div>
+<div id="vp"><div id="stage"></div></div>
+<div id="zc"><button onclick="zoom(1.25)">+</button><span id="zl"></span><button onclick="zoom(.8)">−</button><button onclick="fit()">⟲</button></div>
+<div id="lg"><span><u class="red"></u>સ્વર્ગવાસ</span><span><u class="blue"></u>પરિણીત</span><span><u class="green"></u>અપરિણીત</span></div></section>
+<section id="pf"></section></main>
+<div id="sh" hidden></div>
+<div id="dr" hidden onclick="menu(0)"><aside onclick="event.stopPropagation()"><div class="dh"><div class="dt"><span>Wadbook મેનૂ</span><button onclick="menu(0)" aria-label="બંધ કરો">✕</button></div><div id="dp"></div></div><nav id="dl"></nav><footer id="df"></footer></aside></div>
+<div id="ts" hidden>🌿 ટૂંક સમયમાં આવશે</div>
+<nav><button data-t="tv" onclick="tab('tv')">🌳<br>મારો વડ</button><button data-t="pf" onclick="D.me?show(cur||D.me):empty()">👤<br>પ્રોફાઇલ</button></nav>
+<script src="firebase-config.js"></script><script src="app.js"></script></body></html>
