@@ -70,3 +70,15 @@ nav button{flex:1;border:0;background:none;padding:7px;font:inherit;font-size:12
 .fm{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #f5e6c8;border-radius:16px;padding:12px;margin-bottom:8px;color:#292524}
 .fm div{flex:1}.fm b{display:block;font-size:15px}.fm small{color:#78716c;font-size:12px}.fm span{color:#c2410c;font-weight:700;font-size:13px}
 .fm .r{width:44px;height:44px;font-size:17px;border-width:3px;margin:0}
+
+.lg2{display:flex;align-items:center;gap:10px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#f59e0b,#ea580c 55%,#7f1d1d);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px #7c2d1255}
+.logo svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2}
+.wb{display:flex;align-items:center;gap:6px}
+.wt{font-family:Inter,"Noto Sans Gujarati",sans-serif;font-weight:800;font-size:22px;letter-spacing:-.3px;line-height:1.15;background:linear-gradient(90deg,#b45309,#7f1d1d);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wb em{font-style:normal;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 6px}
+header p{margin:1px 0 0;font-size:11.5px;font-weight:600;color:#57534e;line-height:1.2}
+.hr{gap:8px}.ib{width:38px;height:38px;border-radius:50%;border:0;background:#f5f5f4;color:#44403c;display:flex;align-items:center;justify-content:center}
+.ib svg,#mb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round}
+#mb{display:flex;align-items:center;justify-content:center}
+.pr h2,.hd h2{font-weight:800}
