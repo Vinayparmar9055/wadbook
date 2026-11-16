@@ -34,6 +34,7 @@ function renderState(st){
  if(st.v==="pf")show(st.id,true);
  else if(st.v==="fam")showFamily(st.id,true);
  else if(st.v==="tv")tab("tv",true);
+ else if(st.v==="tul")showTulsi(st.id,true);
 }
 window.addEventListener("popstate",()=>{
  if(!$("#sh").hidden){
@@ -81,12 +82,14 @@ function full(p){
  return p.n+(p.f&&get(p.f)?" "+get(p.f).n:"");
 }
 
+// Naam agal prefix: સ્વ. / ગં.સ્વ. / સૌ. / કુ. / શ્રી
 function pre(p){
  if(!p)return "";
  if(p.s=="d")return "સ્વ. ";
  if(p.g=="F"){
   const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
   if(husb&&husb.s=="d")return "ગં.સ્વ. ";
+  return p.s=="u"?"કુ. ":"સૌ. ";
  }
  return "શ્રી ";
 }
@@ -132,7 +135,9 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
    if(dup){alert("આ નામ પહેલેથી ઉમેરેલું છે!");return false;}
   }
 
-  const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:father.sur||"",gam:father.gam||"",relTo:fatherId,relType:r};
+  // અટક અને ગામ: પોતાના કુટુંબના સભ્યોને સરખા, બીજા (માતા/પત્ની) માટે ખાલી
+  const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
+  const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
     if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");return false;}
     D.ps.push(m);p.f=id;
@@ -150,6 +155,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     m.f=p.f;
     D.ps.push(m);
   } else if(r=="mom"){
+    if(momOf(p)){alert("માતા પહેલેથી ઉમેરેલા છે");return false;}
     m.sp=p.f||null;
     if(p.f&&get(p.f))get(p.f).sp=id;
     D.ps.push(m);
@@ -160,7 +166,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     D.ps.push(m);
   }
   save();shut();
-  if(returnToFamily)showFamily(pid,true);else show(pid,true);
+  if(returnToFamily==="tulsi")showTulsi(pid,true);else if(returnToFamily)showFamily(pid,true);else show(pid,true);
  });
 }
 
@@ -310,7 +316,7 @@ function show(id,skipPush=false){cur=id;const p=get(id);if(!p)return empty();
 
 const W=112,H=112;let cur=null,SW=1,SH=1,FS="all";
 function draw(){const me=get(D.me),stg=$("#stage");if(!me)return;
- if(me.g=="F"){stg.style.cssText="";stg.innerHTML='<p class="em">🌿 તુલસી ક્યારો ટૂંક સમયમાં આવશે</p>';$("#flt").innerHTML="";$("#sub").textContent="";return}
+ if(me.g=="F"){stg.style.cssText="";stg.innerHTML='<p class="em"><button class="bk" onclick="showTulsi('+me.id+')">🌿 તુલસી ક્યારો ખોલો</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return}
  let r=me;while(r.f&&get(r.f))r=get(r.f);let leaf=0,mx=0;const pos={},all=[];
  (function lay(p,d){const k=kids(p);k.forEach(c=>lay(c,d+1));pos[p.id]=[k.length?(pos[k[0].id][0]+pos[k[k.length-1].id][0])/2:leaf++*W,d*H];mx=Math.max(mx,d);all.push(p)})(r,0);
  SW=Math.max(leaf,1)*W;SH=(mx+1)*H;let sv="",nd="";
@@ -355,7 +361,7 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
  $("#dp").innerHTML=me?`<i class="r ${ST[me.s][0]}">${esc(me.n[0])}</i><div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
  const it=[["🌳","મારો વડ (વંશાવળી)",me&&me.g!="F"?info():"તમારા પરિવારનો વડ","menu(0);tab('tv')","hl"],
- ["🌿","તુલસી ક્યારો (માતૃપક્ષ)","માતા, નાની અને પરનાનીની વંશાવળી","soon()","soon"],
+ ["🌿","તુલસી ક્યારો (માતૃપક્ષ)","માતા, નાની અને પરનાનીની વંશાવળી","menu(0);D.me?showTulsi(D.me):empty()",""],
  ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","soon()","soon"],
  ["👤","મારી પ્રોફાઇલ","પરિવાર અને વ્યક્તિગત વિગતો","menu(0);D.me?show(D.me):empty()",""],
  ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]];
@@ -363,14 +369,47 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false;
  try{history.pushState({menu:1},"");}catch(e){}
 }
-// Naam agal prefix: સ્વ. / ગં.સ્વ. / સૌ. / કુ. / શ્રી
-function pre(p){
- if(!p)return "";
- if(p.s=="d")return "સ્વ. ";
- if(p.g=="F"){
-  const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
-  if(husb&&husb.s=="d")return "ગં.સ્વ. ";
-  return p.s=="u"?"કુ. ":"સૌ. ";
- }
- return "શ્રી ";
+
+// ===== તુલસી ક્યારો (માતૃપક્ષ) =====
+(function(){
+ if(document.getElementById("tk-css"))return;
+ const s=document.createElement("style");s.id="tk-css";
+ s.textContent=".tk{display:flex;flex-direction:column;align-items:stretch}"
+ +".tk-st{width:3px;height:22px;margin:0 auto;background:linear-gradient(#16a34a,#d97706)}"
+ +".tk-n{display:flex;align-items:center;gap:12px;background:#fffdf7;border:2px solid #e8d9b8;border-radius:20px;padding:12px 14px;cursor:pointer}"
+ +".tk-n b{display:block;color:#6b141a;font-size:16px}"
+ +".tk-n small{display:block;color:#7a6a5a;margin-top:2px}"
+ +".tk-n span{margin-left:auto;color:#8a2d12;font-weight:700;font-size:14px}"
+ +".tk-add{border:2px dashed #16a34a;background:#f0fdf4;color:#166534;border-radius:20px;padding:13px;font:inherit;font-weight:700;font-size:15px}";
+ document.head.appendChild(s);
+})();
+
+function momOf(p){
+ if(!p)return null;
+ const dad=p.f&&get(p.f);
+ if(dad&&dad.sp&&get(dad.sp))return get(dad.sp);
+ return D.ps.find(x=>x.relType=="mom"&&x.relTo==p.id)||null;
+}
+
+function showTulsi(id,skipPush=false){
+ const p=get(id);if(!p)return empty();
+ const chain=[];let q=momOf(p),guard=0;
+ while(q&&guard++<30){chain.push(q);q=momOf(q)}
+ const LB=["","માતા","નાની","પરનાની"];
+ const lab=i=>LB[i]||(gu(i)+"મી પેઢી ઉપર");
+ const node=(q,role)=>`<div class="tk-n" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${role}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></div>`;
+ const last=chain.length?chain[chain.length-1]:p;
+ const parts=[...chain].reverse().map((q,i)=>node(q,lab(chain.length-i)));
+ $("#pf").innerHTML=`<div class="pad">
+  <div class="hd"><h2>🌿 તુલસી ક્યારો</h2><p>${esc(pre(p)+full(p))} ની માતૃપક્ષ વંશાવળી</p></div>
+  <div class="tk">
+   <button class="tk-add" onclick="addMember(${last.id},'mom','tulsi')">➕ ${lab(chain.length+1)} ઉમેરો</button>
+   ${parts.map(h=>`<div class="tk-st"></div>${h}`).join("")}
+   <div class="tk-st"></div>${node(p,"તમે")}
+  </div>
+  <button class="bk" onclick="history.back()">← પાછા જાઓ</button>
+ </div>`;
+ $("#tv").hidden=true;$("#pf").hidden=false;
+ $("#pf").scrollTop=0;
+ if(!skipPush)pushView({v:"tul",id});
 }
