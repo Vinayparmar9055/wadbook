@@ -10,6 +10,51 @@ const kids=p=>D.ps.filter(c=>c.f==p.id&&c.g!="F").sort((a,b)=>(a.yr||9999)-(b.yr
 const FD={n:["નામ","text"],yr:["જન્મ વર્ષ (દા.ત. 1983)","number"],s:["સ્થિતિ","sel"],g:["લિંગ","gen"],sur:["અટક","text"],ja:["જાતિ / શાખ","text"],gam:["મૂળ ગામ","text"],rah:["રહેઠાણ","text"],edu:["ભણતર","text"],job:["વ્યવસાય","text"],rel:["સંબંધ પસંદ કરો","rel"]};
 const RELS={dad:"પિતા",mom:"માતા",bro:"ભાઈ",sis:"બહેન",wife:"પત્ની",son:"દીકરો",dau:"દીકરી"};
 
+// --- Block Browser Pinch-Zoom outside Wad Tree (#vp) ---
+document.addEventListener("touchmove",e=>{
+ if(e.touches.length>1 && !e.target.closest("#vp")){
+  e.preventDefault();
+ }
+},{passive:false});
+document.addEventListener("gesturestart",e=>{
+ if(!e.target.closest("#vp"))e.preventDefault();
+});
+
+// --- Mobile Back Button / Gesture Navigation Stack ---
+let navStack=[], isPopping=false;
+function pushView(state){
+ if(isPopping)return;
+ const last=navStack[navStack.length-1];
+ if(last && last.v===state.v && last.id===state.id)return;
+ navStack.push(state);
+ try{history.pushState(state,"");}catch(e){}
+}
+function renderState(st){
+ if(!st){D.me&&get(D.me)?show(D.me,true):empty();return;}
+ if(st.v==="pf")show(st.id,true);
+ else if(st.v==="fam")showFamily(st.id,true);
+ else if(st.v==="tv")tab("tv",true);
+}
+window.addEventListener("popstate",()=>{
+ if(!$("#sh").hidden){
+  $("#sh").hidden=true;
+  if(navStack.length)try{history.pushState(navStack[navStack.length-1],"");}catch(e){}
+  return;
+ }
+ if(!$("#dr").hidden){
+  $("#dr").hidden=true;
+  if(navStack.length)try{history.pushState(navStack[navStack.length-1],"");}catch(e){}
+  return;
+ }
+ if(navStack.length>1){
+  navStack.pop();
+  const prev=navStack[navStack.length-1];
+  isPopping=true;
+  renderState(prev);
+  isPopping=false;
+ }
+});
+
 function cleanDuplicates(){
  let changed=false;
  const seen=new Map();
@@ -54,6 +99,7 @@ function form(t,keys,v,cb){
   return `<label>${l}<input id="f_${k}" type="${ty}" value="${esc(x)}"></label>`}).join("")}
  <div class="bt"><button onclick="shut()">રદ કરો</button><button class="pr" id="ok">સાચવો</button></div></div>`;
  $("#sh").hidden=false;
+ try{history.pushState({modal:1},"");}catch(e){}
  let busy=false;
  $("#ok").onclick=()=>{
   if(busy)return;
@@ -67,7 +113,7 @@ function form(t,keys,v,cb){
 const shut=()=>{$("#sh").hidden=true};
 
 function first(){form("તમારી પ્રોફાઇલ બનાવો",["n","sur","g","ja","gam","rah","edu","job","yr","s"],{s:"m"},o=>{
- D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};save();shut();show(1)})}
+ D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};save();shut();navStack=[];show(1)})}
 
 function addMember(pid,defaultRel="son",returnToFamily=false){
  const p=get(pid);
@@ -114,7 +160,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     D.ps.push(m);
   }
   save();shut();
-  if(returnToFamily)showFamily(pid);else show(pid);
+  if(returnToFamily)showFamily(pid,true);else show(pid,true);
  });
 }
 
@@ -124,12 +170,12 @@ function delMember(id,backId){
   D.ps=D.ps.filter(x=>x.id!=id);
   D.ps.forEach(x=>{if(x.f==id)x.f=null;if(x.sp==id)x.sp=null;});
   save();
-  showFamily(backId);
+  showFamily(backId,true);
  }
 }
 
 function edit(id){const p=get(id),k=["n","yr","s","sur","gam","rah","edu","job"];if(id==D.me)k.splice(3,0,"g","ja");
- form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id);if(!$("#tv").hidden)draw()})}
+ form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id,true);if(!$("#tv").hidden)draw()})}
 
 const REL=["","પિતા","દાદા","પરદાદા"];
 const dep=q=>{let d=1;while(q.f&&get(q.f)){q=get(q.f);d++}return d};
@@ -182,7 +228,7 @@ function getNuclearFamily(p){
  return {head,spouse,children};
 }
 
-function showFamily(id){
+function showFamily(id,skipPush=false){
  const p=get(id),{head,spouse,children}=getNuclearFamily(p);
  const node=(q,role)=>`
    <div class="par-node" onclick="show(${q.id})">
@@ -232,12 +278,16 @@ function showFamily(id){
   ${spouse?rowCard(spouse,"પત્ની"):""}
   ${children.map(c=>rowCard(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
 
-  <button class="bk" onclick="show(${id})">← પ્રોફાઇલ પર પાછા જાઓ</button>
+  <button class="bk" onclick="history.back()">← પ્રોફાઇલ પર પાછા જાઓ</button>
  </div>`;
- tab("pf");$("#pf").scrollTop=0;
+ $("#tv").hidden=true;$("#pf").hidden=false;
+ document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t=="pf"));
+ $("#pf").scrollTop=0;
+ if(!skipPush)pushView({v:"fam",id});
 }
 
-function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
+function show(id,skipPush=false){cur=id;const p=get(id);if(!p)return empty();
+ const[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
  const rw=(a,b)=>b?`<div class="rw"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
  $("#pf").innerHTML=`<div class="cv"></div>
@@ -252,7 +302,11 @@ function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFami
  </div>
  <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
  ${fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
- tab("pf");$("#pf").scrollTop=0}
+ $("#tv").hidden=true;$("#pf").hidden=false;
+ document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t=="pf"));
+ $("#pf").scrollTop=0;
+ if(!skipPush)pushView({v:"pf",id});
+}
 
 const W=112,H=112;let cur=null,SW=1,SH=1,FS="all";
 function draw(){const me=get(D.me),stg=$("#stage");if(!me)return;
@@ -282,9 +336,14 @@ vp.onpointermove=e=>{const o=ptr.get(e.pointerId);if(!o)return;ptr.set(e.pointer
   if(last)zoom(d/last,(a[0][0]+a[1][0])/2-r.left,(a[0][1]+a[1][1])/2-r.top);last=d;moved=99}};
 vp.onpointerup=vp.onpointercancel=e=>{ptr.delete(e.pointerId);last=0};
 const tap=id=>{if(moved<8)show(id)};
-function tab(t){if(t=="tv"&&!D.me){return empty()}
+
+function tab(t,skipPush=false){if(t=="tv"&&!D.me){return empty()}
+ if(t=="pf"){return D.me?show(cur||D.me,skipPush):empty()}
  $("#tv").hidden=t!="tv";$("#pf").hidden=t!="pf";
- document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==t));if(t=="tv"){draw();fit()}}
+ document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t==t));
+ if(t=="tv"){draw();fit();if(!skipPush)pushView({v:"tv"});}
+}
+
 function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
  $("#pf").innerHTML='<div class="pad"><div class="hd"><i class="r big blue">વ</i><h2>વડબૂક</h2><p>તમારા પરિવારનો વડ, તમારા હાથે</p></div><button class="bk" onclick="first()">પ્રોફાઇલ બનાવો</button></div>'}
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
@@ -301,4 +360,6 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  ["👤","મારી પ્રોફાઇલ","પરિવાર અને વ્યક્તિગત વિગતો","menu(0);D.me?show(D.me):empty()",""],
  ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]];
  $("#dl").innerHTML=it.map(([i,t,s,a,c])=>`<a class="${c}" onclick="${a}"><span class="ic">${i}</span><div><b>${t}</b><small>${s}</small>${c.includes("soon")?"<em>ટૂંક સમયમાં</em>":""}</div></a>`).join("");
- $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false}
+ $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false;
+ try{history.pushState({menu:1},"");}catch(e){}
+}
