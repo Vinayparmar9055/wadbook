@@ -363,3 +363,14 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false;
  try{history.pushState({menu:1},"");}catch(e){}
 }
+// Naam agal prefix: સ્વ. / ગં.સ્વ. / સૌ. / કુ. / શ્રી
+function pre(p){
+ if(!p)return "";
+ if(p.s=="d")return "સ્વ. ";
+ if(p.g=="F"){
+  const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
+  if(husb&&husb.s=="d")return "ગં.સ્વ. ";
+  return p.s=="u"?"કુ. ":"સૌ. ";
+ }
+ return "શ્રી ";
+}
