@@ -67,24 +67,19 @@ function vs(p){let r=p;while(r.f&&get(r.f))r=get(r.f);let n=0,m=0,u=0;(function 
 function getFamilyList(p){
  const list=[],seen=new Set([p.id]);
  const push=(q,label)=>{if(q&&!seen.has(q.id)){seen.add(q.id);list.push([q,label])}};
- // Ancestors (Father, Grandfather...)
  let curA=p,lvl=1;
  while(curA.f&&get(curA.f)){curA=get(curA.f);push(curA,REL[lvl]||"પૂર્વજ");lvl++}
- // Mother & Wife
  D.ps.forEach(x=>{
   if(x.relType=="mom"&&(x.relTo==p.id||(p.f&&x.sp==p.f)))push(x,"માતા");
   if(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))push(x,"પત્ની");
   if(p.sp==x.id)push(x,"પત્ની");
  });
- // Siblings (Brothers & Sisters)
  if(p.f){
   D.ps.filter(x=>x.f==p.f&&x.id!=p.id).sort((a,b)=>(a.yr||9999)-(b.yr||9999))
    .forEach(x=>push(x,x.g=="F"?"બહેન":"ભાઈ"));
  }
- // Children (Sons & Daughters)
  D.ps.filter(x=>x.f==p.id).sort((a,b)=>(a.yr||9999)-(b.yr||9999))
   .forEach(x=>push(x,x.g=="F"?"દીકરી":"દીકરો"));
- // Direct custom relations
  D.ps.filter(x=>x.relTo==p.id).forEach(x=>push(x,RELS[x.relType]||"સભ્ય"));
  return list;
 }
@@ -110,7 +105,7 @@ function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFami
  <div class="st"><div><b>${gu(g)} પેઢી</b><small>મારો વડ 🌳</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
  <div class="ac2">
    <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="tab('tv')">🌳 મારો વડ</button>
-   <button onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
+   <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
    <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
    <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
  </div>
