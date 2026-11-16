@@ -25,20 +25,20 @@ const shut=()=>{$("#sh").hidden=true};
 function first(){form("તમારી પ્રોફાઇલ બનાવો",["n","sur","g","ja","gam","rah","edu","job","yr","s"],{s:"m"},o=>{
  D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};save();shut();show(1)})}
 
-function addMember(pid){
+function addMember(pid,defaultRel="son",returnToFamily=false){
  const p=get(pid);
- form("➕ નામ ઉમેરો",["rel","n","yr","s"],{rel:"son",s:"u"},o=>{
+ form("➕ નામ ઉમેરો",["rel","n","yr","s"],{rel:defaultRel,s:defaultRel=="wife"?"m":"u"},o=>{
   const id=nid(),r=o.rel;
   const g=(r=="mom"||r=="sis"||r=="wife"||r=="dau")?"F":"M";
   const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:p.sur||"",gam:p.gam||"",relTo:pid,relType:r};
   if(r=="dad"){
-    if(p.f){alert("પિતા પહેલેથી ઉમેરેલા છે");return;}
+    if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");return;}
     D.ps.push(m);p.f=id;
   } else if(r=="son"||r=="dau"){
     m.f=(p.g=="F"&&p.sp)?p.sp:pid;
     D.ps.push(m);
   } else if(r=="bro"||r=="sis"){
-    if(!p.f){
+    if(!p.f||!get(p.f)){
       const fid=nid();
       D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",sur:p.sur||"",gam:p.gam||""});
       p.f=fid;
@@ -53,8 +53,19 @@ function addMember(pid){
     p.sp=id;
     D.ps.push(m);
   }
-  save();shut();show(pid);
+  save();shut();
+  if(returnToFamily)showFamily(pid);else show(pid);
  });
+}
+
+function delMember(id,backId){
+ if(id==D.me){alert("તમારી મુખ્ય પ્રોફાઇલ ડિલીટ ન થઈ શકે");return;}
+ if(confirm("આ સભ્યનું નામ કાઢી નાખવું છે?")){
+  D.ps=D.ps.filter(x=>x.id!=id);
+  D.ps.forEach(x=>{if(x.f==id)x.f=null;if(x.sp==id)x.sp=null;});
+  save();
+  showFamily(backId);
+ }
 }
 
 function edit(id){const p=get(id),k=["n","yr","s","sur","gam","rah","edu","job"];if(id==D.me)k.splice(3,0,"g","ja");
@@ -64,6 +75,7 @@ const pre=p=>p.s=="d"?"સ્વ. ":p.g=="F"?"":"શ્રી ",REL=["","પિ�
 const dep=q=>{let d=1;while(q.f&&get(q.f)){q=get(q.f);d++}return d};
 function vs(p){let r=p;while(r.f&&get(r.f))r=get(r.f);let n=0,m=0,u=0;(function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);return[m,n,u]}
 
+// All extended relatives for main profile card
 function getFamilyList(p){
  const list=[],seen=new Set([p.id]);
  const push=(q,label)=>{if(q&&!seen.has(q.id)){seen.add(q.id);list.push([q,label])}};
@@ -84,13 +96,66 @@ function getFamilyList(p){
  return list;
 }
 
+// Nuclear Family ONLY: Self + Spouse + Sons + Daughters (sorted by age, eldest first)
+function getNuclearFamily(p){
+ const headId=(p.g=="F"&&p.sp&&get(p.sp))?p.sp:p.id;
+ const head=get(headId)||p;
+ const spouse=D.ps.find(x=>(x.relType=="wife"&&(x.sp==head.id||x.relTo==head.id))||head.sp==x.id||(x.sp==head.id&&x.g!=head.g));
+ const children=D.ps.filter(x=>x.f==head.id).sort((a,b)=>(a.yr||9999)-(b.yr||9999));
+ return {head,spouse,children};
+}
+
 function showFamily(id){
- const p=get(id),fam=getFamilyList(p);
- const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
+ const p=get(id),{head,spouse,children}=getNuclearFamily(p);
+ const node=(q,role)=>`
+   <div class="par-node" onclick="show(${q.id})">
+     <i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i>
+     <b>${esc(pre(q)+q.n)}</b>
+     <small>${role}${q.yr?" • "+gu(q.yr):""}</small>
+   </div>`;
+
+ const rowCard=(q,rel)=>`
+   <div class="fm">
+     <i class="r ${ST[q.s][0]}" onclick="show(${q.id})">${esc(q.n[0])}</i>
+     <div onclick="show(${q.id})">
+       <b>${esc(pre(q)+full(q))}</b>
+       <small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
+     </div>
+     ${q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
+     <span onclick="show(${q.id})">જુઓ ›</span>
+   </div>`;
+
  $("#pf").innerHTML=`<div class="pad">
-  <div class="hd"><h2>👨‍👩‍👧‍👦 મારો પરિવાર</h2><p>${esc(pre(p)+full(p))}</p></div>
-  <div style="margin:14px 0"><button class="bk" style="margin:0" onclick="addMember(${id})">➕ નામ ઉમેરો (માતા, પિતા, ભાઈ, બહેન...)</button></div>
-  ${fam.length?fam.map(([q,r])=>card(q,r)).join(""):'<p style="text-align:center;color:#78716c;margin:30px 0">હજુ કોઈ સભ્ય ઉમેરેલ નથી. ઉપરથી નવું નામ ઉમેરો.</p>'}
+  <div class="hd">
+    <h2>👨‍👩‍👧‍👦 મારો પરિવાર</h2>
+    <p>${esc(pre(head)+full(head))} નો ઘર-પરિવાર</p>
+  </div>
+
+  <!-- Visual Family Tree Graphic Card -->
+  <div class="par-tree">
+    <div class="par-badge">🏡 મારું ઘર • ${gu(1+(spouse?1:0)+children.length)} સભ્યો</div>
+    <div class="par-couple">
+      ${node(head,"મુખ્ય")}
+      <div class="par-link"><span>💍</span></div>
+      ${spouse?node(spouse,"પત્ની"):`<div class="par-node add-sp" onclick="addMember(${head.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`}
+    </div>
+    ${children.length?`
+      <div class="par-stem"></div>
+      <div class="par-kids">
+        ${children.map(c=>node(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
+      </div>
+    `:`<p class="par-empty-k">નીચેથી દીકરો કે દીકરી ઉમેરો</p>`}
+  </div>
+
+  <div style="margin:14px 0">
+    <button class="bk" style="margin:0" onclick="addMember(${head.id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (પત્ની, દીકરો, દીકરી)</button>
+  </div>
+
+  <h3 class="fh">પરિવારના સભ્યોની યાદી</h3>
+  ${rowCard(head,"મુખ્ય સભ્ય")}
+  ${spouse?rowCard(spouse,"પત્ની"):""}
+  ${children.map(c=>rowCard(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
+
   <button class="bk" onclick="show(${id})">← પ્રોફાઇલ પર પાછા જાઓ</button>
  </div>`;
  tab("pf");$("#pf").scrollTop=0;

@@ -54,7 +54,7 @@ u.green { background: #22c55e; }
 
 /* Profile Page */
 #pf { position: absolute; inset: 0; overflow-y: auto; background: #fff; color: #1c1917; padding: 0 0 28px; }
-.pad { padding: 22px 16px; }
+.pad { padding: 20px 16px; }
 .cv {
   height: 152px;
   position: relative;
@@ -64,16 +64,124 @@ u.green { background: #22c55e; }
   background-size: cover;
   background-position: center;
 }
-.chip { position: absolute; top: 12px; left: 12px; z-index: 2; background: rgba(58, 18, 12, 0.82); color: #fff; border-radius: 99px; padding: 6px 14px; font-size: 13px; font-weight: 700; }
 
 #pf .pr { padding: 0 14px; margin-top: -46px; position: relative; z-index: 2; }
 #pf .pr .r.big { box-shadow: 0 0 0 4px #fff, 0 4px 14px rgba(0, 0, 0, 0.22); margin-left: 4px; }
 #pf .pr h2 { margin: 10px 0 4px; font-size: 24px; font-weight: 800; line-height: 1.25; color: #3b0a0e; text-align: center; }
 .hd { text-align: center; }
-.hd h2 { margin: 10px 0 3px; font-size: 24px; font-weight: 800; color: #3b0a0e; }
-.hd p { margin: 0; color: #78716c; font-size: 15px; }
+.hd h2 { margin: 6px 0 3px; font-size: 24px; font-weight: 800; color: #3b0a0e; }
+.hd p { margin: 0; color: #78716c; font-size: 15px; font-weight: 600; }
 .ln { margin: 3px 0; color: #5c1015; font-weight: 700; font-size: 15px; text-align: center; }
 .bio { margin: 3px 0 14px; color: #44403c; font-weight: 700; font-size: 14.5px; text-align: center; }
+
+/* Visual Nuclear Family Graphic Card (Maro Parivar) */
+.par-tree {
+  background: radial-gradient(circle at 50% 0%, #fffbeb, #fef3c7 65%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 22px;
+  padding: 14px 10px 18px;
+  margin: 14px 0;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(180, 83, 9, 0.14);
+}
+.par-badge {
+  display: inline-block;
+  background: #6b141a;
+  color: #fef3c7;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 99px;
+  margin-bottom: 14px;
+}
+.par-couple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.par-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  position: relative;
+}
+.par-link::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 3px;
+  background: linear-gradient(90deg, #d97706, #b91c1c, #d97706);
+}
+.par-link span {
+  position: relative;
+  background: #fff;
+  border: 2px solid #f59e0b;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+.par-stem {
+  width: 3px;
+  height: 24px;
+  background: #b45309;
+  margin: 4px auto 0;
+  position: relative;
+}
+.par-kids {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 3px solid #d97706;
+  margin: 0 18px;
+}
+.par-node {
+  width: 102px;
+  background: #fff;
+  border: 1.5px solid #fcd34d;
+  border-radius: 16px;
+  padding: 8px 4px;
+  box-shadow: 0 3px 8px rgba(120, 53, 15, 0.08);
+}
+.par-node b {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #3b0a0e;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+.par-node small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9a3412;
+  margin-top: 2px;
+}
+.par-empty-k {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9a3412;
+}
+.del-btn {
+  border: 0;
+  background: #fee2e2;
+  color: #b91c1c;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 13px;
+  margin-right: 4px;
+}
 
 /* 3-Column Stats */
 .st { display: grid; grid-template-columns: repeat(3, 1fr); background: transparent; border: 0; text-align: center; padding: 6px 0 12px; margin-bottom: 6px; }
