@@ -8,7 +8,7 @@ const get=id=>D.ps.find(p=>p.id==id),nid=()=>Math.max(0,...D.ps.map(p=>p.id))+1;
 const kids=p=>D.ps.filter(c=>c.f==p.id&&c.g!="F").sort((a,b)=>(a.yr||9999)-(b.yr||9999));
 
 const FD={n:["નામ","text"],yr:["જન્મ વર્ષ (દા.ત. 1983)","number"],s:["સ્થિતિ","sel"],g:["લિંગ","gen"],sur:["અટક","text"],ja:["જાતિ / શાખ","text"],gam:["મૂળ ગામ","text"],rah:["રહેઠાણ","text"],edu:["ભણતર","text"],job:["વ્યવસાય","text"],rel:["સંબંધ પસંદ કરો","rel"]};
-const RELS={dad:"પિતા",mom:"માતા",bro:"ભાઈ",sis:"બહેન",wife:"પત્ની",son:"દીકરો",dau:"દીકરી"};
+const RELS={dad:"પિતા",mom:"માતા",bro:"ભાઈ",sis:"બહેન",husb:"પતિ",wife:"પત્ની",son:"દીકરો",dau:"દીકરી"};
 
 // --- Block Browser Pinch-Zoom outside Wad Tree (#vp) ---
 document.addEventListener("touchmove",e=>{
@@ -122,20 +122,21 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
  const p=get(pid);
  const fatherId=(p.g=="F"&&p.sp&&get(p.sp))?p.sp:pid;
  const father=get(fatherId)||p;
+ const defStatus=(defaultRel=="wife"||defaultRel=="husb"||defaultRel=="mom")?"m":"u";
 
- form("➕ નામ ઉમેરો",["rel","n","yr","s"],{rel:defaultRel,s:defaultRel=="wife"?"m":"u"},o=>{
+ form("➕ નામ ઉમેરો",["rel","n","yr","s"],{rel:defaultRel,s:defStatus},o=>{
   const id=nid(),r=o.rel;
   const g=(r=="mom"||r=="sis"||r=="wife"||r=="dau")?"F":"M";
 
   if(r=="son"||r=="dau"){
-   const dup=D.ps.find(x=>x.f===fatherId && x.n===o.n && (x.yr||"")===(o.yr||"") && x.g===g);
+   const dup=D.ps.find(x=>(x.f===fatherId||x.m===pid) && x.n===o.n && (x.yr||"")===(o.yr||"") && x.g===g);
    if(dup){alert("આ બાળકનું નામ પરિવારમાં પહેલેથી ઉમેરેલું છે!");return false;}
   } else {
    const dup=D.ps.find(x=>x.n===o.n && (x.yr||"")===(o.yr||"") && x.g===g && x.relTo===pid && x.relType===r);
    if(dup){alert("આ નામ પહેલેથી ઉમેરેલું છે!");return false;}
   }
 
-  // અટક અને ગામ: પોતાના કુટુંબના સભ્યોને સરખા, બીજા (માતા/પત્ની) માટે ખાલી
+  // અટક અને ગામ: પોતાના કુટુંબના સભ્યોને સરખા, બીજા (માતા/પત્ની/પતિ) માટે ખાલી
   const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
   const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
@@ -144,7 +145,13 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     const exMom=D.ps.find(x=>x.relType=="mom"&&(x.relTo==pid||x.relTo==fatherId));
     if(exMom){exMom.sp=id;m.sp=exMom.id;}
   } else if(r=="son"||r=="dau"){
-    m.f=fatherId;
+    if(p.g=="F"){
+      m.m=pid;
+      if(p.sp&&get(p.sp))m.f=p.sp;
+    } else {
+      m.f=pid;
+      if(p.sp&&get(p.sp))m.m=p.sp;
+    }
     D.ps.push(m);
   } else if(r=="bro"||r=="sis"){
     if(!p.f||!get(p.f)){
@@ -160,10 +167,17 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     if(p.f&&get(p.f))get(p.f).sp=id;
     D.ps.push(m);
   } else if(r=="wife"){
-    if(father.sp&&get(father.sp)){alert("પત્ની પહેલેથી ઉમેરેલા છે");return false;}
-    m.sp=fatherId;
-    father.sp=id;
+    if(p.sp&&get(p.sp)){alert("પત્ની પહેલેથી ઉમેરેલા છે");return false;}
+    m.sp=pid;
+    p.sp=id;
     D.ps.push(m);
+    D.ps.forEach(c=>{if(c.f==pid&&!c.m)c.m=id;});
+  } else if(r=="husb"){
+    if(p.sp&&get(p.sp)){alert("પતિ પહેલેથી ઉમેરેલા છે");return false;}
+    m.sp=pid;
+    p.sp=id;
+    D.ps.push(m);
+    D.ps.forEach(c=>{if((c.m==pid||c.relTo==pid)&&!c.f&&(c.relType=="son"||c.relType=="dau"))c.f=id;});
   }
   save();shut();
   if(returnToFamily==="tulsi")showTulsi(pid,true);else if(returnToFamily)showFamily(pid,true);else show(pid,true);
@@ -174,7 +188,7 @@ function delMember(id,backId){
  if(id==D.me){alert("તમારી મુખ્ય પ્રોફાઇલ ડિલીટ ન થઈ શકે");return;}
  if(confirm("આ સભ્યનું નામ કાઢી નાખવું છે?")){
   D.ps=D.ps.filter(x=>x.id!=id);
-  D.ps.forEach(x=>{if(x.f==id)x.f=null;if(x.sp==id)x.sp=null;});
+  D.ps.forEach(x=>{if(x.f==id)x.f=null;if(x.m==id)x.m=null;if(x.sp==id)x.sp=null;});
   save();
   showFamily(backId,true);
  }
@@ -202,7 +216,7 @@ function getFamilyList(p){
  if(mom)add(parents,mom,"માતા",2);
 
  add(sameGen,p,"મુખ્ય",3);
- const spouseObj=D.ps.find(x=>(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))||p.sp==x.id||x.sp==p.id);
+ const spouseObj=D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id);
  if(spouseObj)add(sameGen,spouseObj,spouseObj.g=="F"?"પત્ની":"પતિ",4);
  if(dad){
   D.ps.filter(x=>x.f==dad.id && x.id!=p.id).forEach(x=>{
@@ -212,7 +226,7 @@ function getFamilyList(p){
  sameGen.sort((a,b)=>(a.yr-b.yr)||(a.order-b.order));
 
  const headId=(p.g=="F"&&spouseObj&&spouseObj.g=="M")?spouseObj.id:p.id;
- D.ps.filter(x=>x.f==headId || (spouseObj&&x.f==spouseObj.id)).forEach(x=>{
+ D.ps.filter(x=>x.f==headId || x.m==p.id || (spouseObj&&(x.f==spouseObj.id||x.m==spouseObj.id))).forEach(x=>{
   add(children,x,x.g=="F"?"દીકરી":"દીકરો",5);
  });
  children.sort((a,b)=>a.yr-b.yr);
@@ -220,22 +234,32 @@ function getFamilyList(p){
  return [...parents,...sameGen,...children].map(item=>[item.q,item.label]);
 }
 
+// Nuclear Family: Husband on Left, Wife on Right (Works properly even if Wife has no husband added yet)
 function getNuclearFamily(p){
- const spouseObj=D.ps.find(x=>(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))||p.sp==x.id||x.sp==p.id);
- const head=(p.g=="F"&&spouseObj&&spouseObj.g=="M")?spouseObj:p;
- const spouse=(head.id===p.id)?spouseObj:p;
+ const spouseObj=D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id);
+ let husb=null, wife=null;
+ if(p.g=="F"){
+  wife=p;
+  husb=(spouseObj&&spouseObj.g!="F")?spouseObj:null;
+ } else {
+  husb=p;
+  wife=(spouseObj&&spouseObj.g=="F")?spouseObj:null;
+ }
  const seenKids=new Set();
  const children=[];
- D.ps.filter(x=>x.f==head.id || (spouse&&x.f==spouse.id)).forEach(c=>{
+ D.ps.filter(x=>(husb&&x.f==husb.id) || (wife&&(x.m==wife.id||x.f==wife.id))).forEach(c=>{
   const key=`${c.n}_${c.yr||""}_${c.g}`;
   if(!seenKids.has(key)){seenKids.add(key);children.push(c);}
  });
  children.sort((a,b)=>(a.yr||9999)-(b.yr||9999));
- return {head,spouse,children};
+ return {husb,wife,children};
 }
 
 function showFamily(id,skipPush=false){
- const p=get(id),{head,spouse,children}=getNuclearFamily(p);
+ const p=get(id),{husb,wife,children}=getNuclearFamily(p);
+ const mainPerson=husb||wife||p;
+ const totalCount=(husb?1:0)+(wife?1:0)+children.length;
+
  const node=(q,role)=>`
    <div class="par-node" onclick="show(${q.id})">
      <i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i>
@@ -254,18 +278,26 @@ function showFamily(id,skipPush=false){
      <span onclick="show(${q.id})">જુઓ ›</span>
    </div>`;
 
+ const leftSlot=husb
+   ? node(husb, wife?"પતિ":"પતિ / મુખ્ય")
+   : `<div class="par-node add-sp" onclick="addMember(${wife.id},'husb',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પતિ ઉમેરો</b><small>ક્લિક કરો</small></div>`;
+
+ const rightSlot=wife
+   ? node(wife, husb?"પત્ની":"પત્ની / મુખ્ય")
+   : `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`;
+
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
     <h2>👨‍👩‍👧‍👦 મારો પરિવાર</h2>
-    <p>${esc(pre(head)+full(head))} નો ઘર-પરિવાર</p>
+    <p>${esc(pre(mainPerson)+full(mainPerson))} નો ઘર-પરિવાર</p>
   </div>
 
   <div class="par-tree">
-    <div class="par-badge">🏡 મારું ઘર • ${gu(1+(spouse?1:0)+children.length)} સભ્યો</div>
+    <div class="par-badge">🏡 મારું ઘર • ${gu(totalCount)} સભ્યો</div>
     <div class="par-couple">
-      ${node(head,"પતિ / મુખ્ય")}
+      ${leftSlot}
       <div class="par-link"><span>💍</span></div>
-      ${spouse?node(spouse,"પત્ની"):`<div class="par-node add-sp" onclick="addMember(${head.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`}
+      ${rightSlot}
     </div>
     ${children.length?`
       <div class="par-stem"></div>
@@ -276,12 +308,12 @@ function showFamily(id,skipPush=false){
   </div>
 
   <div style="margin:14px 0">
-    <button class="bk" style="margin:0" onclick="addMember(${id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (પત્ની, દીકરો, દીકરી)</button>
+    <button class="bk" style="margin:0" onclick="addMember(${id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (${husb?"પત્ની":"પતિ"}, દીકરો, દીકરી)</button>
   </div>
 
   <h3 class="fh">પરિવારના સભ્યોની યાદી</h3>
-  ${rowCard(head,"પતિ / મુખ્ય સભ્ય")}
-  ${spouse?rowCard(spouse,"પત્ની"):""}
+  ${husb?rowCard(husb,wife?"પતિ":"પતિ / મુખ્ય સભ્ય"):""}
+  ${wife?rowCard(wife,husb?"પત્ની":"પત્ની / મુખ્ય સભ્ય"):""}
   ${children.map(c=>rowCard(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
 
   <button class="bk" onclick="history.back()">← પ્રોફાઇલ પર પાછા જાઓ</button>
