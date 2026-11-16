@@ -6,53 +6,131 @@ const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}};
 const ST={d:["red","સ્વર્ગવાસ"],m:["blue","પરિણીત"],u:["green","અપરિણીત"]};
 const get=id=>D.ps.find(p=>p.id==id),nid=()=>Math.max(0,...D.ps.map(p=>p.id))+1;
 const kids=p=>D.ps.filter(c=>c.f==p.id&&c.g!="F").sort((a,b)=>(a.yr||9999)-(b.yr||9999));
-const full=p=>p.n+(p.f?" "+get(p.f).n:"");
-const FD={n:["નામ","text"],yr:["જન્મ વર્ષ (દા.ત. 1983)","number"],s:["સ્થિતિ","sel"],g:["લિંગ","gen"],sur:["અટક","text"],ja:["જાતિ / શાખ","text"],gam:["મૂળ ગામ","text"],rah:["રહેઠાણ","text"],edu:["ભણતર","text"],job:["વ્યવસાય","text"]};
+const full=p=>p.n+(p.f&&get(p.f)?" "+get(p.f).n:"");
+const FD={n:["નામ","text"],yr:["જન્મ વર્ષ (દા.ત. 1983)","number"],s:["સ્થિતિ","sel"],g:["લિંગ","gen"],sur:["અટક","text"],ja:["જાતિ / શાખ","text"],gam:["મૂળ ગામ","text"],rah:["રહેઠાણ","text"],edu:["ભણતર","text"],job:["વ્યવસાય","text"],rel:["સંબંધ પસંદ કરો","rel"]};
+const RELS={dad:"પિતા",mom:"માતા",bro:"ભાઈ",sis:"બહેન",wife:"પત્ની",son:"દીકરો",dau:"દીકરી"};
+
 function form(t,keys,v,cb){
  $("#sh").innerHTML=`<div class="card"><h3>${t}</h3>${keys.map(k=>{const[l,ty]=FD[k],x=v[k]??"";
   if(ty=="sel")return `<label>${l}<select id="f_${k}">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${x==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>`;
   if(ty=="gen")return `<label>${l}<select id="f_g"><option value="M">પુરુષ</option><option value="F" ${x=="F"?"selected":""}>સ્ત્રી</option></select></label>`;
+  if(ty=="rel")return `<label>${l}<select id="f_rel">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${x==a?"selected":""}>${b}</option>`).join("")}</select></label>`;
   return `<label>${l}<input id="f_${k}" type="${ty}" value="${esc(x)}"></label>`}).join("")}
  <div class="bt"><button onclick="shut()">રદ કરો</button><button class="pr" id="ok">સાચવો</button></div></div>`;
  $("#sh").hidden=false;
  $("#ok").onclick=()=>{const o={};keys.forEach(k=>o[k]=$("#f_"+k).value.trim());if(!o.n){alert("નામ લખો");return}
   if("yr"in o)o.yr=o.yr?+o.yr:"";cb(o)}}
 const shut=()=>{$("#sh").hidden=true};
+
 function first(){form("તમારી પ્રોફાઇલ બનાવો",["n","sur","g","ja","gam","rah","edu","job","yr","s"],{s:"m"},o=>{
  D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};save();shut();show(1)})}
-function add(kind,pid){const dad=kind=="dad";
- form(dad?"પિતા ઉમેરો":"દીકરો ઉમેરો",["n","yr","s"],{s:dad?"d":"u"},o=>{
-  const id=nid();D.ps.push({id,f:null,g:"M",...o});if(dad)get(pid).f=id;else get(id).f=pid;save();shut();show(dad?id:pid)})}
+
+function addMember(pid){
+ const p=get(pid);
+ form("➕ નામ ઉમેરો",["rel","n","yr","s"],{rel:"son",s:"u"},o=>{
+  const id=nid(),r=o.rel;
+  const g=(r=="mom"||r=="sis"||r=="wife"||r=="dau")?"F":"M";
+  const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:p.sur||"",gam:p.gam||"",relTo:pid,relType:r};
+  if(r=="dad"){
+    if(p.f){alert("પિતા પહેલેથી ઉમેરેલા છે");return;}
+    D.ps.push(m);p.f=id;
+  } else if(r=="son"||r=="dau"){
+    m.f=(p.g=="F"&&p.sp)?p.sp:pid;
+    D.ps.push(m);
+  } else if(r=="bro"||r=="sis"){
+    if(!p.f){
+      const fid=nid();
+      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",sur:p.sur||"",gam:p.gam||""});
+      p.f=fid;
+    }
+    m.f=p.f;
+    D.ps.push(m);
+  } else if(r=="mom"){
+    m.sp=p.f||null;
+    D.ps.push(m);
+  } else if(r=="wife"){
+    m.sp=pid;
+    p.sp=id;
+    D.ps.push(m);
+  }
+  save();shut();show(pid);
+ });
+}
+
 function edit(id){const p=get(id),k=["n","yr","s","sur","gam","rah","edu","job"];if(id==D.me)k.splice(3,0,"g","ja");
  form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id);if(!$("#tv").hidden)draw()})}
+
 const pre=p=>p.s=="d"?"સ્વ. ":p.g=="F"?"":"શ્રી ",REL=["","પિતા","દાદા","પરદાદા"];
-const dep=q=>{let d=1;while(q.f){q=get(q.f);d++}return d};
-function vs(p){let r=p;while(r.f)r=get(r.f);let n=0,m=0,u=0;(function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);return[m,n,u]}
-function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),anc=[];
- for(let a=p;a.f;){a=get(a.f);anc.push(a)}
+const dep=q=>{let d=1;while(q.f&&get(q.f)){q=get(q.f);d++}return d};
+function vs(p){let r=p;while(r.f&&get(r.f))r=get(r.f);let n=0,m=0,u=0;(function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);return[m,n,u]}
+
+function getFamilyList(p){
+ const list=[],seen=new Set([p.id]);
+ const push=(q,label)=>{if(q&&!seen.has(q.id)){seen.add(q.id);list.push([q,label])}};
+ // Ancestors (Father, Grandfather...)
+ let curA=p,lvl=1;
+ while(curA.f&&get(curA.f)){curA=get(curA.f);push(curA,REL[lvl]||"પૂર્વજ");lvl++}
+ // Mother & Wife
+ D.ps.forEach(x=>{
+  if(x.relType=="mom"&&(x.relTo==p.id||(p.f&&x.sp==p.f)))push(x,"માતા");
+  if(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))push(x,"પત્ની");
+  if(p.sp==x.id)push(x,"પત્ની");
+ });
+ // Siblings (Brothers & Sisters)
+ if(p.f){
+  D.ps.filter(x=>x.f==p.f&&x.id!=p.id).sort((a,b)=>(a.yr||9999)-(b.yr||9999))
+   .forEach(x=>push(x,x.g=="F"?"બહેન":"ભાઈ"));
+ }
+ // Children (Sons & Daughters)
+ D.ps.filter(x=>x.f==p.id).sort((a,b)=>(a.yr||9999)-(b.yr||9999))
+  .forEach(x=>push(x,x.g=="F"?"દીકરી":"દીકરો"));
+ // Direct custom relations
+ D.ps.filter(x=>x.relTo==p.id).forEach(x=>push(x,RELS[x.relType]||"સભ્ય"));
+ return list;
+}
+
+function showFamily(id){
+ const p=get(id),fam=getFamilyList(p);
+ const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
+ $("#pf").innerHTML=`<div class="pad">
+  <div class="hd"><h2>👨‍👩‍👧‍👦 મારો પરિવાર</h2><p>${esc(pre(p)+full(p))}</p></div>
+  <div style="margin:14px 0"><button class="bk" style="margin:0" onclick="addMember(${id})">➕ નામ ઉમેરો (માતા, પિતા, ભાઈ, બહેન...)</button></div>
+  ${fam.length?fam.map(([q,r])=>card(q,r)).join(""):'<p style="text-align:center;color:#78716c;margin:30px 0">હજુ કોઈ સભ્ય ઉમેરેલ નથી. ઉપરથી નવું નામ ઉમેરો.</p>'}
+  <button class="bk" onclick="show(${id})">← પ્રોફાઇલ પર પાછા જાઓ</button>
+ </div>`;
+ tab("pf");$("#pf").scrollTop=0;
+}
+
+function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
  const rw=(a,b)=>b?`<div class="rw"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel} • પેઢી ${gu(dep(q))}</small></div><span>જુઓ ›</span></a>`;
- $("#pf").innerHTML=`<div class="cv"><span class="chip">${p.gam?"🏡 મૂળ વતન: "+esc(p.gam):"🌳 "+esc(D.ja||"વડબૂક")}</span></div>
+ $("#pf").innerHTML=`<div class="cv"></div>
  <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i><h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
  <p class="ln">${[p.job,p.rah].filter(Boolean).map(esc).join(" • ")}</p><p class="bio">${D.ja?"શાખ: "+esc(D.ja)+" • ":""}${t}</p>
- <div class="st"><div><b>${gu(g)} પેઢી</b><small>મારો વડ 🌳</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય 💚</small></div></div>
- <div class="ac2"><button class="pm" onclick="tab('tv')">🌳 મારો વડ જુઓ</button>${p.g!="F"?`<button onclick="add('son',${id})">➕ દીકરો ઉમેરો</button>`:""}${p.f?"":`<button onclick="add('dad',${id})">➕ પિતા ઉમેરો</button>`}<button onclick="edit(${id})">✏️ વિગત ફેરવો</button></div>
+ <div class="st"><div><b>${gu(g)} પેઢી</b><small>મારો વડ 🌳</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
+ <div class="ac2">
+   <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="tab('tv')">🌳 મારો વડ</button>
+   <button onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
+   <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
+   <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
+ </div>
  <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
- ${anc.length||kids(p).length?`<h3 class="fh">પરિવારના મુખ્ય સભ્યો (ક્લિક કરી વિગત જુઓ)</h3>`:""}${anc.map((q,i)=>card(q,REL[i+1]||"પૂર્વજ")).join("")}${kids(p).map(q=>card(q,"દીકરો")).join("")}</div>`;
+ ${fam.length?`<h3 class="fh">પરિવારના મુખ્ય સભ્યો (ક્લિક કરી વિગત જુઓ)</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
  tab("pf");$("#pf").scrollTop=0}
+
 const W=112,H=124;let cur=null,SW=1,SH=1,FS="all";
 function draw(){const me=get(D.me),stg=$("#stage");if(!me)return;
  if(me.g=="F"){stg.style.cssText="";stg.innerHTML='<p class="em">🌿 તુલસી ક્યારો ટૂંક સમયમાં આવશે</p>';$("#flt").innerHTML="";$("#sub").textContent="";return}
- let r=me;while(r.f)r=get(r.f);let leaf=0,mx=0;const pos={},all=[];
+ let r=me;while(r.f&&get(r.f))r=get(r.f);let leaf=0,mx=0;const pos={},all=[];
  (function lay(p,d){const k=kids(p);k.forEach(c=>lay(c,d+1));pos[p.id]=[k.length?(pos[k[0].id][0]+pos[k[k.length-1].id][0])/2:leaf++*W,d*H];mx=Math.max(mx,d);all.push(p)})(r,0);
  SW=Math.max(leaf,1)*W;SH=(mx+1)*H;let sv="",nd="";
  all.forEach(p=>{const[x,y]=pos[p.id];kids(p).forEach(c=>{const[cx,cy]=pos[c.id],a=y+52,b=cy+4,m=(a+b)/2;
   sv+=`<path d="M${x+W/2} ${a}C${x+W/2} ${m},${cx+W/2} ${m},${cx+W/2} ${b}"/>`});
-  nd+=`<div class="nd${p.id==D.me?" me":""}" data-s="${p.s}" style="left:${x+W/2}px;top:${y}px" onclick="tap(${p.id})"><i class="r ${ST[p.s][0]}">${esc(p.n[0])}</i><b>${esc(p.n)}</b><small>${p.f?esc(get(p.f).n):""}</small></div>`});
+  nd+=`<div class="nd${p.id==D.me?" me":""}" data-s="${p.s}" style="left:${x+W/2}px;top:${y}px" onclick="tap(${p.id})"><i class="r ${ST[p.s][0]}">${esc(p.n[0])}</i><b>${esc(p.n)}</b><small>${p.f&&get(p.f)?esc(get(p.f).n):""}</small></div>`});
  stg.style.cssText=`width:${SW}px;height:${SH}px`;stg.innerHTML=`<svg width="${SW}" height="${SH}">${sv}</svg>${nd}`;
  const cn=s=>all.filter(p=>p.s==s).length;
  $("#sub").textContent=`${gu(mx+1)} પેઢી • ${gu(all.length)} સભ્યો`;
- $("#flt").innerHTML=[["all","બધા",all.length],["d","🔴 સ્વર્ગવાસ",cn("d")],["m","🔵 પરિણીત",cn("m")],["u","💚 અપરિણીત",cn("u")]].map(f=>`<button class="${f[0]==FS?"on":""}" onclick="flt('${f[0]}')">${f[1]} (${gu(f[2])})</button>`).join("");
+ $("#flt").innerHTML=[["all","બધા",all.length],["d","🔴 સ્વર્ગવાસ",cn("d")],["m","🔵 પરિણીત",cn("m")],["u","🟢 અપરિણીત",cn("u")]].map(f=>`<button class="${f[0]==FS?"on":""}" onclick="flt('${f[0]}')">${f[1]} (${gu(f[2])})</button>`).join("");
  flt(FS)}
 function flt(s){FS=s;document.querySelectorAll("#flt button").forEach((b,i)=>b.classList.toggle("on",["all","d","m","u"][i]==s));
  document.querySelectorAll(".nd").forEach(n=>n.classList.toggle("dim",s!="all"&&n.dataset.s!=s))}
@@ -83,7 +161,7 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  $("#dp").innerHTML=me?`<i class="r ${ST[me.s][0]}">${esc(me.n[0])}</i><div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
  const it=[["🌳","મારો વડ (વંશાવળી)",me&&me.g!="F"?info():"તમારા પરિવારનો વડ","menu(0);tab('tv')","hl"],
  ["🌿","તુલસી ક્યારો (માતૃપક્ષ)","માતા, નાની અને પરનાનીની વંશાવળી","soon()","soon"],
- ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 💚 ધરાવતા સભ્યો","soon()","soon"],
+ ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","soon()","soon"],
  ["👤","મારી પ્રોફાઇલ","પરિવાર અને વ્યક્તિગત વિગતો","menu(0);D.me?show(D.me):empty()",""],
  ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]];
  $("#dl").innerHTML=it.map(([i,t,s,a,c])=>`<a class="${c}" onclick="${a}"><span class="ic">${i}</span><div><b>${t}</b><small>${s}</small>${c.includes("soon")?"<em>ટૂંક સમયમાં</em>":""}</div></a>`).join("");

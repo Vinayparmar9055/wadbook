@@ -1,0 +1,4 @@
+
+/* 2x2 Grid for the 4 Profile Action Buttons */
+.ac2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.ac2 button:nth-child(3) { grid-column: auto !important; width: 100% !important; margin: 0 !important; }
