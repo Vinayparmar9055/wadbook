@@ -33,7 +33,7 @@ function renderState(st){
  if(!st){D.me&&get(D.me)?show(D.me,true):empty();return;}
  if(st.v==="pf")show(st.id,true);
  else if(st.v==="fam")showFamily(st.id,true);
- else if(st.v==="tv")tab("tv",true);
+ else if(st.v==="tv")tab("tv",true,st.id);
  else if(st.v==="tul")showTulsi(st.id,true);
 }
 window.addEventListener("popstate",()=>{
@@ -55,6 +55,12 @@ window.addEventListener("popstate",()=>{
   isPopping=false;
  }
 });
+
+function setNav(activeTab){
+ document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t==activeTab));
+ const pfBtn=document.querySelector("nav.bn button[data-t='pf'] span");
+ if(pfBtn)pfBtn.textContent=(cur&&D.me&&cur!=D.me)?"મારી પ્રોફાઇલ":"પ્રોફાઇલ";
+}
 
 function cleanDuplicates(){
  let changed=false;
@@ -82,7 +88,6 @@ function full(p){
  return p.n+(p.f&&get(p.f)?" "+get(p.f).n:"");
 }
 
-// Naam agal prefix: સ્વ. / ગં.સ્વ. / સૌ. / કુ. / શ્રી
 function pre(p){
  if(!p)return "";
  if(p.s=="d")return "સ્વ. ";
@@ -136,7 +141,6 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
    if(dup){alert("આ નામ પહેલેથી ઉમેરેલું છે!");return false;}
   }
 
-  // અટક અને ગામ: પોતાના કુટુંબના સભ્યોને સરખા, બીજા (માતા/પત્ની/પતિ) માટે ખાલી
   const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
   const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
@@ -234,7 +238,6 @@ function getFamilyList(p){
  return [...parents,...sameGen,...children].map(item=>[item.q,item.label]);
 }
 
-// Nuclear Family: Husband on Left, Wife on Right (Works properly even if Wife has no husband added yet)
 function getNuclearFamily(p){
  const spouseObj=D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id);
  let husb=null, wife=null;
@@ -256,7 +259,9 @@ function getNuclearFamily(p){
 }
 
 function showFamily(id,skipPush=false){
+ cur=id;
  const p=get(id),{husb,wife,children}=getNuclearFamily(p);
+ const isOwner=(id==D.me);
  const mainPerson=husb||wife||p;
  const totalCount=(husb?1:0)+(wife?1:0)+children.length;
 
@@ -274,26 +279,30 @@ function showFamily(id,skipPush=false){
        <b>${esc(pre(q)+full(q))}</b>
        <small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
      </div>
-     ${q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
+     ${isOwner&&q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
      <span onclick="show(${q.id})">જુઓ ›</span>
    </div>`;
 
  const leftSlot=husb
    ? node(husb, wife?"પતિ":"પતિ / મુખ્ય")
-   : `<div class="par-node add-sp" onclick="addMember(${wife.id},'husb',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પતિ ઉમેરો</b><small>ક્લિક કરો</small></div>`;
+   : (isOwner
+      ? `<div class="par-node add-sp" onclick="addMember(${wife.id},'husb',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પતિ ઉમેરો</b><small>ક્લિક કરો</small></div>`
+      : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પતિ</b><small>ઉમેરેલ નથી</small></div>`);
 
  const rightSlot=wife
    ? node(wife, husb?"પત્ની":"પત્ની / મુખ્ય")
-   : `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`;
+   : (isOwner
+      ? `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`
+      : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પત્ની</b><small>ઉમેરેલ નથી</small></div>`);
 
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
-    <h2>👨‍👩‍👧‍👦 મારો પરિવાર</h2>
+    <h2>👨‍👩‍👧‍👦 ${isOwner?"મારો પરિવાર":"તેમનો પરિવાર"}</h2>
     <p>${esc(pre(mainPerson)+full(mainPerson))} નો ઘર-પરિવાર</p>
   </div>
 
   <div class="par-tree">
-    <div class="par-badge">🏡 મારું ઘર • ${gu(totalCount)} સભ્યો</div>
+    <div class="par-badge">🏡 ઘર-પરિવાર • ${gu(totalCount)} સભ્યો</div>
     <div class="par-couple">
       ${leftSlot}
       <div class="par-link"><span>💍</span></div>
@@ -304,12 +313,12 @@ function showFamily(id,skipPush=false){
       <div class="par-kids">
         ${children.map(c=>node(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
       </div>
-    `:`<p class="par-empty-k">નીચેથી દીકરો કે દીકરી ઉમેરો</p>`}
+    `:`<p class="par-empty-k">${isOwner?"નીચેથી દીકરો કે દીકરી ઉમેરો":"સંતાનો ઉમેરેલ નથી"}</p>`}
   </div>
 
-  <div style="margin:14px 0">
+  ${isOwner?`<div style="margin:14px 0">
     <button class="bk" style="margin:0" onclick="addMember(${id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (${husb?"પત્ની":"પતિ"}, દીકરો, દીકરી)</button>
-  </div>
+  </div>`:""}
 
   <h3 class="fh">પરિવારના સભ્યોની યાદી</h3>
   ${husb?rowCard(husb,wife?"પતિ":"પતિ / મુખ્ય સભ્ય"):""}
@@ -319,37 +328,60 @@ function showFamily(id,skipPush=false){
   <button class="bk" onclick="history.back()">← પ્રોફાઇલ પર પાછા જાઓ</button>
  </div>`;
  $("#tv").hidden=true;$("#pf").hidden=false;
- document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t=="pf"));
+ setNav("pf");
  $("#pf").scrollTop=0;
  if(!skipPush)pushView({v:"fam",id});
 }
 
-function show(id,skipPush=false){cur=id;const p=get(id);if(!p)return empty();
+function show(id,skipPush=false){
+ cur=id;const p=get(id);if(!p)return empty();
+ const isOwner=(id==D.me);
  const[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
  const rw=(a,b)=>b?`<div class="rw"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
+
+ // Owner View vs Visitor View (Clean, Zero Duplicate Buttons!)
+ const actionButtons=isOwner
+   ? `<div class="ac2">
+        <button class="pm full-w" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
+        <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
+        <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
+      </div>`
+   : `<div class="ac2">
+        <button class="pm" onclick="tab('tv',false,${id})">🌳 તેમનો વડ</button>
+        <button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>
+        <button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
+        <button onclick="shareProfile(${id})">📤 શેર કરો</button>
+      </div>`;
+
  $("#pf").innerHTML=`<div class="cv"></div>
- <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i><h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
+ <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i>
+ ${!isOwner?`<div style="text-align:center;margin-top:6px"><span class="vis-badge">👁️ સભ્ય પ્રોફાઇલ (ફક્ત જોવા માટે)</span></div>`:""}
+ <h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
  <p class="ln">${[p.job,p.rah].filter(Boolean).map(esc).join(" • ")}</p><p class="bio">${D.ja?"શાખ: "+esc(D.ja)+" • ":""}${t}</p>
- <div class="st"><div><b>${gu(g)} પેઢી</b><small>મારો વડ 🌳</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
- <div class="ac2">
-   <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="tab('tv')">🌳 મારો વડ</button>
-   <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
-   <button onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
-   <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
- </div>
+ <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isOwner?"મારો વડ 🌳":"તેમનો વડ 🌳"}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
+ ${actionButtons}
  <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
  ${fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
  $("#tv").hidden=true;$("#pf").hidden=false;
- document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t=="pf"));
+ setNav("pf");
  $("#pf").scrollTop=0;
  if(!skipPush)pushView({v:"pf",id});
 }
 
-const W=112,H=112;let cur=null,SW=1,SH=1,FS="all";
-function draw(){const me=get(D.me),stg=$("#stage");if(!me)return;
- if(me.g=="F"){stg.style.cssText="";stg.innerHTML='<p class="em"><button class="bk" onclick="showTulsi('+me.id+')">🌿 તુલસી ક્યારો ખોલો</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return}
- let r=me;while(r.f&&get(r.f))r=get(r.f);let leaf=0,mx=0;const pos={},all=[];
+function shareProfile(id){
+ const p=get(id)||get(D.me);
+ if(!p)return;
+ const txt=`🌳 Wadbook પરિવાર પરિચય\n${pre(p)+full(p)} ${p.sur||""}\nગામ: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
+ if(navigator.share){navigator.share({title:"Wadbook",text:txt}).catch(()=>{});}
+ else{alert(txt);}
+}
+
+const W=112,H=112;let cur=null,SW=1,SH=1,FS="all",treeTarget=null;
+function draw(targetId){
+ const base=get(targetId||D.me);const stg=$("#stage");if(!base)return;
+ if(base.g=="F"){stg.style.cssText="";stg.innerHTML='<p class="em"><button class="bk" onclick="showTulsi('+base.id+')">🌿 તુલસી ક્યારો ખોલો</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return}
+ let r=base;while(r.f&&get(r.f))r=get(r.f);let leaf=0,mx=0;const pos={},all=[];
  (function lay(p,d){const k=kids(p);k.forEach(c=>lay(c,d+1));pos[p.id]=[k.length?(pos[k[0].id][0]+pos[k[k.length-1].id][0])/2:leaf++*W,d*H];mx=Math.max(mx,d);all.push(p)})(r,0);
  SW=Math.max(leaf,1)*W;SH=(mx+1)*H;let sv="",nd="";
  all.forEach(p=>{const[x,y]=pos[p.id];kids(p).forEach(c=>{const[cx,cy]=pos[c.id],a=y+52,b=cy+4,m=(a+b)/2;
@@ -375,11 +407,11 @@ vp.onpointermove=e=>{const o=ptr.get(e.pointerId);if(!o)return;ptr.set(e.pointer
 vp.onpointerup=vp.onpointercancel=e=>{ptr.delete(e.pointerId);last=0};
 const tap=id=>{if(moved<8)show(id)};
 
-function tab(t,skipPush=false){if(t=="tv"&&!D.me){return empty()}
- if(t=="pf"){return D.me?show(cur||D.me,skipPush):empty()}
+function tab(t,skipPush=false,targetId=null){if(t=="tv"&&!D.me){return empty()}
+ if(t=="pf"){return D.me?show(D.me,skipPush):empty()}
  $("#tv").hidden=t!="tv";$("#pf").hidden=t!="pf";
- document.querySelectorAll("nav.bn button").forEach(b=>b.classList.toggle("on",b.dataset.t==t));
- if(t=="tv"){draw();fit();if(!skipPush)pushView({v:"tv"});}
+ setNav(t);
+ if(t=="tv"){treeTarget=targetId||D.me;draw(treeTarget);fit();if(!skipPush)pushView({v:"tv",id:treeTarget});}
 }
 
 function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
@@ -387,16 +419,18 @@ function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
 D.me&&get(D.me)?show(D.me):empty();
 
-function info(){const[m,n]=vs(get(D.me));return gu(m)+" પેઢી • "+gu(n)+" સભ્યો"}
 function soon(){const t=$("#ts");t.hidden=false;clearTimeout(soon.t);soon.t=setTimeout(()=>t.hidden=true,1800)}
+
+// Clean Drawer Menu (No duplicate profile/tree items)
 function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
  $("#dp").innerHTML=me?`<i class="r ${ST[me.s][0]}">${esc(me.n[0])}</i><div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
- const it=[["🌳","મારો વડ (વંશાવળી)",me&&me.g!="F"?info():"તમારા પરિવારનો વડ","menu(0);tab('tv')","hl"],
- ["🌿","તુલસી ક્યારો (માતૃપક્ષ)","માતા, નાની અને પરનાનીની વંશાવળી","menu(0);D.me?showTulsi(D.me):empty()",""],
- ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","soon()","soon"],
- ["👤","મારી પ્રોફાઇલ","પરિવાર અને વ્યક્તિગત વિગતો","menu(0);D.me?show(D.me):empty()",""],
- ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]];
+ const it=[
+  ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","soon()","hl soon"],
+  ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","soon()","soon"],
+  ["📤","મારો વડ શેર કરો","વોટ્સએપ પર પરિવારની લિંક મોકલો","menu(0);shareProfile(D.me)",""],
+  ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]
+ ];
  $("#dl").innerHTML=it.map(([i,t,s,a,c])=>`<a class="${c}" onclick="${a}"><span class="ic">${i}</span><div><b>${t}</b><small>${s}</small>${c.includes("soon")?"<em>ટૂંક સમયમાં</em>":""}</div></a>`).join("");
  $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false;
  try{history.pushState({menu:1},"");}catch(e){}
@@ -424,7 +458,9 @@ function momOf(p){
 }
 
 function showTulsi(id,skipPush=false){
+ cur=id;
  const p=get(id);if(!p)return empty();
+ const isOwner=(id==D.me);
  const chain=[];let q=momOf(p),guard=0;
  while(q&&guard++<30){chain.push(q);q=momOf(q)}
  const LB=["","માતા","નાની","પરનાની"];
@@ -435,13 +471,14 @@ function showTulsi(id,skipPush=false){
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd"><h2>🌿 તુલસી ક્યારો</h2><p>${esc(pre(p)+full(p))} ની માતૃપક્ષ વંશાવળી</p></div>
   <div class="tk">
-   <button class="tk-add" onclick="addMember(${last.id},'mom','tulsi')">➕ ${lab(chain.length+1)} ઉમેરો</button>
-   ${parts.map(h=>`<div class="tk-st"></div>${h}`).join("")}
-   <div class="tk-st"></div>${node(p,"તમે")}
+   ${isOwner?`<button class="tk-add" onclick="addMember(${last.id},'mom','tulsi')">➕ ${lab(chain.length+1)} ઉમેરો</button>`:""}
+   ${parts.map(h=>`${isOwner?'<div class="tk-st"></div>':""}${h}`).join("")}
+   ${parts.length?'<div class="tk-st"></div>':""}${node(p,isOwner?"તમે":"મુખ્ય સભ્ય")}
   </div>
   <button class="bk" onclick="history.back()">← પાછા જાઓ</button>
  </div>`;
  $("#tv").hidden=true;$("#pf").hidden=false;
+ setNav("tul");
  $("#pf").scrollTop=0;
  if(!skipPush)pushView({v:"tul",id});
 }

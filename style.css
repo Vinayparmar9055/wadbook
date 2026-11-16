@@ -25,24 +25,25 @@ header p { margin: 2px 0 0; font-size: 13.5px; font-weight: 700; color: #6b141a;
 .ib, #mb { width: 38px; height: 38px; border-radius: 50%; border: 0; background: transparent; color: #292524; display: flex; align-items: center; justify-content: center; }
 .ib svg, #mb svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; }
 
-/* Main & 4K Cinematic Blurred Banyan Tree View */
+/* Main & 4K Cinematic Banyan Tree View (Uses wad-bg.jpg + SVG fallback) */
 main { flex: 1; position: relative; overflow: hidden; }
 #tv {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 18%, #2d6a3e 0%, #143620 55%, #08170e 100%);
+  background: radial-gradient(circle at 50% 18%, #1e5631 0%, #0d2b18 55%, #05130a 100%);
   touch-action: none;
 }
 .wad-bg {
   position: absolute;
-  inset: -20px;
+  inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.34;
-  filter: blur(4px);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3CradialGradient id='glow' cx='50%25' cy='25%25' r='55%25'%3E%3Cstop offset='0%25' stop-color='%23fef08a' stop-opacity='0.55'/%3E%3Cstop offset='50%25' stop-color='%234ade80' stop-opacity='0.2'/%3E%3Cstop offset='100%25' stop-color='%23052e16' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='trunk' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%23291509'/%3E%3Cstop offset='50%25' stop-color='%235c3317'/%3E%3Cstop offset='100%25' stop-color='%23241207'/%3E%3C/linearGradient%3E%3ClinearGradient id='canopy' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%234d7c0f'/%3E%3Cstop offset='55%25' stop-color='%23166534'/%3E%3Cstop offset='100%25' stop-color='%23052e16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1080' height='1920' fill='url(%23glow)'/%3E%3Cpath d='M440 1920 Q475 1400 490 950 Q360 760 160 660 L210 610 Q395 705 515 840 L525 580 L555 580 L565 840 Q685 705 870 610 L920 660 Q720 760 590 950 Q605 1400 640 1920 Z' fill='url(%23trunk)'/%3E%3Cg stroke='%23452512' stroke-linecap='round' opacity='0.85'%3E%3Cpath d='M250 680 Q242 1050 248 1480' stroke-width='10'/%3E%3Cpath d='M330 720 Q338 1120 330 1620' stroke-width='14'/%3E%3Cpath d='M400 760 Q395 1180 402 1740' stroke-width='8'/%3E%3Cpath d='M680 760 Q685 1180 678 1740' stroke-width='8'/%3E%3Cpath d='M750 720 Q742 1120 750 1620' stroke-width='14'/%3E%3Cpath d='M830 680 Q838 1050 832 1480' stroke-width='10'/%3E%3C/g%3E%3Cellipse cx='540' cy='460' rx='520' ry='290' fill='url(%23canopy)'/%3E%3Cellipse cx='260' cy='540' rx='290' ry='190' fill='%2314532d' opacity='0.9'/%3E%3Cellipse cx='820' cy='540' rx='290' ry='190' fill='%2314532d' opacity='0.9'/%3E%3Cellipse cx='540' cy='340' rx='380' ry='210' fill='%233f6212' opacity='0.75'/%3E%3C/svg%3E");
+  opacity: 0.42;
+  background-image:
+    url("wad-bg.jpg"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3CradialGradient id='glow' cx='50%25' cy='25%25' r='55%25'%3E%3Cstop offset='0%25' stop-color='%23fef08a' stop-opacity='0.55'/%3E%3Cstop offset='50%25' stop-color='%234ade80' stop-opacity='0.2'/%3E%3Cstop offset='100%25' stop-color='%23052e16' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='trunk' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%23291509'/%3E%3Cstop offset='50%25' stop-color='%235c3317'/%3E%3Cstop offset='100%25' stop-color='%23241207'/%3E%3C/linearGradient%3E%3ClinearGradient id='canopy' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%234d7c0f'/%3E%3Cstop offset='55%25' stop-color='%23166534'/%3E%3Cstop offset='100%25' stop-color='%23052e16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1080' height='1920' fill='url(%23glow)'/%3E%3Cpath d='M440 1920 Q475 1400 490 950 Q360 760 160 660 L210 610 Q395 705 515 840 L525 580 L555 580 L565 840 Q685 705 870 610 L920 660 Q720 760 590 950 Q605 1400 640 1920 Z' fill='url(%23trunk)'/%3E%3Cg stroke='%23452512' stroke-linecap='round' opacity='0.85'%3E%3Cpath d='M250 680 Q242 1050 248 1480' stroke-width='10'/%3E%3Cpath d='M330 720 Q338 1120 330 1620' stroke-width='14'/%3E%3Cpath d='M400 760 Q395 1180 402 1740' stroke-width='8'/%3E%3Cpath d='M680 760 Q685 1180 678 1740' stroke-width='8'/%3E%3Cpath d='M750 720 Q742 1120 750 1620' stroke-width='14'/%3E%3Cpath d='M830 680 Q838 1050 832 1480' stroke-width='10'/%3E%3C/g%3E%3Cellipse cx='540' cy='460' rx='520' ry='290' fill='url(%23canopy)'/%3E%3Cellipse cx='260' cy='540' rx='290' ry='190' fill='%2314532d' opacity='0.9'/%3E%3Cellipse cx='820' cy='540' rx='290' ry='190' fill='%2314532d' opacity='0.9'/%3E%3Cellipse cx='540' cy='340' rx='380' ry='210' fill='%233f6212' opacity='0.75'/%3E%3C/svg%3E");
   background-size: cover;
-  background-position: center;
+  background-position: center bottom;
 }
 
 #flt { position: absolute; top: 10px; left: 0; right: 0; z-index: 4; display: flex; gap: 7px; padding: 0 12px; overflow-x: auto; touch-action: pan-x; }
@@ -92,6 +93,19 @@ main { flex: 1; position: relative; overflow: hidden; }
 .hd p { margin: 0; color: #78716c; font-size: 15px; font-weight: 600; }
 .ln { margin: 3px 0; color: #5c1015; font-weight: 700; font-size: 15px; text-align: center; }
 .bio { margin: 3px 0 14px; color: #44403c; font-weight: 700; font-size: 14.5px; text-align: center; }
+
+/* Visitor Badge */
+.vis-badge {
+  display: inline-block;
+  margin: 0 auto 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 99px;
+}
 
 /* Visual Nuclear Family Graphic Card */
 .par-tree {
@@ -208,10 +222,12 @@ main { flex: 1; position: relative; overflow: hidden; }
 .st .gr b { color: #3b0a0e; }
 .st small { display: block; font-size: 13px; color: #44403c; font-weight: 700; }
 
-/* 2x2 Grid for Pill Action Buttons */
+/* Action Pill Buttons (Owner & Visitor) */
 .ac2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .ac2 button { border: 1.5px solid #d6d3d1; border-radius: 99px; padding: 12px 10px; background: #fff; color: #1c1917; font: inherit; font-weight: 800; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
 .ac2 .pm { background: linear-gradient(90deg, #ea580c, #9a3412 55%, #6b141a); color: #fff; border: 0; box-shadow: 0 4px 10px rgba(107, 20, 26, 0.3); }
+.ac2 .full-w { grid-column: span 2; font-size: 16.5px; letter-spacing: .2px; padding: 13px; }
+.ac2 .gr-btn { border-color: #22c55e; color: #15803d; background: #f0fdf4; }
 
 /* Unified Bottom Card with 2-Column Info Grid */
 .bx { background: #fdfbf7; border: 1.5px solid #e7d8be; border-radius: 20px; padding: 14px 16px; margin: 10px 0; box-shadow: 0 3px 12px rgba(120, 53, 15, 0.06); display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
@@ -269,6 +285,6 @@ main { flex: 1; position: relative; overflow: hidden; }
 
 /* Bottom Navigation */
 nav.bn { display: flex; background: #fff; border-top: 1px solid #e7d8be; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); touch-action: none; }
-nav.bn button { flex: 1; border: 0; background: none; padding: 4px; font: inherit; font-size: 14px; font-weight: 800; color: #78716c; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-nav.bn button svg { width: 24px; height: 24px; fill: currentColor; stroke: currentColor; stroke-width: 1.5; }
+nav.bn button { flex: 1; border: 0; background: none; padding: 4px; font: inherit; font-size: 13.5px; font-weight: 800; color: #78716c; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+nav.bn button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 nav.bn .on { color: #6b141a; font-weight: 800; }
