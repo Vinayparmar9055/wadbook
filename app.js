@@ -303,7 +303,7 @@ function show(id,skipPush=false){cur=id;const p=get(id);if(!p)return empty();
  <div class="ac2">
    <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="tab('tv')">🌳 મારો વડ</button>
    <button class="pm" style="font-size:16.5px;letter-spacing:.2px" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
-   <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
+   <button onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
    <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
  </div>
  <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
