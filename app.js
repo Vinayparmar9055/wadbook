@@ -6,11 +6,11 @@ const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}};
 const ST={d:["red","સ્વર્ગવાસ"],m:["blue","પરિણીત"],u:["green","અપરિણીત"]};
 const get=id=>D.ps.find(p=>p.id==id),nid=()=>Math.max(0,...D.ps.map(p=>p.id))+1;
 const kids=p=>D.ps.filter(c=>c.f==p.id&&c.g!="F").sort((a,b)=>(a.yr||9999)-(b.yr||9999));
-const full=p=>p.n+(p.f&&get(p.f)?" "+get(p.f).n:"");
+
 const FD={n:["નામ","text"],yr:["જન્મ વર્ષ (દા.ત. 1983)","number"],s:["સ્થિતિ","sel"],g:["લિંગ","gen"],sur:["અટક","text"],ja:["જાતિ / શાખ","text"],gam:["મૂળ ગામ","text"],rah:["રહેઠાણ","text"],edu:["ભણતર","text"],job:["વ્યવસાય","text"],rel:["સંબંધ પસંદ કરો","rel"]};
 const RELS={dad:"પિતા",mom:"માતા",bro:"ભાઈ",sis:"બહેન",wife:"પત્ની",son:"દીકરો",dau:"દીકરી"};
 
-// Auto-merge duplicate children on load if added from both husband and wife profiles
+// Auto-merge duplicate children on load
 function cleanDuplicates(){
  let changed=false;
  const seen=new Map();
@@ -18,10 +18,7 @@ function cleanDuplicates(){
  D.ps.forEach(p=>{
   if(p.f){
    const key=`${p.f}_${p.n}_${p.yr||""}_${p.g}`;
-   if(seen.has(key)){
-    changed=true;
-    return;
-   }
+   if(seen.has(key)){changed=true;return;}
    seen.set(key,p.id);
   }
   keep.push(p);
@@ -29,6 +26,28 @@ function cleanDuplicates(){
  if(changed){D.ps=keep;save();}
 }
 cleanDuplicates();
+
+// Full name with father's or husband's middle name
+function full(p){
+ if(!p)return "";
+ if(p.g=="F"){
+  const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
+  if(husb)return p.n+" "+husb.n;
+  if(p.f&&get(p.f))return p.n+" "+get(p.f).n;
+ }
+ return p.n+(p.f&&get(p.f)?" "+get(p.f).n:"");
+}
+
+// Honorific prefix: સ્વ., ગં.સ્વ. (widow), or શ્રી
+function pre(p){
+ if(!p)return "";
+ if(p.s=="d")return "સ્વ. ";
+ if(p.g=="F"){
+  const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
+  if(husb&&husb.s=="d")return "ગં.સ્વ. ";
+ }
+ return "શ્રી ";
+}
 
 function form(t,keys,v,cb){
  $("#sh").innerHTML=`<div class="card"><h3>${t}</h3>${keys.map(k=>{const[l,ty]=FD[k],x=v[k]??"";
@@ -55,7 +74,6 @@ function first(){form("તમારી પ્રોફાઇલ બનાવો"
 
 function addMember(pid,defaultRel="son",returnToFamily=false){
  const p=get(pid);
- // Find father ID if adding a child from either husband or wife profile
  const fatherId=(p.g=="F"&&p.sp&&get(p.sp))?p.sp:pid;
  const father=get(fatherId)||p;
 
@@ -63,7 +81,6 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
   const id=nid(),r=o.rel;
   const g=(r=="mom"||r=="sis"||r=="wife"||r=="dau")?"F":"M";
 
-  // Check duplicate across both husband & wife
   if(r=="son"||r=="dau"){
    const dup=D.ps.find(x=>x.f===fatherId && x.n===o.n && (x.yr||"")===(o.yr||"") && x.g===g);
    if(dup){alert("આ બાળકનું નામ પરિવારમાં પહેલેથી ઉમેરેલું છે!");return false;}
@@ -76,6 +93,9 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
   if(r=="dad"){
     if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");return false;}
     D.ps.push(m);p.f=id;
+    // Link existing mother if any
+    const exMom=D.ps.find(x=>x.relType=="mom"&&(x.relTo==pid||x.relTo==fatherId));
+    if(exMom){exMom.sp=id;m.sp=exMom.id;}
   } else if(r=="son"||r=="dau"){
     m.f=fatherId;
     D.ps.push(m);
@@ -89,6 +109,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     D.ps.push(m);
   } else if(r=="mom"){
     m.sp=p.f||null;
+    if(p.f&&get(p.f))get(p.f).sp=id;
     D.ps.push(m);
   } else if(r=="wife"){
     if(father.sp&&get(father.sp)){alert("પત્ની પહેલેથી ઉમેરેલા છે");return false;}
@@ -114,31 +135,45 @@ function delMember(id,backId){
 function edit(id){const p=get(id),k=["n","yr","s","sur","gam","rah","edu","job"];if(id==D.me)k.splice(3,0,"g","ja");
  form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id);if(!$("#tv").hidden)draw()})}
 
-const pre=p=>p.s=="d"?"સ્વ. ":p.g=="F"?"":"શ્રી ",REL=["","પિતા","દાદા","પરદાદા"];
+const REL=["","પિતા","દાદા","પરદાદા"];
 const dep=q=>{let d=1;while(q.f&&get(q.f)){q=get(q.f);d++}return d};
 function vs(p){let r=p;while(r.f&&get(r.f))r=get(r.f);let n=0,m=0,u=0;(function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);return[m,n,u]}
 
-// All extended relatives for main profile card
+// Immediate Household Members sorted by age (Parents -> Self/Spouse/Siblings -> Children)
 function getFamilyList(p){
- const list=[],seen=new Set([p.id]);
- const push=(q,label)=>{if(q&&!seen.has(q.id)){seen.add(q.id);list.push([q,label])}};
- let curA=p,lvl=1;
- while(curA.f&&get(curA.f)){curA=get(curA.f);push(curA,REL[lvl]||"પૂર્વજ");lvl++}
- D.ps.forEach(x=>{
-  if(x.relType=="mom"&&(x.relTo==p.id||(p.f&&x.sp==p.f)))push(x,"માતા");
-  if(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))push(x,"પત્ની");
-  if(p.sp==x.id)push(x,"પત્ની");
-  if(p.g=="F"&&p.sp==x.id)push(x,"પતિ");
- });
- if(p.f){
-  D.ps.filter(x=>x.f==p.f&&x.id!=p.id).sort((a,b)=>(a.yr||9999)-(b.yr||9999))
-   .forEach(x=>push(x,x.g=="F"?"બહેન":"ભાઈ"));
+ const seen=new Set();
+ const parents=[],sameGen=[],children=[];
+ const add=(arr,q,label,order)=>{
+  if(!q||seen.has(q.id))return;
+  seen.add(q.id);
+  arr.push({q,label,yr:q.yr||9999,order});
+ };
+
+ // 1. Father & Mother (Oldest generation at top)
+ const dad=(p.f&&get(p.f))?get(p.f):null;
+ const mom=D.ps.find(x=>(x.relType=="mom"&&(x.relTo==p.id||(dad&&x.sp==dad.id)))||(dad&&dad.sp==x.id&&x.g=="F"));
+ if(dad)add(parents,dad,"પિતા",1);
+ if(mom)add(parents,mom,"માતા",2);
+
+ // 2. Same generation: Self, Spouse, Brothers, Sisters (sorted by age, eldest first)
+ add(sameGen,p,"મુખ્ય",3);
+ const spouseObj=D.ps.find(x=>(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))||p.sp==x.id||x.sp==p.id);
+ if(spouseObj)add(sameGen,spouseObj,spouseObj.g=="F"?"પત્ની":"પતિ",4);
+ if(dad){
+  D.ps.filter(x=>x.f==dad.id && x.id!=p.id).forEach(x=>{
+   add(sameGen,x,x.g=="F"?"બહેન":"ભાઈ",3);
+  });
  }
- const parentId=(p.g=="F"&&p.sp&&get(p.sp))?p.sp:p.id;
- D.ps.filter(x=>x.f==parentId).sort((a,b)=>(a.yr||9999)-(b.yr||9999))
-  .forEach(x=>push(x,x.g=="F"?"દીકરી":"દીકરો"));
- D.ps.filter(x=>x.relTo==p.id).forEach(x=>push(x,RELS[x.relType]||"સભ્ય"));
- return list;
+ sameGen.sort((a,b)=>(a.yr-b.yr)||(a.order-b.order));
+
+ // 3. Next generation: Sons & Daughters (sorted by age, eldest first)
+ const headId=(p.g=="F"&&spouseObj&&spouseObj.g=="M")?spouseObj.id:p.id;
+ D.ps.filter(x=>x.f==headId || (spouseObj&&x.f==spouseObj.id)).forEach(x=>{
+  add(children,x,x.g=="F"?"દીકરી":"દીકરો",5);
+ });
+ children.sort((a,b)=>a.yr-b.yr);
+
+ return [...parents,...sameGen,...children].map(item=>[item.q,item.label]);
 }
 
 // Nuclear Family ONLY: Self + Spouse + Sons + Daughters (Shared between Husband & Wife)
@@ -146,15 +181,11 @@ function getNuclearFamily(p){
  const spouseObj=D.ps.find(x=>(x.relType=="wife"&&(x.sp==p.id||x.relTo==p.id))||p.sp==x.id||x.sp==p.id);
  const head=(p.g=="F"&&spouseObj&&spouseObj.g=="M")?spouseObj:p;
  const spouse=(head.id===p.id)?spouseObj:p;
- // Collect unique children linked to either head or spouse
  const seenKids=new Set();
  const children=[];
  D.ps.filter(x=>x.f==head.id || (spouse&&x.f==spouse.id)).forEach(c=>{
   const key=`${c.n}_${c.yr||""}_${c.g}`;
-  if(!seenKids.has(key)){
-   seenKids.add(key);
-   children.push(c);
-  }
+  if(!seenKids.has(key)){seenKids.add(key);children.push(c);}
  });
  children.sort((a,b)=>(a.yr||9999)-(b.yr||9999));
  return {head,spouse,children};
@@ -186,7 +217,6 @@ function showFamily(id){
     <p>${esc(pre(head)+full(head))} નો ઘર-પરિવાર</p>
   </div>
 
-  <!-- Visual Family Tree Graphic Card -->
   <div class="par-tree">
     <div class="par-badge">🏡 મારું ઘર • ${gu(1+(spouse?1:0)+children.length)} સભ્યો</div>
     <div class="par-couple">
@@ -218,7 +248,7 @@ function showFamily(id){
 
 function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
  const rw=(a,b)=>b?`<div class="rw"><span>${a}</span><b>${b}</b></div>`:"";
- const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel} • પેઢી ${gu(dep(q))}</small></div><span>જુઓ ›</span></a>`;
+ const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
  $("#pf").innerHTML=`<div class="cv"></div>
  <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i><h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
  <p class="ln">${[p.job,p.rah].filter(Boolean).map(esc).join(" • ")}</p><p class="bio">${D.ja?"શાખ: "+esc(D.ja)+" • ":""}${t}</p>
@@ -230,7 +260,7 @@ function show(id){cur=id;const p=get(id),[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFami
    <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
  </div>
  <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
- ${fam.length?`<h3 class="fh">પરિવારના મુખ્ય સભ્યો (ક્લિક કરી વિગત જુઓ)</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
+ ${fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
  tab("pf");$("#pf").scrollTop=0}
 
 const W=112,H=124;let cur=null,SW=1,SH=1,FS="all";
