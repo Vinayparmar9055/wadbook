@@ -17,40 +17,50 @@ header p { margin: 2px 0 0; font-size: 13.5px; font-weight: 700; color: #6b141a;
 .ib, #mb { width: 38px; height: 38px; border-radius: 50%; border: 0; background: transparent; color: #292524; display: flex; align-items: center; justify-content: center; }
 .ib svg, #mb svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; }
 
-/* Main & Wad Tree View */
+/* Main & 4K Cinematic Blurred Banyan Tree View */
 main { flex: 1; position: relative; overflow: hidden; }
-#tv { position: absolute; inset: 0; background: radial-gradient(circle at 50% 0, #2f6b3a, #0d2216 70%); }
-#flt { position: absolute; top: 8px; left: 0; right: 0; z-index: 3; display: flex; gap: 6px; padding: 0 12px; overflow-x: auto; }
-#flt button { flex: none; border: 1px solid #ffffff44; background: #00000066; color: #fff; border-radius: 99px; padding: 5px 11px; font: inherit; font-size: 12px; font-weight: 700; }
-#flt .on { background: #f59e0b; border-color: #f59e0b; }
-#vp { position: absolute; inset: 0; touch-action: none; overflow: hidden; }
+#tv {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 18%, #2d6a3e 0%, #143620 55%, #08170e 100%);
+}
+.wad-bg {
+  position: absolute;
+  inset: -20px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.34;
+  filter: blur(4px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3CradialGradient id='glow' cx='50%25' cy='25%25' r='55%25'%3E%3Cstop offset='0%25' stop-color='%23fef08a' stop-opacity='0.55'/%3E%3Cstop offset='50%25' stop-color='%234ade80' stop-opacity='0.2'/%3E%3Cstop offset='100%25' stop-color='%23052e16' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='trunk' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0%25' stop-color='%23291509'/%3E%3Cstop offset='50%25' stop-color='%235c3317'/%3E%3Cstop offset='100%25' stop-color='%23241207'/%3E%3C/linearGradient%3E%3ClinearGradient id='canopy' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%234d7c0f'/%3E%3Cstop offset='55%25' stop-color='%23166534'/%3E%3Cstop offset='100%25' stop-color='%23052e16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1080' height='1920' fill='url(%23glow)'/%3E%3C!-- Massive Banyan Trunk & Roots --%3E%3Cpath d='M440 1920 Q475 1400 490 950 Q360 760 160 660 L210 610 Q395 705 515 840 L525 580 L555 580 L565 840 Q685 705 870 610 L920 660 Q720 760 590 950 Q605 1400 640 1920 Z' fill='url(%23trunk)'/%3E%3C!-- Hanging Aerial Roots (Vadvai) --%3E%3Cg stroke='%23452512' stroke-linecap='round' opacity='0.85'%3E%3Cpath d='M250 680 Q242 1050 248 1480' stroke-width='10'/%3E%3Cpath d='M330 720 Q338 1120 330 1620' stroke-width='14'/%3E%3Cpath d='M400 760 Q395 1180 402 1740' stroke-width='8'/%3E%3Cpath d='M680 760 Q685 1180 678 1740' stroke-width='8'/%3E%3Cpath d='M750 720 Q742 1120 750 1620' stroke-width='14'/%3E%3Cpath d='M830 680 Q838 1050 832 1480' stroke-width='10'/%3E%3C/g%3E%3C!-- Lush Canopy --%3E%3Cellipse cx='540' cy='460' rx='520' ry='290' fill='url(%23canopy)'/%3E%3Cellipse cx='260' cy='540' rx='290' ry='190' fill='%2314532d' opacity='0.9'/%3E%3Cellipse cx='820' cy='540' rx='290' ry='190' fill='%2314532d' opacity='0.9'/%3E%3Cellipse cx='540' cy='340' rx='380' ry='210' fill='%233f6212' opacity='0.75'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center;
+}
+
+#flt { position: absolute; top: 10px; left: 0; right: 0; z-index: 4; display: flex; gap: 7px; padding: 0 12px; overflow-x: auto; }
+#flt button { flex: none; border: 1px solid rgba(255,255,255,0.28); background: rgba(7, 24, 14, 0.72); backdrop-filter: blur(6px); color: #fff; border-radius: 99px; padding: 6px 13px; font: inherit; font-size: 13px; font-weight: 700; }
+#flt .on { background: linear-gradient(90deg, #f59e0b, #d97706); border-color: #fcd34d; color: #fff; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35); }
+#vp { position: absolute; inset: 0; z-index: 2; touch-action: none; overflow: hidden; }
 #stage { position: relative; transform-origin: 0 0; }
-#stage svg { position: absolute; inset: 0; fill: none; stroke: #d4a53a; stroke-width: 2.5; }
+#stage svg { position: absolute; inset: 0; fill: none; stroke: #eab308; stroke-width: 2.8; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45)); }
 .em { margin: 120px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fcd34d; }
 
-/* Nodes & Rings */
-.nd { position: absolute; width: 108px; transform: translateX(-50%); text-align: center; transition: opacity .2s; }
+/* Nodes & Crisp 4K Rings (Only member name, no father subtitle) */
+.nd { position: absolute; width: 112px; transform: translateX(-50%); text-align: center; transition: opacity .2s; }
 .nd.dim { opacity: .2; }
-.nd b { display: block; font-size: 13px; margin-top: 3px; line-height: 1.15; }
-.nd small { font-size: 10px; color: #fcd34d; }
-.nd.me b { color: #fcd34d; }
-.r { display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; background: #fef3c7; color: #7c2d12; font-style: normal; font-weight: 800; font-size: 20px; border: 4px solid; }
+.nd b { display: block; font-size: 14px; font-weight: 800; margin-top: 5px; line-height: 1.2; color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85); }
+.nd.me b { color: #fde047; }
+.r { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: #fef3c7; color: #7c2d12; font-style: normal; font-weight: 800; font-size: 21px; border: 4px solid; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
 .r.red { border-color: #ef4444; }
-.r.blue { border-color: #1d4ed8; }
+.r.blue { border-color: #2563eb; }
 .r.green { border-color: #22c55e; }
-.r.sm { width: 34px; height: 34px; font-size: 15px; border-width: 3px; margin-right: 10px; }
-.r.big { width: 88px; height: 88px; font-size: 38px; border-width: 4px; background: #1e40af; color: #fff; border-color: #1d4ed8; }
+.r.sm { width: 34px; height: 34px; font-size: 15px; border-width: 3px; margin-right: 10px; box-shadow: none; }
+.r.big { width: 88px; height: 88px; font-size: 38px; border-width: 4px; background: #1e40af; color: #fff; border-color: #1d4ed8; box-shadow: none; }
 
-/* Zoom & Legend */
-#zc { position: absolute; right: 10px; bottom: 56px; z-index: 3; display: flex; flex-direction: column; gap: 5px; align-items: center; background: #000a; padding: 6px; border-radius: 16px; }
-#zc button { width: 38px; height: 38px; border: 0; border-radius: 11px; background: #ffffff26; color: #fff; font-size: 20px; font-weight: 800; }
+/* Zoom Controls (Bottom legend removed as requested) */
+#zc { position: absolute; right: 12px; bottom: 18px; z-index: 4; display: flex; flex-direction: column; gap: 6px; align-items: center; background: rgba(7, 24, 14, 0.78); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.15); padding: 6px; border-radius: 16px; }
+#zc button { width: 38px; height: 38px; border: 0; border-radius: 11px; background: rgba(255,255,255,0.16); color: #fff; font-size: 20px; font-weight: 800; }
 #zc button:last-child { background: #d97706; }
-#zl { font-size: 11px; color: #fcd34d; }
-#lg { position: absolute; left: 10px; right: 70px; bottom: 10px; z-index: 3; display: flex; justify-content: space-between; background: #000a; border-radius: 14px; padding: 7px 12px; font-size: 12px; font-weight: 700; }
-#lg u { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
-u.red { background: #ef4444; }
-u.blue { background: #1d4ed8; }
-u.green { background: #22c55e; }
+#zl { font-size: 11px; font-weight: 700; color: #fcd34d; }
 
 /* Profile Page */
 #pf { position: absolute; inset: 0; overflow-y: auto; background: #fff; color: #1c1917; padding: 0 0 28px; }
@@ -74,7 +84,7 @@ u.green { background: #22c55e; }
 .ln { margin: 3px 0; color: #5c1015; font-weight: 700; font-size: 15px; text-align: center; }
 .bio { margin: 3px 0 14px; color: #44403c; font-weight: 700; font-size: 14.5px; text-align: center; }
 
-/* Visual Nuclear Family Graphic Card (Maro Parivar) */
+/* Visual Nuclear Family Graphic Card */
 .par-tree {
   background: radial-gradient(circle at 50% 0%, #fffbeb, #fef3c7 65%, #fde68a 100%);
   border: 2px solid #f59e0b;
