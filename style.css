@@ -7,12 +7,16 @@ html, body {
   background: #0d2216;
   color: #fff;
   touch-action: manipulation;
-  overscroll-behavior: none;
+  overscroll-behavior-y: auto;
 }
 body { display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); }
 
+/* Fullscreen Tree Mode */
+body.fs-tree header,
+body.fs-tree nav.bn { display: none !important; }
+
 /* Header & Open Banyan Logo */
-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; color: #4a1d0a; border-bottom: 1px solid #f3e8d2; z-index: 5; touch-action: none; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; color: #4a1d0a; border-bottom: 1px solid #f3e8d2; z-index: 5; }
 .lg2 { display: flex; align-items: center; gap: 10px; }
 .logo { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .logo svg { width: 44px; height: 44px; }
@@ -25,17 +29,18 @@ header p { margin: 2px 0 0; font-size: 13.5px; font-weight: 700; color: #6b141a;
 .ib, #mb { width: 38px; height: 38px; border-radius: 50%; border: 0; background: transparent; color: #292524; display: flex; align-items: center; justify-content: center; }
 .ib svg, #mb svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; }
 
-/* Main & 4K Realistic Banyan Tree View (Uses wad-bg.jpg) */
+/* Main & 4K Realistic Banyan Tree View (Uses wad-bg.jpg + 3D Parallax Zoom) */
 main { flex: 1; position: relative; overflow: hidden; }
 #tv {
   position: absolute;
   inset: 0;
   background: #04150a;
   touch-action: none;
+  perspective: 900px;
 }
 .wad-bg {
   position: absolute;
-  inset: -6%;
+  inset: -14%;
   z-index: 1;
   pointer-events: none;
   opacity: 0.92;
@@ -43,19 +48,22 @@ main { flex: 1; position: relative; overflow: hidden; }
   background-size: cover;
   background-position: center 45%;
   background-repeat: no-repeat;
+  transform-origin: 50% 55%;
+  will-change: transform;
+  transition: transform 0.08s ease-out;
 }
 .wad-bg::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 42%, rgba(4, 24, 11, 0.18) 0%, rgba(3, 16, 8, 0.55) 100%);
+  background: radial-gradient(circle at 50% 42%, rgba(4, 24, 11, 0.16) 0%, rgba(3, 16, 8, 0.52) 100%);
 }
 
 #flt { position: absolute; top: 10px; left: 0; right: 0; z-index: 4; display: flex; gap: 7px; padding: 0 12px; overflow-x: auto; touch-action: pan-x; }
 #flt button { flex: none; border: 1px solid rgba(255,255,255,0.28); background: rgba(7, 24, 14, 0.72); backdrop-filter: blur(6px); color: #fff; border-radius: 99px; padding: 6px 13px; font: inherit; font-size: 13px; font-weight: 700; }
 #flt .on { background: linear-gradient(90deg, #f59e0b, #d97706); border-color: #fcd34d; color: #fff; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35); }
 #vp { position: absolute; inset: 0; z-index: 2; touch-action: none; overflow: hidden; }
-#stage { position: relative; transform-origin: 0 0; }
+#stage { position: relative; transform-origin: 0 0; will-change: transform; }
 #stage svg { position: absolute; inset: 0; fill: none; stroke: #facc15; stroke-width: 3; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.85)); }
 .em { margin: 120px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fcd34d; }
 
@@ -73,12 +81,12 @@ main { flex: 1; position: relative; overflow: hidden; }
 
 /* Zoom Controls */
 #zc { position: absolute; right: 12px; bottom: 18px; z-index: 4; display: flex; flex-direction: column; gap: 6px; align-items: center; background: rgba(7, 24, 14, 0.78); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.15); padding: 6px; border-radius: 16px; touch-action: none; }
-#zc button { width: 38px; height: 38px; border: 0; border-radius: 11px; background: rgba(255,255,255,0.16); color: #fff; font-size: 20px; font-weight: 800; }
-#zc button:last-child { background: #d97706; }
+#zc button { width: 38px; height: 38px; border: 0; border-radius: 11px; background: rgba(255,255,255,0.16); color: #fff; font-size: 19px; font-weight: 800; }
+#zc button:nth-child(4) { background: #d97706; }
 #zl { font-size: 11px; font-weight: 700; color: #fcd34d; }
 
-/* Profile Page - Vertical scroll only, NO pinch zoom */
-#pf { position: absolute; inset: 0; overflow-y: auto; background: #fff; color: #1c1917; padding: 0 0 28px; touch-action: pan-y; }
+/* Profile Page - Vertical scroll & Pull-to-refresh enabled */
+#pf { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #fff; color: #1c1917; padding: 0 0 28px; touch-action: pan-y; overscroll-behavior-y: auto; }
 .pad { padding: 20px 16px; }
 .cv {
   height: 152px;
@@ -98,19 +106,6 @@ main { flex: 1; position: relative; overflow: hidden; }
 .hd p { margin: 0; color: #78716c; font-size: 15px; font-weight: 600; }
 .ln { margin: 3px 0; color: #5c1015; font-weight: 700; font-size: 15px; text-align: center; }
 .bio { margin: 3px 0 14px; color: #44403c; font-weight: 700; font-size: 14.5px; text-align: center; }
-
-/* Visitor Badge */
-.vis-badge {
-  display: inline-block;
-  margin: 0 auto 10px;
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #f59e0b;
-  font-size: 12.5px;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 99px;
-}
 
 /* Visual Nuclear Family Graphic Card */
 .par-tree {
@@ -289,7 +284,7 @@ main { flex: 1; position: relative; overflow: hidden; }
 #ts { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 30; background: #6b141a; color: #fef3c7; border: 1px solid #f59e0b; border-radius: 99px; padding: 10px 18px; font-size: 14px; font-weight: 700; }
 
 /* Bottom Navigation */
-nav.bn { display: flex; background: #fff; border-top: 1px solid #e7d8be; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); touch-action: none; }
+nav.bn { display: flex; background: #fff; border-top: 1px solid #e7d8be; padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); }
 nav.bn button { flex: 1; border: 0; background: none; padding: 4px; font: inherit; font-size: 13.5px; font-weight: 800; color: #78716c; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 nav.bn button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 nav.bn .on { color: #6b141a; font-weight: 800; }

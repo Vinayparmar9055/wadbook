@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Noto+Sans+Gujarati:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
   <header>
@@ -46,7 +46,7 @@
 
   <main>
     <section id="tv" hidden>
-      <div class="wad-bg" aria-hidden="true"></div>
+      <div class="wad-bg" id="wadBg" aria-hidden="true"></div>
       <div id="flt"></div>
       <div id="vp"><div id="stage"></div></div>
       <div id="zc">
@@ -54,6 +54,7 @@
         <span id="zl"></span>
         <button onclick="zoom(.8)">−</button>
         <button onclick="fit()">⟲</button>
+        <button onclick="toggleFull()" title="ફુલ સ્ક્રીન">⛶</button>
       </div>
     </section>
     <section id="pf"></section>
@@ -93,6 +94,6 @@
   </nav>
 
   <script src="firebase-config.js"></script>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

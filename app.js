@@ -25,7 +25,7 @@ let navStack=[], isPopping=false;
 function pushView(state){
  if(isPopping)return;
  const last=navStack[navStack.length-1];
- if(last && last.v===state.v && last.id===state.id)return;
+ if(last && last.v===state.v && last.id===state.id && last.side===state.side)return;
  navStack.push(state);
  try{history.pushState(state,"");}catch(e){}
 }
@@ -33,10 +33,16 @@ function renderState(st){
  if(!st){D.me&&get(D.me)?show(D.me,true):empty();return;}
  if(st.v==="pf")show(st.id,true);
  else if(st.v==="fam")showFamily(st.id,true);
- else if(st.v==="tv")tab("tv",true,st.id);
+ else if(st.v==="tv")tab("tv",true,st.id,st.side||"auto");
  else if(st.v==="tul")showTulsi(st.id,true);
 }
 window.addEventListener("popstate",()=>{
+ if(document.body.classList.contains("fs-tree")){
+  document.body.classList.remove("fs-tree");
+  fit();
+  if(navStack.length)try{history.pushState(navStack[navStack.length-1],"");}catch(e){}
+  return;
+ }
  if(!$("#sh").hidden){
   $("#sh").hidden=true;
   if(navStack.length)try{history.pushState(navStack[navStack.length-1],"");}catch(e){}
@@ -199,11 +205,18 @@ function delMember(id,backId){
 }
 
 function edit(id){const p=get(id),k=["n","yr","s","sur","gam","rah","edu","job"];if(id==D.me)k.splice(3,0,"g","ja");
- form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id,true);if(!$("#tv").hidden)draw()})}
+ form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id,true);if(!$("#tv").hidden)draw(treeTarget,treeSide)})}
 
 const REL=["","પિતા","દાદા","પરદાદા"];
 const dep=q=>{let d=1;while(q.f&&get(q.f)){q=get(q.f);d++}return d};
-function vs(p){let r=p;while(r.f&&get(r.f))r=get(r.f);let n=0,m=0,u=0;(function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);return[m,n,u]}
+function vs(p){
+ const husb=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
+ let r=(p.g=="F")?((husb&&husb.g!="F")?husb:(p.f&&get(p.f)?get(p.f):p)):p;
+ while(r.f&&get(r.f))r=get(r.f);
+ let n=0,m=0,u=0;
+ (function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);
+ return[m,n,u];
+}
 
 function getFamilyList(p){
  const seen=new Set();
@@ -340,26 +353,40 @@ function show(id,skipPush=false){
  const rw=(a,b)=>b?`<div class="rw"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
 
- // Owner View vs Visitor View (Clean, Zero Duplicate Buttons!)
- const actionButtons=isOwner
-   ? `<div class="ac2">
-        <button class="pm full-w" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
-        <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
-        <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
-      </div>`
-   : `<div class="ac2">
-        <button class="pm" onclick="tab('tv',false,${id})">🌳 તેમનો વડ</button>
-        <button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>
-        <button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
-        <button onclick="shareProfile(${id})">📤 શેર કરો</button>
-      </div>`;
+ // Owner View vs Visitor View (Including Sasri Wad + Piyar Wad + Tulsi Kyaro for married women!)
+ const husbObj=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
+ const hasSasri=(p.g=="F" && husbObj && husbObj.g!="F");
+
+ let actionButtons="";
+ if(isOwner){
+  actionButtons=`<div class="ac2">
+    <button class="pm full-w" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
+    <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
+    <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
+  </div>`;
+ } else if(hasSasri){
+  actionButtons=`<div class="ac2">
+    <button class="pm" onclick="tab('tv',false,${id},'sasri')">🌳 સાસરી વડ</button>
+    <button class="pm" onclick="tab('tv',false,${id},'piyar')">🌳 પિયર વડ</button>
+    <button onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>
+    <button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
+    <button class="full-w" style="font-size:15px;padding:11px" onclick="shareProfile(${id})">📤 પ્રોફાઇલ શેર કરો</button>
+  </div>`;
+ } else {
+  const wadLabel=(p.g=="F")?"🌳 પિયર વડ":"🌳 તેમનો વડ";
+  actionButtons=`<div class="ac2">
+    <button class="pm" onclick="tab('tv',false,${id},'piyar')">${wadLabel}</button>
+    <button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>
+    <button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
+    <button onclick="shareProfile(${id})">📤 શેર કરો</button>
+  </div>`;
+ }
 
  $("#pf").innerHTML=`<div class="cv"></div>
  <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i>
- ${!isOwner?`<div style="text-align:center;margin-top:6px"><span class="vis-badge">👁️ સભ્ય પ્રોફાઇલ (ફક્ત જોવા માટે)</span></div>`:""}
  <h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
  <p class="ln">${[p.job,p.rah].filter(Boolean).map(esc).join(" • ")}</p><p class="bio">${D.ja?"શાખ: "+esc(D.ja)+" • ":""}${t}</p>
- <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isOwner?"મારો વડ 🌳":"તેમનો વડ 🌳"}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
+ <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isOwner?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
  ${actionButtons}
  <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
  ${fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
@@ -377,10 +404,27 @@ function shareProfile(id){
  else{alert(txt);}
 }
 
-const W=112,H=112;let cur=null,SW=1,SH=1,FS="all",treeTarget=null;
-function draw(targetId){
- const base=get(targetId||D.me);const stg=$("#stage");if(!base)return;
- if(base.g=="F"){stg.style.cssText="";stg.innerHTML='<p class="em"><button class="bk" onclick="showTulsi('+base.id+')">🌿 તુલસી ક્યારો ખોલો</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return}
+const W=112,H=112;let cur=null,SW=1,SH=1,FS="all",treeTarget=null,treeSide="auto";
+function draw(targetId,side="auto"){
+ let person=get(targetId||D.me);const stg=$("#stage");if(!person)return;
+ let base=person, sideTag="";
+
+ if(person.g=="F"){
+  const husb=D.ps.find(x=>(person.sp&&x.id==person.sp)||x.sp==person.id);
+  const dad=(person.f&&get(person.f))?get(person.f):null;
+  if(side=="sasri"){
+   if(husb&&husb.g!="F"){base=husb;sideTag="સાસરી વડ • ";}
+   else{stg.style.cssText="";stg.innerHTML='<p class="em">પતિનું નામ ઉમેરેલ નથી<br><button class="bk" style="max-width:240px" onclick="history.back()">← પાછા જાઓ</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return;}
+  } else if(side=="piyar"){
+   if(dad){base=dad;sideTag="પિયર વડ • ";}
+   else{stg.style.cssText="";stg.innerHTML='<p class="em">પિતાનું નામ ઉમેરેલ નથી<br><button class="bk" style="max-width:240px" onclick="showTulsi('+person.id+')">🌿 તુલસી ક્યારો જુઓ</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return;}
+  } else {
+   if(husb&&husb.g!="F"){base=husb;sideTag="સાસરી વડ • ";}
+   else if(dad){base=dad;sideTag="પિયર વડ • ";}
+   else{stg.style.cssText="";stg.innerHTML='<p class="em">પિતાનું નામ ઉમેરેલ નથી<br><button class="bk" style="max-width:240px" onclick="showTulsi('+person.id+')">🌿 તુલસી ક્યારો જુઓ</button></p>';$("#flt").innerHTML="";$("#sub").textContent="";return;}
+  }
+ }
+
  let r=base;while(r.f&&get(r.f))r=get(r.f);let leaf=0,mx=0;const pos={},all=[];
  (function lay(p,d){const k=kids(p);k.forEach(c=>lay(c,d+1));pos[p.id]=[k.length?(pos[k[0].id][0]+pos[k[k.length-1].id][0])/2:leaf++*W,d*H];mx=Math.max(mx,d);all.push(p)})(r,0);
  SW=Math.max(leaf,1)*W;SH=(mx+1)*H;let sv="",nd="";
@@ -389,29 +433,60 @@ function draw(targetId){
   nd+=`<div class="nd${p.id==D.me?" me":""}" data-s="${p.s}" style="left:${x+W/2}px;top:${y}px" onclick="tap(${p.id})"><i class="r ${ST[p.s][0]}">${esc(p.n[0])}</i><b>${esc(p.n)}</b></div>`});
  stg.style.cssText=`width:${SW}px;height:${SH}px`;stg.innerHTML=`<svg width="${SW}" height="${SH}">${sv}</svg>${nd}`;
  const cn=s=>all.filter(p=>p.s==s).length;
- $("#sub").textContent=`${gu(mx+1)} પેઢી • ${gu(all.length)} સભ્યો`;
+ $("#sub").textContent=`${sideTag}${gu(mx+1)} પેઢી • ${gu(all.length)} સભ્યો`;
  $("#flt").innerHTML=[["all","બધા",all.length],["d","🔴 સ્વર્ગવાસ",cn("d")],["m","🔵 પરિણીત",cn("m")],["u","🟢 અપરિણીત",cn("u")]].map(f=>`<button class="${f[0]==FS?"on":""}" onclick="flt('${f[0]}')">${f[1]} (${gu(f[2])})</button>`).join("");
  flt(FS)}
 function flt(s){FS=s;document.querySelectorAll("#flt button").forEach((b,i)=>b.classList.toggle("on",["all","d","m","u"][i]==s));
  document.querySelectorAll(".nd").forEach(n=>n.classList.toggle("dim",s!="all"&&n.dataset.s!=s))}
-let T={x:0,y:0,z:.8},moved=0;const vp=$("#vp"),st=$("#stage");
-const apply=()=>{st.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.z})`;$("#zl").textContent=gu(Math.round(T.z*100))+"%"};
-function zoom(f,cx=vp.clientWidth/2,cy=vp.clientHeight/2){const z=Math.min(1.6,Math.max(.2,T.z*f)),r=z/T.z;T.x=cx-(cx-T.x)*r;T.y=cy-(cy-T.y)*r;T.z=z;apply()}
-function fit(){const w=vp.clientWidth,h=vp.clientHeight;T.z=Math.min(1,w/SW,h/SH)*.95;T.x=(w-SW*T.z)/2;T.y=Math.max(66,(h-SH*T.z)/2);apply()}
-const ptr=new Map();let last=0;
+
+// --- 3D Parallax Zoom & Double-Tap Fullscreen for Banyan Tree ---
+let T={x:0,y:0,z:.8,baseZ:.8},moved=0;const vp=$("#vp"),st=$("#stage"),bg=$("#wadBg");
+const apply=()=>{
+ st.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.z})`;
+ $("#zl").textContent=gu(Math.round(T.z*100))+"%";
+ if(bg){
+  const rel=T.z/(T.baseZ||0.5);
+  const bgScale=Math.min(1.55,Math.max(0.95,1+(rel-1)*0.32));
+  const px=Math.max(-35,Math.min(35,(T.x-(vp.clientWidth-SW*T.z)/2)*0.08));
+  const py=Math.max(-35,Math.min(35,(T.y-(vp.clientHeight-SH*T.z)/2)*0.08));
+  bg.style.transform=`translate3d(${px}px,${py}px,0) scale(${bgScale})`;
+ }
+};
+function zoom(f,cx=vp.clientWidth/2,cy=vp.clientHeight/2){const z=Math.min(1.8,Math.max(.2,T.z*f)),r=z/T.z;T.x=cx-(cx-T.x)*r;T.y=cy-(cy-T.y)*r;T.z=z;apply()}
+function fit(){const w=vp.clientWidth,h=vp.clientHeight;T.z=Math.min(1,w/SW,h/SH)*.95;T.baseZ=T.z;T.x=(w-SW*T.z)/2;T.y=Math.max(66,(h-SH*T.z)/2);apply()}
+
+function toggleFull(){
+ document.body.classList.toggle("fs-tree");
+ setTimeout(fit,60);
+ const ts=$("#ts");
+ ts.textContent=document.body.classList.contains("fs-tree")?"⛶ ફુલ સ્ક્રીન ચાલુ (ફરી ડબલ-ટેપ કરો)":"⛶ નોર્મલ સ્ક્રીન";
+ ts.hidden=false;clearTimeout(soon.t);soon.t=setTimeout(()=>ts.hidden=true,1600);
+}
+
+const ptr=new Map();let last=0,lastTapTime=0;
 vp.onpointerdown=e=>{ptr.set(e.pointerId,[e.clientX,e.clientY]);moved=0};
 vp.onpointermove=e=>{const o=ptr.get(e.pointerId);if(!o)return;ptr.set(e.pointerId,[e.clientX,e.clientY]);
  if(ptr.size==1){T.x+=e.clientX-o[0];T.y+=e.clientY-o[1];moved+=Math.abs(e.clientX-o[0])+Math.abs(e.clientY-o[1]);apply()}
  else if(ptr.size==2){const a=[...ptr.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]),r=vp.getBoundingClientRect();
   if(last)zoom(d/last,(a[0][0]+a[1][0])/2-r.left,(a[0][1]+a[1][1])/2-r.top);last=d;moved=99}};
-vp.onpointerup=vp.onpointercancel=e=>{ptr.delete(e.pointerId);last=0};
+vp.onpointerup=vp.onpointercancel=e=>{
+ const wasSingle=(ptr.size===1);
+ ptr.delete(e.pointerId);last=0;
+ if(wasSingle && moved<8 && !e.target.closest(".nd")){
+  const now=Date.now();
+  if(now-lastTapTime<320){toggleFull();lastTapTime=0;}
+  else{lastTapTime=now;}
+ }
+};
 const tap=id=>{if(moved<8)show(id)};
 
-function tab(t,skipPush=false,targetId=null){if(t=="tv"&&!D.me){return empty()}
+function tab(t,skipPush=false,targetId=null,side="auto"){
+ document.body.classList.remove("fs-tree");
+ if(t=="tv"&&!D.me){return empty()}
  if(t=="pf"){return D.me?show(D.me,skipPush):empty()}
  $("#tv").hidden=t!="tv";$("#pf").hidden=t!="pf";
  setNav(t);
- if(t=="tv"){treeTarget=targetId||D.me;draw(treeTarget);fit();if(!skipPush)pushView({v:"tv",id:treeTarget});}
+ if(t=="tv"){treeTarget=targetId||D.me;treeSide=side;draw(treeTarget,treeSide);fit();if(!skipPush)pushView({v:"tv",id:treeTarget,side:treeSide});}
 }
 
 function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
@@ -419,9 +494,9 @@ function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
 D.me&&get(D.me)?show(D.me):empty();
 
-function soon(){const t=$("#ts");t.hidden=false;clearTimeout(soon.t);soon.t=setTimeout(()=>t.hidden=true,1800)}
+function soon(){const t=$("#ts");t.textContent="🌿 ટૂંક સમયમાં આવશે";t.hidden=false;clearTimeout(soon.t);soon.t=setTimeout(()=>t.hidden=true,1800)}
 
-// Clean Drawer Menu (No duplicate profile/tree items)
+// Clean Drawer Menu
 function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
  $("#dp").innerHTML=me?`<i class="r ${ST[me.s][0]}">${esc(me.n[0])}</i><div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
