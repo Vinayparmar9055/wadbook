@@ -538,15 +538,29 @@ function edit(id){
  });
 }
 
+function togglePiyarBox(){
+ const b=$("#piyarBox");if(!b)return;
+ b.hidden=!(b.dataset.ok=="1"&&["dad","mom","bro","sis"].includes($("#f_rel").value));
+}
+
 function addMember(pid,defaultRel="son",returnToFamily=false){
  const p=get(pid);
+ // parnelī stri (pati ni profile sathe joDayeli) potana piyar na sagā umere to pati na parivar ni mahiti na aave
+ const isMarriedIn=!!(p.g=="F"&&p.sp&&get(p.sp));
  const fatherId=(p.g=="F"&&p.sp&&get(p.sp))?p.sp:pid;
  const father=get(fatherId)||p;
  const defStatus=(defaultRel=="wife"||defaultRel=="husb"||defaultRel=="mom")?"m":"u";
 
  $("#sh").innerHTML=`<div class="card"><h3>➕ નામ ઉમેરો (${esc(p.n)})</h3>
-  <label>સંબંધ પસંદ કરો<select id="f_rel">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${defaultRel==a?"selected":""}>${b}</option>`).join("")}</select></label>
+  <label>સંબંધ પસંદ કરો<select id="f_rel" onchange="togglePiyarBox()">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${defaultRel==a?"selected":""}>${b}</option>`).join("")}</select></label>
   <label>નામ *<input id="f_n" type="text" placeholder="નામ લખો"></label>
+  <div id="piyarBox" data-ok="${isMarriedIn?1:0}" ${(isMarriedIn&&["dad","mom","bro","sis"].includes(defaultRel))?"":"hidden"}>
+    <div class="g2">
+      <label>અટક<input id="f_sur2" type="text" placeholder="અટક લખો"></label>
+      <label>જાતિ / શાખ<input id="f_ja2" type="text" placeholder="જાતિ લખો"></label>
+    </div>
+    <label>મૂળ ગામ<input id="f_gam2" type="text" placeholder="મૂળ ગામ લખો"></label>
+  </div>
   <div class="g2">
     <label>જન્મ તારીખ<input id="f_dob" type="date" onchange="if(this.value&&!$('#f_yr').value)$('#f_yr').value=this.value.slice(0,4)"></label>
     <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" placeholder="જન્મ વર્ષ લખો"></label>
@@ -577,7 +591,13 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
 
   busy=true;$("#ok").disabled=true;
   const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
-  const m={id,f:null,g,n,dob,yr,s,sagaiOpen:"yes",createdBy:D.me,ja:same?(father.ja||D.ja||""):"",sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
+  const piyarRel=isMarriedIn&&(r=="dad"||r=="mom"||r=="bro"||r=="sis");
+  let mJa=same?(father.ja||D.ja||""):"",mSur=same?(father.sur||""):"",mGam=same?(father.gam||""):"";
+  if(piyarRel){
+   mJa=$("#f_ja2").value.trim();mSur=$("#f_sur2").value.trim();mGam=$("#f_gam2").value.trim();
+   if((r=="bro"||r=="sis")&&p.f&&get(p.f)){const pf=get(p.f);mJa=mJa||pf.ja||"";mSur=mSur||pf.sur||"";mGam=mGam||pf.gam||"";}
+  }
+  const m={id,f:null,g,n,dob,yr,s,sagaiOpen:"yes",createdBy:D.me,ja:mJa,sur:mSur,gam:mGam,relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
     if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     D.ps.push(m);p.f=id;
@@ -595,7 +615,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
   } else if(r=="bro"||r=="sis"){
     if(!p.f||!get(p.f)){
       const fid=nid();
-      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",createdBy:D.me,ja:p.ja||D.ja||"",sur:p.sur||"",gam:p.gam||""});
+      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",createdBy:D.me,ja:piyarRel?mJa:(p.ja||D.ja||""),sur:piyarRel?mSur:(p.sur||""),gam:piyarRel?mGam:(p.gam||"")});
       p.f=fid;
     }
     m.f=p.f;
