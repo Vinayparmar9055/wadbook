@@ -39,27 +39,47 @@ function canManage(p){
   return true;
 }
 
-// --- Interactive Drag & Zoom Photo Cropper (Circle, Banner, Family) ---
-function pickAndCrop(mode, cb){
-  const inp=document.createElement("input");
-  inp.type="file";
-  inp.accept="image/*";
-  inp.style.display="none";
-  document.body.appendChild(inp);
-
-  inp.onchange=e=>{
-    const file=e.target.files && e.target.files[0];
-    document.body.removeChild(inp);
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      const img=new Image();
-      img.onload=()=>openCropModal(img, mode, cb);
-      img.src=ev.target.result;
+// --- Native File Input Handler + Interactive Drag & Zoom Photo Cropper ---
+function handleFileSelect(inputEl, mode, targetType, targetId){
+  const file=inputEl.files && inputEl.files[0];
+  inputEl.value="";
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      openCropModal(img, mode, dataUrl=>{
+        if(targetType==="quickAv"){
+          const p=get(targetId);if(!p)return;
+          p.img=dataUrl;save();show(targetId,true);
+          toast("📸 પ્રોફાઇલ ફોટો સેટ થઈ ગયો");
+        } else if(targetType==="quickCov"){
+          const p=get(targetId);if(!p)return;
+          if(targetId==D.me)D.wadCover=dataUrl;
+          p.cover=dataUrl;save();show(targetId,true);
+          toast("🏞️ વડ / કવર ફોટો સેવ થઈ ગયો");
+        } else if(targetType==="quickFam"){
+          const p=get(targetId);if(!p)return;
+          const {husb,wife}=getNuclearFamily(p);
+          p.famImg=dataUrl;
+          if(husb)husb.famImg=dataUrl;
+          if(wife)wife.famImg=dataUrl;
+          save();showFamily(targetId,true);
+          toast("👨‍👩‍👧‍👦 પરિવારનો ફોટો સેવ થઈ ગયો");
+        } else if(targetType==="formAv"){
+          tempImg=dataUrl;
+          const box=$("#prevAv");
+          if(box)box.innerHTML=avHtml({img:tempImg,n:$("#f_n").value||"વ",s:$("#f_s").value});
+          toast("📸 પ્રોફાઇલ ફોટો સેટ થયો — નીચે સાચવો દબાવો");
+        } else if(targetType==="formCov"){
+          tempCover=dataUrl;
+          toast("🏞️ કવર ફોટો સેટ થયો — નીચે સાચવો દબાવો");
+        }
+      });
     };
-    reader.readAsDataURL(file);
+    img.src=ev.target.result;
   };
-  inp.click();
+  reader.readAsDataURL(file);
 }
 
 function openCropModal(img, mode, cb){
@@ -111,7 +131,6 @@ function openCropModal(img, mode, cb){
 
   zInp.oninput=()=>{state.z=+zInp.value;renderCrop();};
 
-  // Touch / Mouse Drag & Pinch Zoom inside Crop Box
   const pts=new Map(); let lastDist=0;
   box.onpointerdown=e=>{box.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);};
   box.onpointermove=e=>{
@@ -157,48 +176,11 @@ function openCropModal(img, mode, cb){
   };
 }
 
-// Avatar Renderer (Shows Photo if uploaded, otherwise crisp Gujarati first letter)
+// Avatar Renderer
 function avHtml(p, cls=""){
   const st=ST[p.s]?ST[p.s][0]:"blue";
   const inner=p.img?`<img src="${p.img}" alt="">`:esc((p.n||"?")[0]);
   return `<i class="r ${st} ${cls}">${inner}</i>`;
-}
-
-function quickProfilePhoto(id){
-  const p=get(id);
-  if(!p || !canManage(p))return;
-  pickAndCrop("circle", dataUrl=>{
-    p.img=dataUrl;
-    save();
-    show(id,true);
-    toast("📸 પ્રોફાઇલ ફોટો સેટ થઈ ગયો");
-  });
-}
-
-function quickCoverPhoto(id){
-  const p=get(id);
-  if(!p || !canManage(p))return;
-  pickAndCrop("banner", dataUrl=>{
-    if(id==D.me)D.wadCover=dataUrl;
-    p.cover=dataUrl;
-    save();
-    show(id,true);
-    toast("🏞️ વડ / કવર ફોટો સેવ થઈ ગયો");
-  });
-}
-
-function quickFamilyPhoto(id){
-  const p=get(id);
-  if(!p || !canManage(p))return;
-  pickAndCrop("family", dataUrl=>{
-    const {husb,wife}=getNuclearFamily(p);
-    p.famImg=dataUrl;
-    if(husb)husb.famImg=dataUrl;
-    if(wife)wife.famImg=dataUrl;
-    save();
-    showFamily(id,true);
-    toast("👨‍👩‍👧‍👦 પરિવારનો ફોટો સેવ થઈ ગયો");
-  });
 }
 
 function removeFamilyPhoto(id){
@@ -368,8 +350,8 @@ function openProfileForm(title, v, isRoot, cb){
   <div class="photo-edit-row">
     <div id="prevAv">${avHtml({...v,img:tempImg,n:v.n||"વ"})}</div>
     <div class="photo-btns">
-      <button type="button" onclick="pickFormAv()">📷 પ્રોફાઇલ ફોટો</button>
-      <button type="button" onclick="pickFormCov()">🏞️ કવર / વડ ફોટો</button>
+      <label class="file-lbl p-pill">📷 પ્રોફાઇલ ફોટો<input type="file" accept="image/*" onchange="handleFileSelect(this,'circle','formAv',0)"></label>
+      <label class="file-lbl p-pill">🏞️ કવર / વડ ફોટો<input type="file" accept="image/*" onchange="handleFileSelect(this,'banner','formCov',0)"></label>
       ${tempImg?`<button type="button" class="del-p" onclick="tempImg=null;$('#prevAv').innerHTML=avHtml({n:$('#f_n').value||'વ',s:$('#f_s').value})">✕ ફોટો કાઢો</button>`:""}
     </div>
   </div>
@@ -491,20 +473,6 @@ function openProfileForm(title, v, isRoot, cb){
   busy=true;$("#ok").disabled=true;
   cb(o);
  };
-}
-
-function pickFormAv(){
- pickAndCrop("circle", dataUrl=>{
-  tempImg=dataUrl;
-  const box=$("#prevAv");
-  if(box)box.innerHTML=avHtml({img:tempImg,n:$("#f_n").value||"વ",s:$("#f_s").value});
- });
-}
-function pickFormCov(){
- pickAndCrop("banner", dataUrl=>{
-  tempCover=dataUrl;
-  toast("🏞️ કવર ફોટો પસંદ થઈ ગયો — નીચે સાચવો દબાવો");
- });
 }
 
 function toggleStatusRows(val){
@@ -739,10 +707,10 @@ function showFamily(id,skipPush=false){
         <img src="${famPhoto}" alt="પરિવાર ફોટો">
         <div class="fam-photo-bar">
           <span>👨‍👩‍👧‍👦 ${esc(pre(mainPerson)+full(mainPerson))} પરિવાર</span>
-          ${editable?`<div><button onclick="quickFamilyPhoto(${id})">📸 બદલો</button> <button onclick="removeFamilyPhoto(${id})">✕</button></div>`:""}
+          ${editable?`<div><label class="file-lbl mini-btn">📸 બદલો<input type="file" accept="image/*" onchange="handleFileSelect(this,'family','quickFam',${id})"></label> <button class="mini-btn" onclick="removeFamilyPhoto(${id})">✕</button></div>`:""}
         </div>
       </div>`
-   : (editable?`<button class="fam-photo-add" onclick="quickFamilyPhoto(${id})">📸 ઘર-પરિવારનો ગ્રુપ ફોટો ઉમેરો</button>`:"");
+   : (editable?`<label class="file-lbl fam-photo-add">📸 ઘર-પરિવારનો ગ્રુપ ફોટો ઉમેરો<input type="file" accept="image/*" onchange="handleFileSelect(this,'family','quickFam',${id})"></label>`:"");
 
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
@@ -864,14 +832,19 @@ function show(id,skipPush=false){
   canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : ""
  ].filter(Boolean).join("");
 
+ const avBlock=editable
+   ? `<label class="file-lbl av-wrap">
+        <i class="r big ${c}" style="${bigRingStyle}">${bigAvInner}</i>
+        <span class="cam-badge">📷</span>
+        <input type="file" accept="image/*" onchange="handleFileSelect(this,'circle','quickAv',${id})">
+      </label>`
+   : `<div class="av-wrap"><i class="r big ${c}" style="${bigRingStyle}">${bigAvInner}</i></div>`;
+
  $("#pf").innerHTML=`<div class="cv" ${coverStyle}>
-   ${editable?`<button type="button" class="cv-btn" onclick="event.stopPropagation();quickCoverPhoto(${id})">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}</button>`:""}
+   ${editable?`<label class="file-lbl cv-btn">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}<input type="file" accept="image/*" onchange="handleFileSelect(this,'banner','quickCov',${id})"></label>`:""}
  </div>
  <div class="pr">
- <div class="av-wrap" ${editable?`onclick="quickProfilePhoto(${id})"`:""}>
-   <i class="r big ${c}" style="${bigRingStyle}">${bigAvInner}</i>
-   ${editable?`<span class="cam-badge">📷</span>`:""}
- </div>
+ ${avBlock}
  <h2>${esc(pre(p)+full(p))}${titleSuffix?" "+esc(titleSuffix):""}</h2>
  ${memorialNote}
  ${line1?`<p class="ln">${line1}</p>`:""}

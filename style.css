@@ -103,16 +103,30 @@ main { flex: 1; position: relative; overflow: hidden; }
   right: 10px;
   bottom: 10px;
   z-index: 4;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0,0,0,0.68);
   backdrop-filter: blur(4px);
   color: #fff;
-  border: 1.5px solid rgba(255,255,255,0.65);
+  border: 1.5px solid rgba(255,255,255,0.7);
   border-radius: 99px;
   padding: 6px 13px;
   font: inherit;
   font-size: 12.5px;
   font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   cursor: pointer;
+}
+
+/* Native Hidden File Input for 100% Reliable Mobile Picker */
+.file-lbl { cursor: pointer; }
+.file-lbl input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 #pf .pr { padding: 0 14px; margin-top: -48px; position: relative; z-index: 2; }
@@ -192,7 +206,9 @@ main { flex: 1; position: relative; overflow: hidden; }
   font-weight: 800;
   color: #7c2d12;
 }
-.fam-photo-bar button {
+.fam-photo-bar .mini-btn {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid #d97706;
   background: #fff;
   color: #7c2d12;
@@ -299,24 +315,35 @@ main { flex: 1; position: relative; overflow: hidden; }
   margin-bottom: 8px;
 }
 .photo-btns { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
-.photo-btns button {
+.photo-btns .p-pill {
+  display: inline-flex;
+  align-items: center;
   border: 1.5px solid #d97706;
   background: #fffbeb;
   color: #7c2d12;
   border-radius: 99px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   font: inherit;
   font-size: 13px;
   font-weight: 800;
 }
-.photo-btns button.del-p { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+.photo-btns button.del-p {
+  border: 1.5px solid #ef4444;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 99px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
 
 /* Interactive Drag & Zoom Photo Cropper Modal */
 #cropModal {
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(12, 10, 9, 0.94);
+  background: rgba(12, 10, 9, 0.96);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -396,8 +423,8 @@ main { flex: 1; position: relative; overflow: hidden; }
   font-size: 14px;
   font-weight: 800;
 }
-.card label { display: block; margin-top: 10px; font-size: 13.5px; font-weight: 700; color: #78350f; }
-.card input, .card select, .card textarea {
+.card label:not(.file-lbl) { display: block; margin-top: 10px; font-size: 13.5px; font-weight: 700; color: #78350f; }
+.card input:not([type="file"]):not([type="range"]), .card select, .card textarea {
   display: block;
   width: 100%;
   margin-top: 4px;
