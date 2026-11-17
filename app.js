@@ -39,34 +39,122 @@ function canManage(p){
   return true;
 }
 
-// --- Smart Image Auto-Compressor (HD quality, ultra-low KB size) ---
-function pickImage(maxDim, quality, cb){
+// --- Interactive Drag & Zoom Photo Cropper (Circle, Banner, Family) ---
+function pickAndCrop(mode, cb){
   const inp=document.createElement("input");
   inp.type="file";
   inp.accept="image/*";
+  inp.style.display="none";
+  document.body.appendChild(inp);
+
   inp.onchange=e=>{
     const file=e.target.files && e.target.files[0];
+    document.body.removeChild(inp);
     if(!file)return;
     const reader=new FileReader();
     reader.onload=ev=>{
       const img=new Image();
-      img.onload=()=>{
-        let w=img.width, h=img.height;
-        if(w>maxDim || h>maxDim){
-          if(w>h){h=Math.round(h*(maxDim/w));w=maxDim;}
-          else{w=Math.round(w*(maxDim/h));h=maxDim;}
-        }
-        const cv=document.createElement("canvas");
-        cv.width=w;cv.height=h;
-        const ctx=cv.getContext("2d");
-        ctx.drawImage(img,0,0,w,h);
-        cb(cv.toDataURL("image/jpeg",quality));
-      };
+      img.onload=()=>openCropModal(img, mode, cb);
       img.src=ev.target.result;
     };
     reader.readAsDataURL(file);
   };
   inp.click();
+}
+
+function openCropModal(img, mode, cb){
+  const cm=$("#cropModal");
+  const titleMap={
+    circle:"📸 પ્રોફાઇલ ફોટો ગોઠવો",
+    banner:"🏞️ વડ / કવર ફોટો ગોઠવો",
+    family:"👨‍👩‍👧‍👦 પરિવારનો ફોટો ગોઠવો"
+  };
+  cm.innerHTML=`
+    <div class="crop-hd">
+      <h3>${titleMap[mode]||"ફોટો ગોઠવો"}</h3>
+      <p>આંગળીથી ફોટો ખસેડો અને ઝૂમ કરીને બરાબર સેટ કરો</p>
+    </div>
+    <div class="crop-stage ${mode}" id="cropBox">
+      <img id="cropImg" src="${img.src}" alt="">
+    </div>
+    <div class="crop-ctrl">
+      <div class="crop-zoom-row">
+        <span>🔍</span>
+        <input type="range" id="cropZoom" min="0.5" max="3.5" step="0.02" value="1">
+        <span id="cropPct">૧૦૦%</span>
+      </div>
+      <div class="crop-btns">
+        <button type="button" id="cropCancel">રદ કરો</button>
+        <button type="button" class="save-c" id="cropSave">✓ ફોટો સેટ કરો</button>
+      </div>
+    </div>
+  `;
+  cm.hidden=false;
+
+  const box=$("#cropBox"), cImg=$("#cropImg"), zInp=$("#cropZoom"), zPct=$("#cropPct");
+  const bw=box.clientWidth, bh=box.clientHeight;
+  const baseScale=Math.max(bw/img.width, bh/img.height);
+  let state={x:0, y:0, z:1};
+
+  const renderCrop=()=>{
+    const s=baseScale*state.z;
+    const w=img.width*s, h=img.height*s;
+    const maxX=Math.max(0,(w-bw)/2), maxY=Math.max(0,(h-bh)/2);
+    state.x=Math.max(-maxX, Math.min(maxX, state.x));
+    state.y=Math.max(-maxY, Math.min(maxY, state.y));
+    cImg.style.width=w+"px";
+    cImg.style.height=h+"px";
+    cImg.style.transform=`translate(calc(-50% + ${state.x}px), calc(-50% + ${state.y}px))`;
+    zPct.textContent=gu(Math.round(state.z*100))+"%";
+  };
+  renderCrop();
+
+  zInp.oninput=()=>{state.z=+zInp.value;renderCrop();};
+
+  // Touch / Mouse Drag & Pinch Zoom inside Crop Box
+  const pts=new Map(); let lastDist=0;
+  box.onpointerdown=e=>{box.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);};
+  box.onpointermove=e=>{
+    const o=pts.get(e.pointerId);if(!o)return;
+    pts.set(e.pointerId,[e.clientX,e.clientY]);
+    if(pts.size===1){
+      state.x+=e.clientX-o[0];
+      state.y+=e.clientY-o[1];
+      renderCrop();
+    } else if(pts.size===2){
+      const a=[...pts.values()];
+      const d=Math.hypot(a[0][0]-a[1][0], a[0][1]-a[1][1]);
+      if(lastDist){
+        state.z=Math.max(0.5, Math.min(3.5, state.z*(d/lastDist)));
+        zInp.value=state.z;
+        renderCrop();
+      }
+      lastDist=d;
+    }
+  };
+  box.onpointerup=box.onpointercancel=e=>{pts.delete(e.pointerId);lastDist=0;};
+
+  $("#cropCancel").onclick=()=>{cm.hidden=true;cm.innerHTML="";};
+  $("#cropSave").onclick=()=>{
+    const outW=(mode==="circle")?320:820;
+    const outH=(mode==="circle")?320:Math.round(outW*(bh/bw));
+    const ratio=outW/bw;
+    const s=baseScale*state.z*ratio;
+    const drawW=img.width*s, drawH=img.height*s;
+    const dx=(outW-drawW)/2 + state.x*ratio;
+    const dy=(outH-drawH)/2 + state.y*ratio;
+
+    const cv=document.createElement("canvas");
+    cv.width=outW;cv.height=outH;
+    const ctx=cv.getContext("2d");
+    ctx.fillStyle="#1c1917";
+    ctx.fillRect(0,0,outW,outH);
+    ctx.drawImage(img, dx, dy, drawW, drawH);
+
+    cm.hidden=true;
+    cm.innerHTML="";
+    cb(cv.toDataURL("image/jpeg",0.82));
+  };
 }
 
 // Avatar Renderer (Shows Photo if uploaded, otherwise crisp Gujarati first letter)
@@ -79,18 +167,18 @@ function avHtml(p, cls=""){
 function quickProfilePhoto(id){
   const p=get(id);
   if(!p || !canManage(p))return;
-  pickImage(280, 0.78, dataUrl=>{
+  pickAndCrop("circle", dataUrl=>{
     p.img=dataUrl;
     save();
     show(id,true);
-    toast("📸 પ્રોફાઇલ ફોટો અપડેટ થઈ ગયો");
+    toast("📸 પ્રોફાઇલ ફોટો સેટ થઈ ગયો");
   });
 }
 
 function quickCoverPhoto(id){
   const p=get(id);
   if(!p || !canManage(p))return;
-  pickImage(820, 0.76, dataUrl=>{
+  pickAndCrop("banner", dataUrl=>{
     if(id==D.me)D.wadCover=dataUrl;
     p.cover=dataUrl;
     save();
@@ -102,7 +190,7 @@ function quickCoverPhoto(id){
 function quickFamilyPhoto(id){
   const p=get(id);
   if(!p || !canManage(p))return;
-  pickImage(760, 0.78, dataUrl=>{
+  pickAndCrop("family", dataUrl=>{
     const {husb,wife}=getNuclearFamily(p);
     p.famImg=dataUrl;
     if(husb)husb.famImg=dataUrl;
@@ -161,14 +249,14 @@ function fmtTithi(m,p,t){
   return [m,p,t].filter(Boolean).join(" ");
 }
 
-// --- Block Browser Pinch-Zoom outside Wad Tree (#vp) ---
+// --- Block Browser Pinch-Zoom outside Wad Tree (#vp) & Cropper (#cropBox) ---
 document.addEventListener("touchmove",e=>{
- if(e.touches.length>1 && !e.target.closest("#vp")){
+ if(e.touches.length>1 && !e.target.closest("#vp") && !e.target.closest("#cropBox")){
   e.preventDefault();
  }
 },{passive:false});
 document.addEventListener("gesturestart",e=>{
- if(!e.target.closest("#vp"))e.preventDefault();
+ if(!e.target.closest("#vp") && !e.target.closest("#cropBox"))e.preventDefault();
 });
 
 // --- Mobile Back Button / Gesture Navigation Stack ---
@@ -188,6 +276,12 @@ function renderState(st){
  else if(st.v==="tul")showTulsi(st.id,true);
 }
 window.addEventListener("popstate",()=>{
+ if(!$("#cropModal").hidden){
+  $("#cropModal").hidden=true;
+  $("#cropModal").innerHTML="";
+  if(navStack.length)try{history.pushState(navStack[navStack.length-1],"");}catch(e){}
+  return;
+ }
  if(document.body.classList.contains("fs-tree")){
   document.body.classList.remove("fs-tree");
   fit();
@@ -259,7 +353,7 @@ function pre(p){
 const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
 const privSel=(id,val)=>Object.entries(PRIV_OPTS).map(([k,v])=>`<option value="${k}" ${val==k?"selected":""}>${v}</option>`).join("");
 
-// --- Comprehensive Smart Profile Form (Includes Profile Photo & Cover Photo Upload) ---
+// --- Comprehensive Smart Profile Form ---
 let tempImg=null, tempCover=null;
 function openProfileForm(title, v, isRoot, cb){
  const pv=defaultPriv(v);
@@ -400,14 +494,14 @@ function openProfileForm(title, v, isRoot, cb){
 }
 
 function pickFormAv(){
- pickImage(280, 0.78, dataUrl=>{
+ pickAndCrop("circle", dataUrl=>{
   tempImg=dataUrl;
   const box=$("#prevAv");
   if(box)box.innerHTML=avHtml({img:tempImg,n:$("#f_n").value||"વ",s:$("#f_s").value});
  });
 }
 function pickFormCov(){
- pickImage(820, 0.76, dataUrl=>{
+ pickAndCrop("banner", dataUrl=>{
   tempCover=dataUrl;
   toast("🏞️ કવર ફોટો પસંદ થઈ ગયો — નીચે સાચવો દબાવો");
  });
@@ -771,7 +865,7 @@ function show(id,skipPush=false){
  ].filter(Boolean).join("");
 
  $("#pf").innerHTML=`<div class="cv" ${coverStyle}>
-   ${editable?`<button class="cv-btn" onclick="quickCoverPhoto(${id})">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}</button>`:""}
+   ${editable?`<button type="button" class="cv-btn" onclick="event.stopPropagation();quickCoverPhoto(${id})">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}</button>`:""}
  </div>
  <div class="pr">
  <div class="av-wrap" ${editable?`onclick="quickProfilePhoto(${id})"`:""}>

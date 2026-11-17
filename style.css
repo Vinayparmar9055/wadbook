@@ -90,7 +90,7 @@ main { flex: 1; position: relative; overflow: hidden; }
 #pf { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #fff; color: #1c1917; padding: 0 0 28px; touch-action: pan-y; overscroll-behavior-y: auto; }
 .pad { padding: 20px 16px; }
 .cv {
-  height: 165px;
+  height: 170px;
   position: relative;
   overflow: hidden;
   background-color: #5c1d16;
@@ -102,15 +102,17 @@ main { flex: 1; position: relative; overflow: hidden; }
   position: absolute;
   right: 10px;
   bottom: 10px;
-  background: rgba(0,0,0,0.58);
+  z-index: 4;
+  background: rgba(0,0,0,0.65);
   backdrop-filter: blur(4px);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.45);
+  border: 1.5px solid rgba(255,255,255,0.65);
   border-radius: 99px;
-  padding: 5px 12px;
+  padding: 6px 13px;
   font: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 800;
+  cursor: pointer;
 }
 
 #pf .pr { padding: 0 14px; margin-top: -48px; position: relative; z-index: 2; }
@@ -308,6 +310,77 @@ main { flex: 1; position: relative; overflow: hidden; }
   font-weight: 800;
 }
 .photo-btns button.del-p { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+
+/* Interactive Drag & Zoom Photo Cropper Modal */
+#cropModal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(12, 10, 9, 0.94);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  touch-action: none;
+}
+.crop-hd { text-align: center; color: #fff; }
+.crop-hd h3 { margin: 0; font-size: 19px; font-weight: 800; color: #fde68a; }
+.crop-hd p { margin: 4px 0 0; font-size: 13px; color: #d6d3d1; }
+.crop-stage {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 8px 30px rgba(0, 0, 0, 0.7);
+  touch-action: none;
+  user-select: none;
+}
+.crop-stage.circle { width: 260px; height: 260px; border-radius: 50%; }
+.crop-stage.banner { width: 92vw; max-width: 380px; height: 180px; border-radius: 18px; }
+.crop-stage.family { width: 92vw; max-width: 380px; height: 225px; border-radius: 18px; }
+.crop-stage img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  pointer-events: none;
+  max-width: none;
+}
+.crop-ctrl {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.crop-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 14px;
+  border-radius: 99px;
+}
+.crop-zoom-row span { font-size: 14px; font-weight: 800; color: #fde68a; }
+.crop-zoom-row input[type="range"] { flex: 1; accent-color: #f59e0b; }
+.crop-btns { display: flex; gap: 12px; }
+.crop-btns button {
+  flex: 1;
+  height: 46px;
+  border-radius: 99px;
+  border: 1.5px solid #78716c;
+  background: #292524;
+  color: #fff;
+  font: inherit;
+  font-size: 15.5px;
+  font-weight: 800;
+}
+.crop-btns button.save-c {
+  background: linear-gradient(90deg, #ea580c, #6b141a);
+  border: 0;
+  color: #fff;
+}
 
 /* Bottom Sheet / Structured Smart Form */
 #sh { position: fixed; inset: 0; z-index: 9; background: #000b; display: flex; align-items: flex-end; touch-action: pan-y; }
