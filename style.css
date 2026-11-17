@@ -259,7 +259,8 @@ main { flex: 1; position: relative; overflow: hidden; }
 .par-link span { position: relative; background: #fff; border: 2px solid #f59e0b; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
 .par-stem { width: 3px; height: 24px; background: #b45309; margin: 4px auto 0; position: relative; }
 .par-kids { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; padding-top: 12px; border-top: 3px solid #d97706; margin: 0 18px; }
-.par-node { width: 102px; background: #fff; border: 1.5px solid #fcd34d; border-radius: 16px; padding: 8px 4px; box-shadow: 0 3px 8px rgba(120, 53, 15, 0.08); }
+.par-node { width: 126px; background: #fff; border: 1.5px solid #fcd34d; border-radius: 18px; padding: 10px 6px; box-shadow: 0 3px 8px rgba(120, 53, 15, 0.08); }
+.par-node .r { width: 76px; height: 76px; font-size: 28px; border-width: 4px; }
 .par-node b { display: block; font-size: 13px; font-weight: 800; color: #3b0a0e; margin-top: 4px; line-height: 1.2; }
 .par-node small { display: block; font-size: 11px; font-weight: 700; color: #9a3412; margin-top: 2px; }
 .par-empty-k { margin: 12px 0 0; font-size: 13px; font-weight: 700; color: #9a3412; }
@@ -299,12 +300,13 @@ main { flex: 1; position: relative; overflow: hidden; }
 }
 
 .fh { margin: 14px 0 8px; font-size: 16px; font-weight: 800; color: #3b0a0e; }
-.fm { display: flex; align-items: center; gap: 12px; background: #fdfbf7; border: 1.5px solid #e7d8be; border-radius: 16px; padding: 12px; margin-bottom: 8px; color: #1c1917; }
-.fm div { flex: 1; }
-.fm b { display: block; font-size: 16px; font-weight: 800; }
-.fm small { color: #78716c; font-size: 13px; font-weight: 600; }
-.fm span { color: #9a3412; font-weight: 800; font-size: 14px; }
-.fm .r { width: 42px; height: 42px; font-size: 17px; border-width: 3px; margin: 0; }
+.fm { display: flex; align-items: center; gap: 10px; background: #fdfbf7; border: 1.5px solid #e7d8be; border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; color: #1c1917; }
+.fm > div:first-child { flex: none; display: flex; align-items: center; }
+.fm > div:nth-child(2) { flex: 1; min-width: 0; }
+.fm b { display: block; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm small { display: block; color: #78716c; font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+.fm span { flex: none; color: #9a3412; font-weight: 800; font-size: 13.5px; white-space: nowrap; }
+.fm .r { width: 54px; height: 54px; font-size: 20px; border-width: 3.5px; margin: 0; }
 
 .ac { display: flex; flex-direction: column; gap: 8px; }
 .ac button, .bk { width: 100%; border: 1.5px solid #d6d3d1; border-radius: 99px; padding: 13px; background: #fff; color: #1c1917; font: inherit; font-weight: 800; font-size: 15.5px; }
