@@ -31,6 +31,15 @@ function defaultPriv(p){
   }, (p&&p.priv)||{});
 }
 
+// Check if current logged-in user can manage/edit this profile (self OR family member created by me)
+function canManage(p){
+  if(!p || !D.me)return false;
+  if(p.id==D.me)return true;
+  if(p.createdBy && p.createdBy!=D.me && !p.claimedBy)return false;
+  if(p.claimedBy && p.claimedBy!=D.me)return false;
+  return true;
+}
+
 // --- Automatic Age & Date Helpers ---
 function calcAge(dob, yr){
   const now=new Date();
@@ -300,6 +309,7 @@ function first(){
 
 function edit(id){
  const p=get(id);
+ if(!canManage(p)){alert("તમે આ પ્રોફાઇલ એડિટ ન કરી શકો");return;}
  openProfileForm("✏️ વિગત ફેરવો",p,id==D.me,o=>{
   Object.assign(p,o);
   if(id==D.me && o.ja)D.ja=o.ja;
@@ -314,7 +324,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
  const father=get(fatherId)||p;
  const defStatus=(defaultRel=="wife"||defaultRel=="husb"||defaultRel=="mom")?"m":"u";
 
- $("#sh").innerHTML=`<div class="card"><h3>➕ નામ ઉમેરો</h3>
+ $("#sh").innerHTML=`<div class="card"><h3>➕ નામ ઉમેરો (${esc(p.n)})</h3>
   <label>સંબંધ પસંદ કરો<select id="f_rel">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${defaultRel==a?"selected":""}>${b}</option>`).join("")}</select></label>
   <label>નામ *<input id="f_n" type="text" placeholder="સભ્યનું નામ"></label>
   <div class="g2">
@@ -347,7 +357,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
 
   busy=true;$("#ok").disabled=true;
   const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
-  const m={id,f:null,g,n,dob,yr,s,ja:same?(father.ja||D.ja||""):"",sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
+  const m={id,f:null,g,n,dob,yr,s,createdBy:D.me,ja:same?(father.ja||D.ja||""):"",sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
     if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     D.ps.push(m);p.f=id;
@@ -365,7 +375,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
   } else if(r=="bro"||r=="sis"){
     if(!p.f||!get(p.f)){
       const fid=nid();
-      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",ja:p.ja||D.ja||"",sur:p.sur||"",gam:p.gam||""});
+      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",createdBy:D.me,ja:p.ja||D.ja||"",sur:p.sur||"",gam:p.gam||""});
       p.f=fid;
     }
     m.f=p.f;
@@ -468,7 +478,8 @@ function getNuclearFamily(p){
 function showFamily(id,skipPush=false){
  cur=id;
  const p=get(id),{husb,wife,children}=getNuclearFamily(p);
- const isOwner=(id==D.me);
+ const isSelf=(id==D.me);
+ const editable=canManage(p);
  const mainPerson=husb||wife||p;
  const totalCount=(husb?1:0)+(wife?1:0)+children.length;
 
@@ -486,25 +497,25 @@ function showFamily(id,skipPush=false){
        <b>${esc(pre(q)+full(q))}</b>
        <small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
      </div>
-     ${isOwner&&q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
+     ${editable&&q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
      <span onclick="show(${q.id})">જુઓ ›</span>
    </div>`;
 
  const leftSlot=husb
    ? node(husb, wife?"પતિ":"પતિ / મુખ્ય")
-   : (isOwner
+   : (editable
       ? `<div class="par-node add-sp" onclick="addMember(${wife.id},'husb',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પતિ ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પતિ</b><small>ઉમેરેલ નથી</small></div>`);
 
  const rightSlot=wife
    ? node(wife, husb?"પત્ની":"પત્ની / મુખ્ય")
-   : (isOwner
+   : (editable
       ? `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પત્ની</b><small>ઉમેરેલ નથી</small></div>`);
 
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
-    <h2>👨‍👩‍👧‍👦 ${isOwner?"મારો પરિવાર":"તેમનો પરિવાર"}</h2>
+    <h2>👨‍👩‍👧‍👦 ${isSelf?"મારો પરિવાર":"તેમનો પરિવાર"}</h2>
     <p>${esc(pre(mainPerson)+full(mainPerson))} નો ઘર-પરિવાર</p>
   </div>
 
@@ -520,10 +531,10 @@ function showFamily(id,skipPush=false){
       <div class="par-kids">
         ${children.map(c=>node(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
       </div>
-    `:`<p class="par-empty-k">${isOwner?"નીચેથી દીકરો કે દીકરી ઉમેરો":"સંતાનો ઉમેરેલ નથી"}</p>`}
+    `:`<p class="par-empty-k">${editable?"નીચેથી દીકરો કે દીકરી ઉમેરો":"સંતાનો ઉમેરેલ નથી"}</p>`}
   </div>
 
-  ${isOwner?`<div style="margin:14px 0">
+  ${editable?`<div style="margin:14px 0">
     <button class="bk" style="margin:0" onclick="addMember(${id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (${husb?"પત્ની":"પતિ"}, દીકરો, દીકરી)</button>
   </div>`:""}
 
@@ -542,18 +553,19 @@ function showFamily(id,skipPush=false){
 
 function show(id,skipPush=false){
  cur=id;const p=get(id);if(!p)return empty();
- const isOwner=(id==D.me);
+ const isSelf=(id==D.me);
+ const editable=canManage(p);
  const[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
  const pv=defaultPriv(p);
- const canSee=k=>(isOwner || pv[k]!=="me");
+ const canSee=k=>(editable || pv[k]!=="me");
 
  // 1. Name Heading uses Jati/Shakha (e.g., શ્રી વિનયભાઈ કરશનભાઈ ટડાવા)
- const shakh=p.ja||(isOwner?D.ja:"");
+ const shakh=p.ja||(isSelf?D.ja:"");
  const titleSuffix=shakh||p.sur||"";
 
  // 2. Top Handle: Atak, Vatan, Rahethan, Sampark (Mobile)
  const line1=[p.sur?"અટક: "+esc(p.sur):"", p.gam?"વતન: "+esc(p.gam):"", t].filter(Boolean).join(" • ");
- const mobBadge=(p.mob && canSee("mob"))?`<a class="call-pill" href="tel:${esc(p.mob)}">📞 ${esc(p.mob)}</a>`:"";
+ const mobBadge=(p.mob && canSee("mob") && p.s!="d")?`<a class="call-pill" href="tel:${esc(p.mob)}">📞 ${esc(p.mob)}</a>`:"";
  const line2=[p.rah?"રહેઠાણ: "+esc(p.rah):"", mobBadge].filter(Boolean).join(" • ");
 
  // Date + Auto Age + Gujarati Tithi
@@ -567,12 +579,12 @@ function show(id,skipPush=false){
  const rw=(a,b,fullW=false)=>b?`<div class="rw${fullW?" full-rw":""}"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
 
- // Owner View vs Visitor View
+ // Action Buttons: Self vs Family Member managed by me vs External Visitor
  const husbObj=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
  const hasSasri=(p.g=="F" && husbObj && husbObj.g!="F");
 
  let actionButtons="";
- if(isOwner){
+ if(isSelf){
   actionButtons=`<div class="ac2">
     <button class="pm full-w" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
     <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
@@ -584,6 +596,7 @@ function show(id,skipPush=false){
     <button class="pm" onclick="tab('tv',false,${id},'piyar')">🌳 પિયર વડ</button>
     ${canSee("fam")?`<button onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
     ${canSee("tul")?`<button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>`:""}
+    ${editable?`<button onclick="addMember(${id})">➕ નામ ઉમેરો</button><button onclick="edit(${id})">✏️ વિગત ફેરવો</button>`:""}
     <button class="full-w" style="font-size:15px;padding:11px" onclick="shareProfile(${id})">📤 પ્રોફાઇલ શેર કરો</button>
   </div>`;
  } else {
@@ -593,10 +606,17 @@ function show(id,skipPush=false){
     ${canSee("fam")?`<button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
     ${canSee("tul")?`<button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>`:""}
     <button onclick="shareProfile(${id})">📤 શેર કરો</button>
+    ${editable?`<button onclick="addMember(${id})">➕ નામ ઉમેરો</button><button onclick="edit(${id})">✏️ વિગત ફેરવો</button>`:""}
   </div>`;
  }
 
- // 3. Bottom Info Box: Birth Date, Death Date (if deceased), Mosal, Pohal, Sasri, Blood Group (any), & Education/Job (if alive)
+ // Fix Big Avatar Ring Color for Deceased (red), Married (blue), Unmarried (green)
+ const bigRingStyle=(p.s=="d")?"background:#b91c1c;border-color:#ef4444;color:#fff":(p.s=="u"?"background:#15803d;border-color:#22c55e;color:#fff":"");
+
+ // Memorial Note for Deceased (Not an active login account, just family lineage connection)
+ const memorialNote=(p.s=="d")?`<p style="text-align:center;margin:2px 0 8px"><span style="display:inline-block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:800">🕊️ સ્મૃતિ પ્રોફાઇલ • વંશાવળી જોડાણ માટે</span></p>`:"";
+
+ // Bottom Info Box
  const infoRows=[
   canSee("dob") ? rw("જન્મ તારીખ", birthFull) : "",
   canSee("dob") ? rw("જન્મ તિથિ", esc(gujBirth)) : "",
@@ -611,12 +631,13 @@ function show(id,skipPush=false){
  ].filter(Boolean).join("");
 
  $("#pf").innerHTML=`<div class="cv"></div>
- <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i>
+ <div class="pr"><i class="r big ${c}" style="${bigRingStyle}">${esc(p.n[0])}</i>
  <h2>${esc(pre(p)+full(p))}${titleSuffix?" "+esc(titleSuffix):""}</h2>
+ ${memorialNote}
  ${line1?`<p class="ln">${line1}</p>`:""}
  ${line2?`<p class="bio">${line2}</p>`:""}
  ${p.bio?`<div class="bio-box">“${esc(p.bio)}”</div>`:""}
- <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isOwner?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
+ <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isSelf?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
  ${actionButtons}
  ${infoRows?`<div class="bx">${infoRows}</div>`:""}
  ${canSee("fam") && fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>${fam.map(([q,r])=>card(q,r)).join("")}`:(!canSee("fam")?`<div class="priv-note">🔒 પરિવારની વિગત પ્રાઇવેટ રાખવામાં આવી છે</div>`:"")}</div>`;
@@ -766,7 +787,7 @@ function momOf(p){
 function showTulsi(id,skipPush=false){
  cur=id;
  const p=get(id);if(!p)return empty();
- const isOwner=(id==D.me);
+ const editable=canManage(p);
  const chain=[];let q=momOf(p),guard=0;
  while(q&&guard++<30){chain.push(q);q=momOf(q)}
  const LB=["","માતા","નાની","પરનાની"];
@@ -777,9 +798,9 @@ function showTulsi(id,skipPush=false){
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd"><h2>🌿 તુલસી ક્યારો</h2><p>${esc(pre(p)+full(p))} ની માતૃપક્ષ વંશાવળી</p></div>
   <div class="tk">
-   ${isOwner?`<button class="tk-add" onclick="addMember(${last.id},'mom','tulsi')">➕ ${lab(chain.length+1)} ઉમેરો</button>`:""}
-   ${parts.map(h=>`${isOwner?'<div class="tk-st"></div>':""}${h}`).join("")}
-   ${parts.length?'<div class="tk-st"></div>':""}${node(p,isOwner?"તમે":"મુખ્ય સભ્ય")}
+   ${editable?`<button class="tk-add" onclick="addMember(${last.id},'mom','tulsi')">➕ ${lab(chain.length+1)} ઉમેરો</button>`:""}
+   ${parts.map(h=>`${editable?'<div class="tk-st"></div>':""}${h}`).join("")}
+   ${parts.length?'<div class="tk-st"></div>':""}${node(p,id==D.me?"તમે":"મુખ્ય સભ્ય")}
   </div>
   <button class="bk" onclick="history.back()">← પાછા જાઓ</button>
  </div>`;
