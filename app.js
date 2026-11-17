@@ -156,7 +156,7 @@ function pre(p){
 const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
 const privSel=(id,val)=>Object.entries(PRIV_OPTS).map(([k,v])=>`<option value="${k}" ${val==k?"selected":""}>${v}</option>`).join("");
 
-// --- Comprehensive Smart Profile Form (with Gujarati Tithi, Kul-Paksh & 4-Level Privacy) ---
+// --- Comprehensive Smart Profile Form ---
 function openProfileForm(title, v, isRoot, cb){
  const pv=defaultPriv(v);
  const jaVal=(v.ja!==undefined)?v.ja:(isRoot?D.ja:"");
@@ -164,28 +164,31 @@ function openProfileForm(title, v, isRoot, cb){
  $("#sh").innerHTML=`<div class="card">
   <h3>${title}</h3>
 
-  <div class="f-sec">૧. મૂળભૂત ઓળખ</div>
+  <div class="f-sec">૧. મૂળભૂત ઓળખ (જાતિ & અટક)</div>
   <div class="g2">
     <label>નામ *<input id="f_n" type="text" value="${esc(v.n||"")}" placeholder="દા.ત. વિનયભાઈ"></label>
-    <label>અટક<input id="f_sur" type="text" value="${esc(v.sur||"")}" placeholder="દા.ત. પરમાર"></label>
+    <label>જાતિ / શાખ (નામ સાથે દેખાશે)<input id="f_ja" type="text" value="${esc(jaVal)}" placeholder="દા.ત. ટડાવા"></label>
   </div>
   <div class="g2">
-    <label>જાતિ / શાખ<input id="f_ja" type="text" value="${esc(jaVal)}" placeholder="દા.ત. ટડાવા"></label>
+    <label>અટક<input id="f_sur" type="text" value="${esc(v.sur||"")}" placeholder="દા.ત. પરમાર"></label>
     <label>લિંગ<select id="f_g"><option value="M" ${v.g!="F"?"selected":""}>પુરુષ</option><option value="F" ${v.g=="F"?"selected":""}>સ્ત્રી</option></select></label>
   </div>
   <div class="g2">
-    <label>સ્થિતિ<select id="f_s" onchange="toggleDeathRow(this.value)">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${(v.s||"m")==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>
+    <label>સ્થિતિ<select id="f_s" onchange="toggleStatusRows(this.value)">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${(v.s||"m")==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>
     <label>બ્લડ ગ્રુપ<select id="f_bg">${selOpts(BLOOD,v.bg)}</select></label>
-  </div>
-  <div class="g2">
-    <label>મોબાઇલ નંબર<input id="f_mob" type="tel" value="${esc(v.mob||"")}" placeholder="દા.ત. 9876543210"></label>
-    <label>ભણતર<input id="f_edu" type="text" value="${esc(v.edu||"")}" placeholder="દા.ત. ૧૦ સુધી / B.A."></label>
   </div>
   <div class="g2">
     <label>મૂળ વતન - ગામ<input id="f_gam" type="text" value="${esc(v.gam||"")}" placeholder="દા.ત. ટડાય (બનાસકાંઠા)"></label>
     <label>હાલ રહેઠાણ<input id="f_rah" type="text" value="${esc(v.rah||"")}" placeholder="દા.ત. ભાવનગર"></label>
   </div>
-  <label>નોકરી / ધંધો / પોતાનો વ્યવસાય<input id="f_job" type="text" value="${esc(v.job||"")}" placeholder="દા.ત. વેપાર / નોકરી / ખેતી"></label>
+  <label>સંપર્ક / મોબાઇલ નંબર<input id="f_mob" type="tel" value="${esc(v.mob||"")}" placeholder="દા.ત. 8460209055"></label>
+
+  <div id="aliveBox" ${v.s=="d"?"hidden":""}>
+    <div class="g2">
+      <label>ભણતર (હયાત હોય તો)<input id="f_edu" type="text" value="${esc(v.edu||"")}" placeholder="દા.ત. ૧૦ સુધી / B.A."></label>
+      <label>નોકરી / ધંધો / વ્યવસાય<input id="f_job" type="text" value="${esc(v.job||"")}" placeholder="દા.ત. વેપાર / નોકરી / ખેતી"></label>
+    </div>
+  </div>
 
   <div class="f-sec">૨. જન્મ તારીખ, ઉંમર અને ગુજરાતી તિથિ</div>
   <div class="g2">
@@ -210,19 +213,19 @@ function openProfileForm(title, v, isRoot, cb){
     </div>
   </div>
 
-  <div class="f-sec">૩. ત્રણેય કુળ-સંબંધો (ગામ અને અટક)</div>
-  <label>A. મોસાળપક્ષ (મારા મામાનું ઘર)<input id="f_mos" type="text" value="${esc(v.mos||"")}" placeholder="દા.ત. સાયડા (પ્રજાપતિ)"></label>
-  <label>B. સાસરીપક્ષ (લગ્ન થયા હોય તો સાસરીનું ઘર)<input id="f_sas" type="text" value="${esc(v.sas||"")}" placeholder="દા.ત. પાલનપુર (મકવાણા)"></label>
-  <label>C. પોહાળપક્ષ (પિતાના મામાનું ઘર)<input id="f_poh" type="text" value="${esc(v.poh||"")}" placeholder="દા.ત. ડીસા (પટેલ)"></label>
+  <div class="f-sec">૩. ત્રણેય કુળ-સંબંધો (ગામ અને અટક/જાતિ)</div>
+  <label>A. મોસાળપક્ષ (મારા મામાનું ઘર)<input id="f_mos" type="text" value="${esc(v.mos||"")}" placeholder="દા.ત. ભાવનગર (ગેલડા)"></label>
+  <label>B. પોહાળપક્ષ (પિતાના મામાનું ઘર)<input id="f_poh" type="text" value="${esc(v.poh||"")}" placeholder="દા.ત. અભેપુરા (ગોહેલ)"></label>
+  <label>C. સાસરીપક્ષ (લગ્ન થયા હોય તો સાસરીનું ઘર)<input id="f_sas" type="text" value="${esc(v.sas||"")}" placeholder="દા.ત. સિદ્ધપુર (ભૈડુસા)"></label>
 
   <div class="f-sec">૪. મારો પરિચય / વિચાર (Bio - ૧૦૦ શબ્દો સુધી)</div>
   <textarea id="f_bio" maxlength="600" placeholder="તમારા વિચારો, સામાજિક પ્રવૃત્તિ કે પોતાના વિશે ટૂંકમાં લખો...">${esc(v.bio||"")}</textarea>
 
   <div class="f-sec">૫. પ્રાઇવસી કંટ્રોલ (કોને શું દેખાડવું?)</div>
   <div class="priv-box">
-    <div class="priv-row"><span>📞 મોબાઇલ નંબર</span><select id="pv_mob">${privSel("mob",pv.mob)}</select></div>
+    <div class="priv-row"><span>📞 સંપર્ક / મોબાઇલ નંબર</span><select id="pv_mob">${privSel("mob",pv.mob)}</select></div>
     <div class="priv-row"><span>🎂 જન્મ તારીખ & ઉંમર</span><select id="pv_dob">${privSel("dob",pv.dob)}</select></div>
-    <div class="priv-row"><span>🌾 મોસાળ / સાસરી / પોહાળ</span><select id="pv_kul">${privSel("kul",pv.kul)}</select></div>
+    <div class="priv-row"><span>🌾 મોસાળ / પોહાળ / સાસરી</span><select id="pv_kul">${privSel("kul",pv.kul)}</select></div>
     <div class="priv-row"><span>👨‍👩‍👧‍👦 મારો પરિવાર</span><select id="pv_fam">${privSel("fam",pv.fam)}</select></div>
     <div class="priv-row"><span>🌿 તુલસી ક્યારો</span><select id="pv_tul">${privSel("tul",pv.tul)}</select></div>
   </div>
@@ -242,8 +245,8 @@ function openProfileForm(title, v, isRoot, cb){
   if(!yr && dob)yr=dob.slice(0,4);
   const o={
    n,
-   sur:$("#f_sur").value.trim(),
    ja:$("#f_ja").value.trim(),
+   sur:$("#f_sur").value.trim(),
    g:$("#f_g").value,
    s:$("#f_s").value,
    bg:$("#f_bg").value,
@@ -278,9 +281,10 @@ function openProfileForm(title, v, isRoot, cb){
  };
 }
 
-function toggleDeathRow(val){
- const b=$("#deathBox");
- if(b)b.hidden=(val!="d");
+function toggleStatusRows(val){
+ const d=$("#deathBox"), a=$("#aliveBox");
+ if(d)d.hidden=(val!="d");
+ if(a)a.hidden=(val=="d");
 }
 function autoFillYr(dob){
  if(dob && !$("#f_yr").value)$("#f_yr").value=dob.slice(0,4);
@@ -361,7 +365,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
   } else if(r=="bro"||r=="sis"){
     if(!p.f||!get(p.f)){
       const fid=nid();
-      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",sur:p.sur||"",gam:p.gam||""});
+      D.ps.push({id:fid,f:null,g:"M",n:"પિતા",s:"d",ja:p.ja||D.ja||"",sur:p.sur||"",gam:p.gam||""});
       p.f=fid;
     }
     m.f=p.f;
@@ -543,11 +547,14 @@ function show(id,skipPush=false){
  const pv=defaultPriv(p);
  const canSee=k=>(isOwner || pv[k]!=="me");
 
- // Handle Lines: Shakha + Vatan + Status, and Mobile + Rahethan
+ // 1. Name Heading uses Jati/Shakha (e.g., શ્રી વિનયભાઈ કરશનભાઈ ટડાવા)
  const shakh=p.ja||(isOwner?D.ja:"");
- const line1=[shakh?"શાખ: "+esc(shakh):"", p.gam?"વતન: "+esc(p.gam):"", t].filter(Boolean).join(" • ");
+ const titleSuffix=shakh||p.sur||"";
+
+ // 2. Top Handle: Atak, Vatan, Rahethan, Sampark (Mobile)
+ const line1=[p.sur?"અટક: "+esc(p.sur):"", p.gam?"વતન: "+esc(p.gam):"", t].filter(Boolean).join(" • ");
  const mobBadge=(p.mob && canSee("mob"))?`<a class="call-pill" href="tel:${esc(p.mob)}">📞 ${esc(p.mob)}</a>`:"";
- const line2=[mobBadge, p.rah?"રહેઠાણ: "+esc(p.rah):""].filter(Boolean).join(" • ");
+ const line2=[p.rah?"રહેઠાણ: "+esc(p.rah):"", mobBadge].filter(Boolean).join(" • ");
 
  // Date + Auto Age + Gujarati Tithi
  const age=calcAge(p.dob,p.yr);
@@ -589,24 +596,23 @@ function show(id,skipPush=false){
   </div>`;
  }
 
+ // 3. Bottom Info Box: Birth Date, Death Date (if deceased), Mosal, Pohal, Sasri, Blood Group (any), & Education/Job (if alive)
  const infoRows=[
   canSee("dob") ? rw("જન્મ તારીખ", birthFull) : "",
   canSee("dob") ? rw("જન્મ તિથિ", esc(gujBirth)) : "",
-  (p.s=="d" && deathFull) ? rw("સ્વર્ગવાસ", deathFull) : "",
+  (p.s=="d" && deathFull) ? rw("મરણ તારીખ", deathFull) : "",
   (p.s=="d" && gujDeath) ? rw("પુણ્યતિથિ", esc(gujDeath)) : "",
   rw("બ્લડ ગ્રુપ", esc(p.bg)),
-  rw("ભણતર", esc(p.edu)),
-  rw("વ્યવસાય", esc(p.job)),
-  rw("રહેઠાણ", esc(p.rah)),
-  rw("મૂળ વતન", esc(p.gam)),
+  (p.s!="d") ? rw("ભણતર", esc(p.edu)) : "",
+  (p.s!="d") ? rw("વ્યવસાય", esc(p.job)) : "",
   canSee("kul") ? rw("મોસાળપક્ષ", esc(p.mos), true) : "",
-  canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : "",
-  canSee("kul") ? rw("પોહાળપક્ષ", esc(p.poh), true) : ""
+  canSee("kul") ? rw("પોહાળપક્ષ", esc(p.poh), true) : "",
+  canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : ""
  ].filter(Boolean).join("");
 
  $("#pf").innerHTML=`<div class="cv"></div>
  <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i>
- <h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
+ <h2>${esc(pre(p)+full(p))}${titleSuffix?" "+esc(titleSuffix):""}</h2>
  ${line1?`<p class="ln">${line1}</p>`:""}
  ${line2?`<p class="bio">${line2}</p>`:""}
  ${p.bio?`<div class="bio-box">“${esc(p.bio)}”</div>`:""}
@@ -623,7 +629,8 @@ function show(id,skipPush=false){
 function shareProfile(id){
  const p=get(id)||get(D.me);
  if(!p)return;
- const txt=`🌳 Wadbook પરિવાર પરિચય\n${pre(p)+full(p)} ${p.sur||""}\nવતન: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
+ const shakh=p.ja||D.ja||p.sur||"";
+ const txt=`🌳 Wadbook પરિવાર પરિચય\n${pre(p)+full(p)} ${shakh}\nવતન: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
  if(navigator.share){navigator.share({title:"Wadbook",text:txt}).catch(()=>{});}
  else{alert(txt);}
 }
