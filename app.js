@@ -256,6 +256,7 @@ function renderState(st){
  else if(st.v==="fam")showFamily(st.id,true);
  else if(st.v==="tv")tab("tv",true,st.id,st.side||"auto");
  else if(st.v==="tul")showTulsi(st.id,true);
+ else if(st.v==="sag")showSagai(true);
 }
 window.addEventListener("popstate",()=>{
  if(!$("#cropModal").hidden){
@@ -335,7 +336,7 @@ function pre(p){
 const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
 const privSel=(id,val)=>Object.entries(PRIV_OPTS).map(([k,v])=>`<option value="${k}" ${val==k?"selected":""}>${v}</option>`).join("");
 
-// --- Comprehensive Smart Profile Form ---
+// --- Comprehensive Smart Profile Form (Includes Matrimony Height/Weight/Income when Unmarried) ---
 let tempImg=null, tempCover=null;
 function openProfileForm(title, v, isRoot, cb){
  const pv=defaultPriv(v);
@@ -379,6 +380,18 @@ function openProfileForm(title, v, isRoot, cb){
     <div class="g2">
       <label>ભણતર (હયાત હોય તો)<input id="f_edu" type="text" value="${esc(v.edu||"")}" placeholder="દા.ત. ૧૦ સુધી / B.A."></label>
       <label>નોકરી / ધંધો / વ્યવસાય<input id="f_job" type="text" value="${esc(v.job||"")}" placeholder="દા.ત. વેપાર / નોકરી / ખેતી"></label>
+    </div>
+  </div>
+
+  <div id="sagaiBox" ${(v.s||"m")=="u"?"":"hidden"}>
+    <div class="f-sec" style="background:#dcfce7;color:#14532d;border-color:#22c55e">💍 સગાઈ બાયોડેટા વિગત (અપરિણીત માટે)</div>
+    <div class="g2">
+      <label>ઊંચાઈ (Height)<input id="f_ht" type="text" value="${esc(v.ht||"")}" placeholder="દા.ત. 5 ફૂટ 7 ઇંચ"></label>
+      <label>વજન (Weight)<input id="f_wt" type="text" value="${esc(v.wt||"")}" placeholder="દા.ત. 62 કિલો"></label>
+    </div>
+    <div class="g2">
+      <label>વાર્ષિક આવક<input id="f_inc" type="text" value="${esc(v.inc||"")}" placeholder="દા.ત. 5 લાખ / નોકરી"></label>
+      <label>સગાઈ માટે રસ છે?<select id="f_sagaiOpen"><option value="yes" ${(v.sagaiOpen||"yes")=="yes"?"selected":""}>હા, સગાઈ યોગ્ય</option><option value="no" ${v.sagaiOpen=="no"?"selected":""}>હમણાં નહીં</option></select></label>
     </div>
   </div>
 
@@ -449,6 +462,10 @@ function openProfileForm(title, v, isRoot, cb){
    gam:$("#f_gam").value.trim(),
    rah:$("#f_rah").value.trim(),
    job:$("#f_job").value.trim(),
+   ht:$("#f_ht")?$("#f_ht").value.trim():"",
+   wt:$("#f_wt")?$("#f_wt").value.trim():"",
+   inc:$("#f_inc")?$("#f_inc").value.trim():"",
+   sagaiOpen:$("#f_sagaiOpen")?$("#f_sagaiOpen").value:"yes",
    dob,
    yr:yr?+yr:"",
    gm:$("#f_gm").value,
@@ -476,9 +493,10 @@ function openProfileForm(title, v, isRoot, cb){
 }
 
 function toggleStatusRows(val){
- const d=$("#deathBox"), a=$("#aliveBox");
+ const d=$("#deathBox"), a=$("#aliveBox"), sg=$("#sagaiBox");
  if(d)d.hidden=(val!="d");
  if(a)a.hidden=(val=="d");
+ if(sg)sg.hidden=(val!="u");
 }
 function autoFillYr(dob){
  if(dob && !$("#f_yr").value)$("#f_yr").value=dob.slice(0,4);
@@ -545,7 +563,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
 
   busy=true;$("#ok").disabled=true;
   const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
-  const m={id,f:null,g,n,dob,yr,s,createdBy:D.me,ja:same?(father.ja||D.ja||""):"",sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
+  const m={id,f:null,g,n,dob,yr,s,sagaiOpen:"yes",createdBy:D.me,ja:same?(father.ja||D.ja||""):"",sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
     if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     D.ps.push(m);p.f=id;
@@ -752,6 +770,283 @@ function showFamily(id,skipPush=false){
  if(!skipPush)pushView({v:"fam",id});
 }
 
+// ===== સ્માર્ટ સગાઈ બાયોડેટા વિભાગ (Smart Matrimony Directory & Shareable Biodata Card) =====
+let sagFilter="all", sagSearch="";
+
+function showSagai(skipPush=false){
+ const list=D.ps.filter(p=>p.s==="u" && p.sagaiOpen!=="no");
+ const filtered=list.filter(p=>{
+  if(sagFilter==="M" && p.g==="F")return false;
+  if(sagFilter==="F" && p.g!=="F")return false;
+  if(sagSearch){
+   const q=sagSearch.toLowerCase();
+   const blob=[p.n,p.ja,p.sur,p.gam,p.rah,p.edu,p.job,p.mos,p.poh].filter(Boolean).join(" ").toLowerCase();
+   if(!blob.includes(q))return false;
+  }
+  return true;
+ }).sort((a,b)=>(a.yr||9999)-(b.yr||9999));
+
+ const mCount=list.filter(p=>p.g!=="F").length;
+ const fCount=list.filter(p=>p.g==="F").length;
+
+ const cardsHtml=filtered.length ? filtered.map(p=>{
+  const age=calcAge(p.dob,p.yr);
+  const shakh=p.ja||D.ja||p.sur||"";
+  return `<div class="sag-card">
+    <div class="sag-top" onclick="show(${p.id})">
+      ${avHtml(p)}
+      <div class="sag-info">
+        <b>${esc(pre(p)+full(p))}${shakh?" "+esc(shakh):""}</b>
+        <small>${p.gam?"વતન: "+esc(p.gam):""}${p.rah?" • હાલ: "+esc(p.rah):""}</small>
+      </div>
+    </div>
+    <div class="sag-tags">
+      ${age!==null?`<span class="gr-tag">🎂 ઉંમર: ${gu(age)} વર્ષ</span>`:(p.yr?`<span class="gr-tag">🎂 જન્મ: ${gu(p.yr)}</span>`:"")}
+      ${p.edu?`<span>🎓 ${esc(p.edu)}</span>`:""}
+      ${p.job?`<span>💼 ${esc(p.job)}</span>`:""}
+      ${p.ht?`<span>📏 ${esc(p.ht)}</span>`:""}
+      ${p.mos?`<span>🌾 મોસાળ: ${esc(p.mos)}</span>`:""}
+    </div>
+    <div class="sag-btns">
+      <button class="bio-btn" onclick="openBiodata(${p.id})">📋 સગાઈ બાયોડેટા</button>
+      <button onclick="show(${p.id})">👤 પ્રોફાઇલ જુઓ</button>
+    </div>
+  </div>`;
+ }).join("") : `<div class="priv-note">🟢 અત્યારે કોઈ અપરિણીત સભ્ય મળ્યા નથી.<br><small>પ્રોફાઇલ કે "+ નામ ઉમેરો" માં સ્થિતિ <b>"અપરિણીત"</b> રાખવાથી નામ અહીં આપમેળે દેખાશે.</small></div>`;
+
+ $("#pf").innerHTML=`<div class="pad">
+  <div class="hd">
+    <h2>💍 સગાઈ બાયોડેટા વિભાગ</h2>
+    <p>લીલા સર્કલ (અપરિણીત) ધરાવતા સમાજના યુવાન-યુવતીઓ</p>
+  </div>
+
+  <div class="sag-tabs">
+    <button class="${sagFilter==="all"?"on":""}" onclick="sagFilter='all';showSagai(true)">બધા (${gu(list.length)})</button>
+    <button class="${sagFilter==="M"?"on":""}" onclick="sagFilter='M';showSagai(true)">👦 યુવાનો (${gu(mCount)})</button>
+    <button class="${sagFilter==="F"?"on":""}" onclick="sagFilter='F';showSagai(true)">👧 યુવતીઓ (${gu(fCount)})</button>
+  </div>
+
+  <input class="sag-search" type="search" value="${esc(sagSearch)}" placeholder="🔍 નામ, ગામ, શાખ, ભણતર કે વ્યવસાયથી શોધો..." oninput="sagSearch=this.value;showSagai(true)">
+
+  ${cardsHtml}
+ </div>`;
+
+ $("#tv").hidden=true;$("#pf").hidden=false;
+ setNav("sag");
+ if(!skipPush)pushView({v:"sag"});
+}
+
+// Royal Shareable Biodata Card Modal
+function openBiodata(id){
+ const p=get(id);if(!p)return;
+ const editable=canManage(p);
+ const pv=defaultPriv(p);
+ const canSee=k=>(editable || pv[k]!=="me");
+
+ const shakh=p.ja||D.ja||p.sur||"";
+ const age=calcAge(p.dob,p.yr);
+ const dobStr=fmtDate(p.dob,p.yr);
+ const ageStr=dobStr ? (dobStr + (age!==null?` (${gu(age)} વર્ષ)`:"")) : "";
+ const dad=(p.f&&get(p.f))?get(p.f):null;
+ const mom=momOf(p);
+
+ const bRow=(lbl,val,fullW=false)=>val?`<div class="${fullW?"full-b":""}"><span>${lbl}:</span> <b>${val}</b></div>`:"";
+
+ $("#sh").innerHTML=`<div class="card">
+  <div class="bio-sheet" id="biodataCard">
+    <div class="bio-ganesh">॥ શ્રી ગણેશાય નમઃ • Wadbook સગાઈ બાયોડેટા ॥</div><br>
+    ${avHtml(p,"big")}
+    <h4>${esc(pre(p)+full(p))}${shakh?" "+esc(shakh):""}</h4>
+    <p class="sub-b">${[p.sur?"અટક: "+esc(p.sur):"", p.gam?"મૂળ વતન: "+esc(p.gam):""].filter(Boolean).join(" • ")}</p>
+
+    <div class="bio-grid">
+      ${canSee("dob")?bRow("જન્મ તારીખ",ageStr):""}
+      ${canSee("dob")?bRow("જન્મ તિથિ",esc(fmtTithi(p.gm,p.gp,p.gt))):""}
+      ${bRow("ઊંચાઈ / વજન",esc([p.ht,p.wt].filter(Boolean).join(" • ")))}
+      ${bRow("બ્લડ ગ્રુપ",esc(p.bg))}
+      ${bRow("ભણતર",esc(p.edu))}
+      ${bRow("વ્યવસાય",esc(p.job))}
+      ${bRow("વાર્ષિક આવક",esc(p.inc))}
+      ${bRow("હાલ રહેઠાણ",esc(p.rah))}
+      ${dad?bRow("પિતાનું નામ",esc(pre(dad)+full(dad)),true):""}
+      ${mom?bRow("માતાનું નામ",esc(pre(mom)+full(mom)),true):""}
+      ${canSee("kul")?bRow("મોસાળપક્ષ",esc(p.mos),true):""}
+      ${canSee("kul")?bRow("પોહાળપક્ષ",esc(p.poh),true):""}
+      ${(p.mob&&canSee("mob"))?bRow("સંપર્ક નંબર",esc(p.mob),true):""}
+    </div>
+  </div>
+
+  <div class="bt" style="margin-top:14px">
+    <button onclick="shut()">બંધ કરો</button>
+    <button class="pr" onclick="shareBiodataCard(${id})">📤 બાયોડેટા કાર્ડ શેર કરો</button>
+  </div>
+ </div>`;
+
+ $("#sh").hidden=false;
+ try{history.pushState({modal:1},"");}catch(e){}
+}
+
+// Generate HD Image of Biodata Card and Share via WhatsApp / Native Share
+function shareBiodataCard(id){
+ const p=get(id);if(!p)return;
+ const shakh=p.ja||D.ja||p.sur||"";
+ const age=calcAge(p.dob,p.yr);
+ const dobStr=fmtDate(p.dob,p.yr);
+ const dad=(p.f&&get(p.f))?get(p.f):null;
+ const mom=momOf(p);
+ const pv=defaultPriv(p);
+ const editable=canManage(p);
+ const canSee=k=>(editable || pv[k]!=="me");
+
+ const lines=[
+  `॥ શ્રી ગણેશાય નમઃ ॥`,
+  `💍 *સગાઈ બાયોડેટા (Wadbook)*`,
+  `━━━━━━━━━━━━━━`,
+  `👤 *નામ:* ${pre(p)+full(p)} ${shakh}`,
+  p.sur?`🏷️ *અટક:* ${p.sur}`:"",
+  (dobStr&&canSee("dob"))?`🎂 *જન્મ:* ${dobStr}${age!==null?` (${gu(age)} વર્ષ)`:""}`:"",
+  p.ht?`📏 *ઊંચાઈ:* ${p.ht}${p.wt?" | વજન: "+p.wt:""}`:"",
+  p.bg?`🩸 *બ્લડ ગ્રુપ:* ${p.bg}`:"",
+  p.edu?`🎓 *ભણતર:* ${p.edu}`:"",
+  p.job?`💼 *વ્યવસાય:* ${p.job}`:"",
+  p.inc?`💰 *આવક:* ${p.inc}`:"",
+  p.gam?`🏡 *મૂળ વતન:* ${p.gam}`:"",
+  p.rah?`📍 *હાલ રહેઠાણ:* ${p.rah}`:"",
+  dad?`👨 *પિતા:* ${pre(dad)+full(dad)}`:"",
+  mom?`👩 *માતા:* ${pre(mom)+full(mom)}`:"",
+  (p.mos&&canSee("kul"))?`🌾 *મોસાળપક્ષ:* ${p.mos}`:"",
+  (p.poh&&canSee("kul"))?`🌿 *પોહાળપક્ષ:* ${p.poh}`:"",
+  (p.mob&&canSee("mob"))?`📞 *સંપર્ક:* ${p.mob}`:"",
+  `━━━━━━━━━━━━━━`,
+  `🌳 *શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ • Wadbook*`
+ ].filter(Boolean).join("\n");
+
+ // Draw clean HD Biodata Image on Canvas for direct image sharing
+ const cv=document.createElement("canvas");
+ cv.width=720; cv.height=960;
+ const ctx=cv.getContext("2d");
+
+ // Cream & Gold Royal Background
+ const grad=ctx.createLinearGradient(0,0,0,960);
+ grad.addColorStop(0,"#fffbeb");
+ grad.addColorStop(1,"#fef3c7");
+ ctx.fillStyle=grad;
+ ctx.fillRect(0,0,720,960);
+
+ // Ornate Border
+ ctx.strokeStyle="#d97706";
+ ctx.lineWidth=12;
+ ctx.strokeRect(18,18,684,924);
+ ctx.strokeStyle="#6b141a";
+ ctx.lineWidth=3;
+ ctx.strokeRect(30,30,660,900);
+
+ // Header Banner
+ ctx.fillStyle="#6b141a";
+ ctx.fillRect(30,30,660,86);
+ ctx.fillStyle="#fde68a";
+ ctx.font="bold 24px sans-serif";
+ ctx.textAlign="center";
+ ctx.fillText("॥ શ્રી ગણેશાય નમઃ ॥", 360, 68);
+ ctx.fillStyle="#ffffff";
+ ctx.font="bold 20px sans-serif";
+ ctx.fillText("શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ • સગાઈ બાયોડેટા", 360, 100);
+
+ const finishShare=()=>{
+  // Name & Subtitles
+  ctx.fillStyle="#3b0a0e";
+  ctx.font="bold 34px sans-serif";
+  ctx.textAlign="center";
+  ctx.fillText(`${pre(p)+full(p)} ${shakh}`.trim(), 360, 325);
+
+  ctx.fillStyle="#9a3412";
+  ctx.font="bold 22px sans-serif";
+  ctx.fillText([p.sur?"અટક: "+p.sur:"", p.gam?"વતન: "+p.gam:""].filter(Boolean).join("  •  "), 360, 362);
+
+  // Details Box
+  ctx.fillStyle="rgba(255,255,255,0.92)";
+  ctx.fillRect(60,390,600,480);
+  ctx.strokeStyle="#f59e0b";
+  ctx.lineWidth=2;
+  ctx.strokeRect(60,390,600,480);
+
+  const rows=[
+   ["જન્મ તારીખ", (dobStr&&canSee("dob"))?`${dobStr}${age!==null?` (${gu(age)} વર્ષ)`:""}`:""],
+   ["જન્મ તિથિ", canSee("dob")?fmtTithi(p.gm,p.gp,p.gt):""],
+   ["ઊંચાઈ / વજન", [p.ht,p.wt].filter(Boolean).join(" • ")],
+   ["બ્લડ ગ્રુપ", p.bg],
+   ["ભણતર", p.edu],
+   ["વ્યવસાય", p.job],
+   ["વાર્ષિક આવક", p.inc],
+   ["હાલ રહેઠાણ", p.rah],
+   ["પિતાનું નામ", dad?pre(dad)+full(dad):""],
+   ["માતાનું નામ", mom?pre(mom)+full(mom):""],
+   ["મોસાળપક્ષ", canSee("kul")?p.mos:""],
+   ["પોહાળપક્ષ", canSee("kul")?p.poh:""],
+   ["સંપર્ક નંબર", (p.mob&&canSee("mob"))?p.mob:""]
+  ].filter(r=>r[1]);
+
+  ctx.textAlign="left";
+  let y=432;
+  rows.slice(0,11).forEach(([k,v])=>{
+   ctx.fillStyle="#78716c";
+   ctx.font="bold 20px sans-serif";
+   ctx.fillText(k+" :", 85, y);
+   ctx.fillStyle="#1c1917";
+   ctx.font="bold 21px sans-serif";
+   ctx.fillText(String(v).slice(0,34), 265, y);
+   y+=39;
+  });
+
+  ctx.fillStyle="#6b141a";
+  ctx.font="bold 19px sans-serif";
+  ctx.textAlign="center";
+  ctx.fillText("🌳 Wadbook પરિવાર એપ દ્વારા બનાવેલ બાયોડેટા", 360, 910);
+
+  cv.toBlob(blob=>{
+   if(blob && navigator.canShare){
+    const file=new File([blob], `${p.n}_biodata.jpg`, {type:"image/jpeg"});
+    if(navigator.canShare({files:[file]})){
+     navigator.share({files:[file], title:"સગાઈ બાયોડેટા", text:lines}).catch(()=>{});
+     return;
+    }
+   }
+   if(navigator.share){
+    navigator.share({title:"સગાઈ બાયોડેટા", text:lines}).catch(()=>{});
+   } else {
+    alert(lines);
+   }
+  },"image/jpeg",0.9);
+ };
+
+ // Draw Avatar Circle on Biodata Canvas
+ ctx.save();
+ ctx.beginPath();
+ ctx.arc(360, 205, 72, 0, Math.PI*2);
+ ctx.closePath();
+ ctx.clip();
+ if(p.img){
+  const im=new Image();
+  im.onload=()=>{
+   ctx.drawImage(im, 288, 133, 144, 144);
+   ctx.restore();
+   ctx.beginPath();ctx.arc(360,205,72,0,Math.PI*2);ctx.strokeStyle="#22c55e";ctx.lineWidth=6;ctx.stroke();
+   finishShare();
+  };
+  im.src=p.img;
+ } else {
+  ctx.fillStyle="#15803d";
+  ctx.fillRect(288,133,144,144);
+  ctx.restore();
+  ctx.beginPath();ctx.arc(360,205,72,0,Math.PI*2);ctx.strokeStyle="#22c55e";ctx.lineWidth=6;ctx.stroke();
+  ctx.fillStyle="#fff";
+  ctx.font="bold 62px sans-serif";
+  ctx.textAlign="center";
+  ctx.fillText((p.n||"?")[0], 360, 226);
+  finishShare();
+ }
+}
+
 function show(id,skipPush=false){
  cur=id;const p=get(id);if(!p)return empty();
  const isSelf=(id==D.me);
@@ -806,7 +1101,7 @@ function show(id,skipPush=false){
     <button class="pm" onclick="tab('tv',false,${id},'piyar')">${wadLabel}</button>
     ${canSee("fam")?`<button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
     ${canSee("tul")?`<button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>`:""}
-    <button onclick="shareProfile(${id})">📤 શેર કરો</button>
+    ${p.s==="u"?`<button class="gr-btn" onclick="openBiodata(${id})">💍 સગાઈ બાયોડેટા</button>`:`<button onclick="shareProfile(${id})">📤 શેર કરો</button>`}
     ${editable?`<button onclick="addMember(${id})">➕ નામ ઉમેરો</button><button onclick="edit(${id})">✏️ વિગત ફેરવો</button>`:""}
   </div>`;
  }
@@ -827,6 +1122,8 @@ function show(id,skipPush=false){
   rw("બ્લડ ગ્રુપ", esc(p.bg)),
   (p.s!="d") ? rw("ભણતર", esc(p.edu)) : "",
   (p.s!="d") ? rw("વ્યવસાય", esc(p.job)) : "",
+  (p.s=="u" && (p.ht||p.wt)) ? rw("ઊંચાઈ / વજન", esc([p.ht,p.wt].filter(Boolean).join(" • "))) : "",
+  (p.s=="u" && p.inc) ? rw("વાર્ષિક આવક", esc(p.inc)) : "",
   canSee("kul") ? rw("મોસાળપક્ષ", esc(p.mos), true) : "",
   canSee("kul") ? rw("પોહાળપક્ષ", esc(p.poh), true) : "",
   canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : ""
@@ -850,7 +1147,7 @@ function show(id,skipPush=false){
  ${line1?`<p class="ln">${line1}</p>`:""}
  ${line2?`<p class="bio">${line2}</p>`:""}
  ${p.bio?`<div class="bio-box">“${esc(p.bio)}”</div>`:""}
- <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isSelf?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
+ <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isSelf?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr" onclick="showSagai()"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય ›</small></div></div>
  ${actionButtons}
  ${infoRows?`<div class="bx">${infoRows}</div>`:""}
  ${canSee("fam") && fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>${fam.map(([q,r])=>card(q,r)).join("")}`:(!canSee("fam")?`<div class="priv-note">🔒 પરિવારની વિગત પ્રાઇવેટ રાખવામાં આવી છે</div>`:"")}</div>`;
@@ -964,7 +1261,7 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
  $("#dp").innerHTML=me?`${avHtml(me)}<div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
  const it=[
-  ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","soon()","hl soon"],
+  ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","menu(0);showSagai()","hl"],
   ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","soon()","soon"],
   ["📤","મારો વડ શેર કરો","વોટ્સએપ પર પરિવારની લિંક મોકલો","menu(0);shareProfile(D.me)",""],
   ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]
