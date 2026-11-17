@@ -67,17 +67,18 @@ main { flex: 1; position: relative; overflow: hidden; }
 #stage svg { position: absolute; inset: 0; fill: none; stroke: #facc15; stroke-width: 3; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.85)); }
 .em { margin: 120px 20px; text-align: center; font-size: 18px; font-weight: 700; color: #fcd34d; }
 
-/* Nodes & Crisp 4K Rings */
+/* Nodes & Crisp 4K Rings + Profile Photo Support */
 .nd { position: absolute; width: 112px; transform: translateX(-50%); text-align: center; transition: opacity .2s; }
 .nd.dim { opacity: .2; }
 .nd b { display: block; font-size: 14px; font-weight: 800; margin-top: 5px; line-height: 1.2; color: #fff; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 3px #000; }
 .nd.me b { color: #fde047; }
-.r { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: #fef3c7; color: #7c2d12; font-style: normal; font-weight: 800; font-size: 21px; border: 4px solid; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65); }
+.r { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: #fef3c7; color: #7c2d12; font-style: normal; font-weight: 800; font-size: 21px; border: 4px solid; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65); overflow: hidden; flex-shrink: 0; }
+.r img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .r.red { border-color: #ef4444; }
 .r.blue { border-color: #2563eb; }
 .r.green { border-color: #22c55e; }
 .r.sm { width: 34px; height: 34px; font-size: 15px; border-width: 3px; margin-right: 10px; box-shadow: none; }
-.r.big { width: 88px; height: 88px; font-size: 38px; border-width: 4px; background: #1e40af; color: #fff; border-color: #1d4ed8; box-shadow: none; }
+.r.big { width: 92px; height: 92px; font-size: 38px; border-width: 4px; background: #1e40af; color: #fff; border-color: #1d4ed8; box-shadow: none; }
 
 /* Zoom Controls */
 #zc { position: absolute; right: 12px; bottom: 18px; z-index: 4; display: flex; flex-direction: column; gap: 6px; align-items: center; background: rgba(7, 24, 14, 0.78); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.15); padding: 6px; border-radius: 16px; touch-action: none; }
@@ -85,11 +86,11 @@ main { flex: 1; position: relative; overflow: hidden; }
 #zc button:nth-child(4) { background: #d97706; }
 #zl { font-size: 11px; font-weight: 700; color: #fcd34d; }
 
-/* Profile Page */
+/* Profile Page & Custom Cover / Wad Banner */
 #pf { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #fff; color: #1c1917; padding: 0 0 28px; touch-action: pan-y; overscroll-behavior-y: auto; }
 .pad { padding: 20px 16px; }
 .cv {
-  height: 152px;
+  height: 165px;
   position: relative;
   overflow: hidden;
   background-color: #5c1d16;
@@ -97,9 +98,40 @@ main { flex: 1; position: relative; overflow: hidden; }
   background-size: cover;
   background-position: center;
 }
+.cv-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  background: rgba(0,0,0,0.58);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 99px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
 
-#pf .pr { padding: 0 14px; margin-top: -46px; position: relative; z-index: 2; }
-#pf .pr .r.big { box-shadow: 0 0 0 4px #fff, 0 4px 14px rgba(0, 0, 0, 0.22); margin-left: 4px; }
+#pf .pr { padding: 0 14px; margin-top: -48px; position: relative; z-index: 2; }
+.av-wrap { position: relative; display: inline-block; margin-left: 4px; }
+#pf .pr .r.big { box-shadow: 0 0 0 4px #fff, 0 4px 14px rgba(0, 0, 0, 0.22); }
+.cam-badge {
+  position: absolute;
+  right: -2px;
+  bottom: 2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #6b141a;
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
 #pf .pr h2 { margin: 10px 0 4px; font-size: 23px; font-weight: 800; line-height: 1.25; color: #3b0a0e; text-align: center; }
 .hd { text-align: center; }
 .hd h2 { margin: 6px 0 3px; font-size: 24px; font-weight: 800; color: #3b0a0e; }
@@ -130,6 +162,59 @@ main { flex: 1; position: relative; overflow: hidden; }
   font-size: 13.5px;
   font-weight: 800;
   text-decoration: none;
+}
+
+/* Parivar Group Photo Frame */
+.fam-photo-box {
+  margin: 12px 0 14px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 5px 15px rgba(180, 83, 9, 0.14);
+  position: relative;
+}
+.fam-photo-box img {
+  width: 100%;
+  max-height: 230px;
+  object-fit: cover;
+  display: block;
+}
+.fam-photo-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fef3c7;
+  font-size: 13px;
+  font-weight: 800;
+  color: #7c2d12;
+}
+.fam-photo-bar button {
+  border: 1px solid #d97706;
+  background: #fff;
+  color: #7c2d12;
+  border-radius: 99px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+.fam-photo-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 12px 0;
+  padding: 13px;
+  border: 2px dashed #d97706;
+  border-radius: 18px;
+  background: #fffbeb;
+  color: #92400e;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
 }
 
 /* Visual Nuclear Family Graphic Card */
@@ -199,6 +284,30 @@ main { flex: 1; position: relative; overflow: hidden; }
 .ac { display: flex; flex-direction: column; gap: 8px; }
 .ac button, .bk { width: 100%; border: 1.5px solid #d6d3d1; border-radius: 99px; padding: 13px; background: #fff; color: #1c1917; font: inherit; font-weight: 800; font-size: 15.5px; }
 .bk { background: linear-gradient(90deg, #ea580c, #6b141a); color: #fff; border: 0; margin-top: 20px; }
+
+/* Photo Picker Row in Form */
+.photo-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.photo-btns { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.photo-btns button {
+  border: 1.5px solid #d97706;
+  background: #fffbeb;
+  color: #7c2d12;
+  border-radius: 99px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+.photo-btns button.del-p { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
 
 /* Bottom Sheet / Structured Smart Form */
 #sh { position: fixed; inset: 0; z-index: 9; background: #000b; display: flex; align-items: flex-end; touch-action: pan-y; }

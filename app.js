@@ -1,8 +1,8 @@
 const $=s=>document.querySelector(s),gu=n=>String(n).replace(/\d/g,d=>"૦૧૨૩૪૫૬૭૮૯"[d]);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const K="wadbook-v1";let D;try{D=JSON.parse(localStorage.getItem(K))}catch(e){}
-D=D||{ps:[],me:null,ja:""};
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){}};
+D=D||{ps:[],me:null,ja:"",wadCover:""};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){alert("ફોન સ્ટોરેજ ભરાઈ ગયું છે, થોડા નાના ફોટા રાખો.")}};
 const ST={d:["red","સ્વર્ગવાસ"],m:["blue","પરિણીત"],u:["green","અપરિણીત"]};
 const get=id=>D.ps.find(p=>p.id==id),nid=()=>Math.max(0,...D.ps.map(p=>p.id))+1;
 const kids=p=>D.ps.filter(c=>c.f==p.id&&c.g!="F").sort((a,b)=>(a.yr||9999)-(b.yr||9999));
@@ -31,13 +31,107 @@ function defaultPriv(p){
   }, (p&&p.priv)||{});
 }
 
-// Check if current logged-in user can manage/edit this profile (self OR family member created by me)
 function canManage(p){
   if(!p || !D.me)return false;
   if(p.id==D.me)return true;
   if(p.createdBy && p.createdBy!=D.me && !p.claimedBy)return false;
   if(p.claimedBy && p.claimedBy!=D.me)return false;
   return true;
+}
+
+// --- Smart Image Auto-Compressor (HD quality, ultra-low KB size) ---
+function pickImage(maxDim, quality, cb){
+  const inp=document.createElement("input");
+  inp.type="file";
+  inp.accept="image/*";
+  inp.onchange=e=>{
+    const file=e.target.files && e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width, h=img.height;
+        if(w>maxDim || h>maxDim){
+          if(w>h){h=Math.round(h*(maxDim/w));w=maxDim;}
+          else{w=Math.round(w*(maxDim/h));h=maxDim;}
+        }
+        const cv=document.createElement("canvas");
+        cv.width=w;cv.height=h;
+        const ctx=cv.getContext("2d");
+        ctx.drawImage(img,0,0,w,h);
+        cb(cv.toDataURL("image/jpeg",quality));
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+// Avatar Renderer (Shows Photo if uploaded, otherwise crisp Gujarati first letter)
+function avHtml(p, cls=""){
+  const st=ST[p.s]?ST[p.s][0]:"blue";
+  const inner=p.img?`<img src="${p.img}" alt="">`:esc((p.n||"?")[0]);
+  return `<i class="r ${st} ${cls}">${inner}</i>`;
+}
+
+function quickProfilePhoto(id){
+  const p=get(id);
+  if(!p || !canManage(p))return;
+  pickImage(280, 0.78, dataUrl=>{
+    p.img=dataUrl;
+    save();
+    show(id,true);
+    toast("📸 પ્રોફાઇલ ફોટો અપડેટ થઈ ગયો");
+  });
+}
+
+function quickCoverPhoto(id){
+  const p=get(id);
+  if(!p || !canManage(p))return;
+  pickImage(820, 0.76, dataUrl=>{
+    if(id==D.me)D.wadCover=dataUrl;
+    p.cover=dataUrl;
+    save();
+    show(id,true);
+    toast("🏞️ વડ / કવર ફોટો સેવ થઈ ગયો");
+  });
+}
+
+function quickFamilyPhoto(id){
+  const p=get(id);
+  if(!p || !canManage(p))return;
+  pickImage(760, 0.78, dataUrl=>{
+    const {husb,wife}=getNuclearFamily(p);
+    p.famImg=dataUrl;
+    if(husb)husb.famImg=dataUrl;
+    if(wife)wife.famImg=dataUrl;
+    save();
+    showFamily(id,true);
+    toast("👨‍👩‍👧‍👦 પરિવારનો ફોટો સેવ થઈ ગયો");
+  });
+}
+
+function removeFamilyPhoto(id){
+  const p=get(id);
+  if(!p || !canManage(p))return;
+  if(confirm("પરિવારનો ફોટો હટાવવો છે?")){
+    const {husb,wife}=getNuclearFamily(p);
+    delete p.famImg;
+    if(husb)delete husb.famImg;
+    if(wife)delete wife.famImg;
+    save();
+    showFamily(id,true);
+  }
+}
+
+function toast(msg){
+  const t=$("#ts");
+  t.textContent=msg;
+  t.hidden=false;
+  clearTimeout(soon.t);
+  soon.t=setTimeout(()=>t.hidden=true,1900);
 }
 
 // --- Automatic Age & Date Helpers ---
@@ -165,13 +259,26 @@ function pre(p){
 const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
 const privSel=(id,val)=>Object.entries(PRIV_OPTS).map(([k,v])=>`<option value="${k}" ${val==k?"selected":""}>${v}</option>`).join("");
 
-// --- Comprehensive Smart Profile Form ---
+// --- Comprehensive Smart Profile Form (Includes Profile Photo & Cover Photo Upload) ---
+let tempImg=null, tempCover=null;
 function openProfileForm(title, v, isRoot, cb){
  const pv=defaultPriv(v);
  const jaVal=(v.ja!==undefined)?v.ja:(isRoot?D.ja:"");
+ tempImg=(v.img!==undefined)?v.img:null;
+ tempCover=(v.cover!==undefined)?v.cover:(isRoot?D.wadCover:null);
 
  $("#sh").innerHTML=`<div class="card">
   <h3>${title}</h3>
+
+  <div class="f-sec">📸 પ્રોફાઇલ ફોટો અને વડ / કવર ફોટો</div>
+  <div class="photo-edit-row">
+    <div id="prevAv">${avHtml({...v,img:tempImg,n:v.n||"વ"})}</div>
+    <div class="photo-btns">
+      <button type="button" onclick="pickFormAv()">📷 પ્રોફાઇલ ફોટો</button>
+      <button type="button" onclick="pickFormCov()">🏞️ કવર / વડ ફોટો</button>
+      ${tempImg?`<button type="button" class="del-p" onclick="tempImg=null;$('#prevAv').innerHTML=avHtml({n:$('#f_n').value||'વ',s:$('#f_s').value})">✕ ફોટો કાઢો</button>`:""}
+    </div>
+  </div>
 
   <div class="f-sec">૧. મૂળભૂત ઓળખ (જાતિ & અટક)</div>
   <div class="g2">
@@ -254,6 +361,8 @@ function openProfileForm(title, v, isRoot, cb){
   if(!yr && dob)yr=dob.slice(0,4);
   const o={
    n,
+   img:tempImg,
+   cover:tempCover,
    ja:$("#f_ja").value.trim(),
    sur:$("#f_sur").value.trim(),
    g:$("#f_g").value,
@@ -290,6 +399,20 @@ function openProfileForm(title, v, isRoot, cb){
  };
 }
 
+function pickFormAv(){
+ pickImage(280, 0.78, dataUrl=>{
+  tempImg=dataUrl;
+  const box=$("#prevAv");
+  if(box)box.innerHTML=avHtml({img:tempImg,n:$("#f_n").value||"વ",s:$("#f_s").value});
+ });
+}
+function pickFormCov(){
+ pickImage(820, 0.76, dataUrl=>{
+  tempCover=dataUrl;
+  toast("🏞️ કવર ફોટો પસંદ થઈ ગયો — નીચે સાચવો દબાવો");
+ });
+}
+
 function toggleStatusRows(val){
  const d=$("#deathBox"), a=$("#aliveBox");
  if(d)d.hidden=(val!="d");
@@ -302,7 +425,7 @@ const shut=()=>{$("#sh").hidden=true};
 
 function first(){
  openProfileForm("તમારી પ્રોફાઇલ બનાવો",{s:"m",g:"M"},true,o=>{
-  D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};
+  D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja,wadCover:o.cover||""};
   save();shut();navStack=[];show(1);
  });
 }
@@ -312,7 +435,10 @@ function edit(id){
  if(!canManage(p)){alert("તમે આ પ્રોફાઇલ એડિટ ન કરી શકો");return;}
  openProfileForm("✏️ વિગત ફેરવો",p,id==D.me,o=>{
   Object.assign(p,o);
-  if(id==D.me && o.ja)D.ja=o.ja;
+  if(id==D.me){
+   if(o.ja)D.ja=o.ja;
+   if(o.cover)D.wadCover=o.cover;
+  }
   save();shut();show(id,true);
   if(!$("#tv").hidden)draw(treeTarget,treeSide);
  });
@@ -482,17 +608,18 @@ function showFamily(id,skipPush=false){
  const editable=canManage(p);
  const mainPerson=husb||wife||p;
  const totalCount=(husb?1:0)+(wife?1:0)+children.length;
+ const famPhoto=p.famImg || (husb&&husb.famImg) || (wife&&wife.famImg) || "";
 
  const node=(q,role)=>`
    <div class="par-node" onclick="show(${q.id})">
-     <i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i>
+     ${avHtml(q)}
      <b>${esc(pre(q)+q.n)}</b>
      <small>${role}${q.yr?" • "+gu(q.yr):""}</small>
    </div>`;
 
  const rowCard=(q,rel)=>`
    <div class="fm">
-     <i class="r ${ST[q.s][0]}" onclick="show(${q.id})">${esc(q.n[0])}</i>
+     <div onclick="show(${q.id})">${avHtml(q)}</div>
      <div onclick="show(${q.id})">
        <b>${esc(pre(q)+full(q))}</b>
        <small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
@@ -513,11 +640,23 @@ function showFamily(id,skipPush=false){
       ? `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પત્ની</b><small>ઉમેરેલ નથી</small></div>`);
 
+ const famPhotoHtml=famPhoto
+   ? `<div class="fam-photo-box">
+        <img src="${famPhoto}" alt="પરિવાર ફોટો">
+        <div class="fam-photo-bar">
+          <span>👨‍👩‍👧‍👦 ${esc(pre(mainPerson)+full(mainPerson))} પરિવાર</span>
+          ${editable?`<div><button onclick="quickFamilyPhoto(${id})">📸 બદલો</button> <button onclick="removeFamilyPhoto(${id})">✕</button></div>`:""}
+        </div>
+      </div>`
+   : (editable?`<button class="fam-photo-add" onclick="quickFamilyPhoto(${id})">📸 ઘર-પરિવારનો ગ્રુપ ફોટો ઉમેરો</button>`:"");
+
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
     <h2>👨‍👩‍👧‍👦 ${isSelf?"મારો પરિવાર":"તેમનો પરિવાર"}</h2>
     <p>${esc(pre(mainPerson)+full(mainPerson))} નો ઘર-પરિવાર</p>
   </div>
+
+  ${famPhotoHtml}
 
   <div class="par-tree">
     <div class="par-badge">🏡 ઘર-પરિવાર • ${gu(totalCount)} સભ્યો</div>
@@ -559,7 +698,7 @@ function show(id,skipPush=false){
  const pv=defaultPriv(p);
  const canSee=k=>(editable || pv[k]!=="me");
 
- // 1. Name Heading uses Jati/Shakha (e.g., શ્રી વિનયભાઈ કરશનભાઈ ટડાવા)
+ // 1. Name Heading uses Jati/Shakha
  const shakh=p.ja||(isSelf?D.ja:"");
  const titleSuffix=shakh||p.sur||"";
 
@@ -577,9 +716,9 @@ function show(id,skipPush=false){
  const gujDeath=fmtTithi(p.dm,p.dp,p.dt);
 
  const rw=(a,b,fullW=false)=>b?`<div class="rw${fullW?" full-rw":""}"><span>${a}</span><b>${b}</b></div>`:"";
- const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
+ const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})">${avHtml(q)}<div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
 
- // Action Buttons: Self vs Family Member managed by me vs External Visitor
+ // Action Buttons
  const husbObj=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
  const hasSasri=(p.g=="F" && husbObj && husbObj.g!="F");
 
@@ -610,13 +749,14 @@ function show(id,skipPush=false){
   </div>`;
  }
 
- // Fix Big Avatar Ring Color for Deceased (red), Married (blue), Unmarried (green)
- const bigRingStyle=(p.s=="d")?"background:#b91c1c;border-color:#ef4444;color:#fff":(p.s=="u"?"background:#15803d;border-color:#22c55e;color:#fff":"");
+ // Big Avatar & Cover Banner
+ const bigRingStyle=p.img?"background:#fff":((p.s=="d")?"background:#b91c1c;border-color:#ef4444;color:#fff":(p.s=="u"?"background:#15803d;border-color:#22c55e;color:#fff":""));
+ const bigAvInner=p.img?`<img src="${p.img}" alt="">`:esc(p.n[0]);
+ const coverUrl=p.cover || (isSelf?D.wadCover:"");
+ const coverStyle=coverUrl?`style="background-image:url('${coverUrl}')"`:``;
 
- // Memorial Note for Deceased (Not an active login account, just family lineage connection)
  const memorialNote=(p.s=="d")?`<p style="text-align:center;margin:2px 0 8px"><span style="display:inline-block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:800">🕊️ સ્મૃતિ પ્રોફાઇલ • વંશાવળી જોડાણ માટે</span></p>`:"";
 
- // Bottom Info Box
  const infoRows=[
   canSee("dob") ? rw("જન્મ તારીખ", birthFull) : "",
   canSee("dob") ? rw("જન્મ તિથિ", esc(gujBirth)) : "",
@@ -630,8 +770,14 @@ function show(id,skipPush=false){
   canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : ""
  ].filter(Boolean).join("");
 
- $("#pf").innerHTML=`<div class="cv"></div>
- <div class="pr"><i class="r big ${c}" style="${bigRingStyle}">${esc(p.n[0])}</i>
+ $("#pf").innerHTML=`<div class="cv" ${coverStyle}>
+   ${editable?`<button class="cv-btn" onclick="quickCoverPhoto(${id})">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}</button>`:""}
+ </div>
+ <div class="pr">
+ <div class="av-wrap" ${editable?`onclick="quickProfilePhoto(${id})"`:""}>
+   <i class="r big ${c}" style="${bigRingStyle}">${bigAvInner}</i>
+   ${editable?`<span class="cam-badge">📷</span>`:""}
+ </div>
  <h2>${esc(pre(p)+full(p))}${titleSuffix?" "+esc(titleSuffix):""}</h2>
  ${memorialNote}
  ${line1?`<p class="ln">${line1}</p>`:""}
@@ -682,7 +828,7 @@ function draw(targetId,side="auto"){
  SW=Math.max(leaf,1)*W;SH=(mx+1)*H;let sv="",nd="";
  all.forEach(p=>{const[x,y]=pos[p.id];kids(p).forEach(c=>{const[cx,cy]=pos[c.id],a=y+52,b=cy+4,m=(a+b)/2;
   sv+=`<path d="M${x+W/2} ${a}C${x+W/2} ${m},${cx+W/2} ${m},${cx+W/2} ${b}"/>`});
-  nd+=`<div class="nd${p.id==D.me?" me":""}" data-s="${p.s}" style="left:${x+W/2}px;top:${y}px" onclick="tap(${p.id})"><i class="r ${ST[p.s][0]}">${esc(p.n[0])}</i><b>${esc(p.n)}</b></div>`});
+  nd+=`<div class="nd${p.id==D.me?" me":""}" data-s="${p.s}" style="left:${x+W/2}px;top:${y}px" onclick="tap(${p.id})">${avHtml(p)}<b>${esc(p.n)}</b></div>`});
  stg.style.cssText=`width:${SW}px;height:${SH}px`;stg.innerHTML=`<svg width="${SW}" height="${SH}">${sv}</svg>${nd}`;
  const cn=s=>all.filter(p=>p.s==s).length;
  $("#sub").textContent=`${sideTag}${gu(mx+1)} પેઢી • ${gu(all.length)} સભ્યો`;
@@ -710,9 +856,7 @@ function fit(){const w=vp.clientWidth,h=vp.clientHeight;T.z=Math.min(1,w/SW,h/SH
 function toggleFull(){
  document.body.classList.toggle("fs-tree");
  setTimeout(fit,60);
- const ts=$("#ts");
- ts.textContent=document.body.classList.contains("fs-tree")?"⛶ ફુલ સ્ક્રીન ચાલુ (ફરી ડબલ-ટેપ કરો)":"⛶ નોર્મલ સ્ક્રીન";
- ts.hidden=false;clearTimeout(soon.t);soon.t=setTimeout(()=>ts.hidden=true,1600);
+ toast(document.body.classList.contains("fs-tree")?"⛶ ફુલ સ્ક્રીન ચાલુ (ફરી ડબલ-ટેપ કરો)":"⛶ નોર્મલ સ્ક્રીન");
 }
 
 const ptr=new Map();let last=0,lastTapTime=0;
@@ -746,12 +890,12 @@ function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
 D.me&&get(D.me)?show(D.me):empty();
 
-function soon(){const t=$("#ts");t.textContent="🌿 ટૂંક સમયમાં આવશે";t.hidden=false;clearTimeout(soon.t);soon.t=setTimeout(()=>t.hidden=true,1800)}
+function soon(){toast("🌿 ટૂંક સમયમાં આવશે")}
 
 // Clean Drawer Menu
 function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
- $("#dp").innerHTML=me?`<i class="r ${ST[me.s][0]}">${esc(me.n[0])}</i><div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
+ $("#dp").innerHTML=me?`${avHtml(me)}<div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
  const it=[
   ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","soon()","hl soon"],
   ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","soon()","soon"],
@@ -792,7 +936,7 @@ function showTulsi(id,skipPush=false){
  while(q&&guard++<30){chain.push(q);q=momOf(q)}
  const LB=["","માતા","નાની","પરનાની"];
  const lab=i=>LB[i]||(gu(i)+"મી પેઢી ઉપર");
- const node=(q,role)=>`<div class="tk-n" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${role}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></div>`;
+ const node=(q,role)=>`<div class="tk-n" onclick="show(${q.id})">${avHtml(q)}<div><b>${esc(pre(q)+full(q))}</b><small>${role}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></div>`;
  const last=chain.length?chain[chain.length-1]:p;
  const parts=[...chain].reverse().map((q,i)=>node(q,lab(chain.length-i)));
  $("#pf").innerHTML=`<div class="pad">
