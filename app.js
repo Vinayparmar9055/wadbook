@@ -39,7 +39,6 @@ function canManage(p){
   return true;
 }
 
-// --- Native File Input Handler + Interactive Drag & Zoom Photo Cropper ---
 function handleFileSelect(inputEl, mode, targetType, targetId){
   const file=inputEl.files && inputEl.files[0];
   inputEl.value="";
@@ -176,7 +175,6 @@ function openCropModal(img, mode, cb){
   };
 }
 
-// Avatar Renderer
 function avHtml(p, cls=""){
   const st=ST[p.s]?ST[p.s][0]:"blue";
   const inner=p.img?`<img src="${p.img}" alt="">`:esc((p.n||"?")[0]);
@@ -204,7 +202,6 @@ function toast(msg){
   soon.t=setTimeout(()=>t.hidden=true,1900);
 }
 
-// --- Automatic Age & Date Helpers ---
 function calcAge(dob, yr){
   const now=new Date();
   if(dob && /^\d{4}-\d{2}-\d{2}$/.test(dob)){
@@ -231,7 +228,6 @@ function fmtTithi(m,p,t){
   return [m,p,t].filter(Boolean).join(" ");
 }
 
-// --- Block Browser Pinch-Zoom outside Wad Tree (#vp) & Cropper (#cropBox) ---
 document.addEventListener("touchmove",e=>{
  if(e.touches.length>1 && !e.target.closest("#vp") && !e.target.closest("#cropBox")){
   e.preventDefault();
@@ -241,7 +237,6 @@ document.addEventListener("gesturestart",e=>{
  if(!e.target.closest("#vp") && !e.target.closest("#cropBox"))e.preventDefault();
 });
 
-// --- Mobile Back Button / Gesture Navigation Stack ---
 let navStack=[], isPopping=false;
 function pushView(state){
  if(isPopping)return;
@@ -336,7 +331,6 @@ function pre(p){
 const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
 const privSel=(id,val)=>Object.entries(PRIV_OPTS).map(([k,v])=>`<option value="${k}" ${val==k?"selected":""}>${v}</option>`).join("");
 
-// --- Comprehensive Smart Profile Form (Includes Matrimony Height/Weight/Income when Unmarried) ---
 let tempImg=null, tempCover=null;
 function openProfileForm(title, v, isRoot, cb){
  const pv=defaultPriv(v);
@@ -359,11 +353,11 @@ function openProfileForm(title, v, isRoot, cb){
 
   <div class="f-sec">૧. મૂળભૂત ઓળખ (જાતિ & અટક)</div>
   <div class="g2">
-    <label>નામ *<input id="f_n" type="text" value="${esc(v.n||"")}" placeholder="દા.ત. વિનયભાઈ"></label>
-    <label>જાતિ / શાખ (નામ સાથે દેખાશે)<input id="f_ja" type="text" value="${esc(jaVal)}" placeholder="દા.ત. ટડાવા"></label>
+    <label>નામ *<input id="f_n" type="text" value="${esc(v.n||"")}" placeholder="નામ લખો"></label>
+    <label>જાતિ / શાખ (નામ સાથે દેખાશે)<input id="f_ja" type="text" value="${esc(jaVal)}" placeholder="જાતિ લખો"></label>
   </div>
   <div class="g2">
-    <label>અટક<input id="f_sur" type="text" value="${esc(v.sur||"")}" placeholder="દા.ત. પરમાર"></label>
+    <label>અટક<input id="f_sur" type="text" value="${esc(v.sur||"")}" placeholder="અટક લખો"></label>
     <label>લિંગ<select id="f_g"><option value="M" ${v.g!="F"?"selected":""}>પુરુષ</option><option value="F" ${v.g=="F"?"selected":""}>સ્ત્રી</option></select></label>
   </div>
   <div class="g2">
@@ -371,26 +365,26 @@ function openProfileForm(title, v, isRoot, cb){
     <label>બ્લડ ગ્રુપ<select id="f_bg">${selOpts(BLOOD,v.bg)}</select></label>
   </div>
   <div class="g2">
-    <label>મૂળ વતન - ગામ<input id="f_gam" type="text" value="${esc(v.gam||"")}" placeholder="દા.ત. ટડાય (બનાસકાંઠા)"></label>
-    <label>હાલ રહેઠાણ<input id="f_rah" type="text" value="${esc(v.rah||"")}" placeholder="દા.ત. ભાવનગર"></label>
+    <label>મૂળ વતન - ગામ<input id="f_gam" type="text" value="${esc(v.gam||"")}" placeholder="ગામનું નામ લખો"></label>
+    <label>હાલ રહેઠાણ<input id="f_rah" type="text" value="${esc(v.rah||"")}" placeholder="હાલનું શહેર / ગામ લખો"></label>
   </div>
-  <label>સંપર્ક / મોબાઇલ નંબર<input id="f_mob" type="tel" value="${esc(v.mob||"")}" placeholder="દા.ત. 8460209055"></label>
+  <label>સંપર્ક / મોબાઇલ નંબર<input id="f_mob" type="tel" value="${esc(v.mob||"")}" placeholder="મોબાઇલ નંબર લખો"></label>
 
   <div id="aliveBox" ${v.s=="d"?"hidden":""}>
     <div class="g2">
-      <label>ભણતર (હયાત હોય તો)<input id="f_edu" type="text" value="${esc(v.edu||"")}" placeholder="દા.ત. ૧૦ સુધી / B.A."></label>
-      <label>નોકરી / ધંધો / વ્યવસાય<input id="f_job" type="text" value="${esc(v.job||"")}" placeholder="દા.ત. વેપાર / નોકરી / ખેતી"></label>
+      <label>ભણતર (હયાત હોય તો)<input id="f_edu" type="text" value="${esc(v.edu||"")}" placeholder="ભણતર લખો"></label>
+      <label>નોકરી / ધંધો / વ્યવસાય<input id="f_job" type="text" value="${esc(v.job||"")}" placeholder="વ્યવસાય / નોકરી લખો"></label>
     </div>
   </div>
 
   <div id="sagaiBox" ${(v.s||"m")=="u"?"":"hidden"}>
     <div class="f-sec" style="background:#dcfce7;color:#14532d;border-color:#22c55e">💍 સગાઈ બાયોડેટા વિગત (અપરિણીત માટે)</div>
     <div class="g2">
-      <label>ઊંચાઈ (Height)<input id="f_ht" type="text" value="${esc(v.ht||"")}" placeholder="દા.ત. 5 ફૂટ 7 ઇંચ"></label>
-      <label>વજન (Weight)<input id="f_wt" type="text" value="${esc(v.wt||"")}" placeholder="દા.ત. 62 કિલો"></label>
+      <label>ઊંચાઈ (Height)<input id="f_ht" type="text" value="${esc(v.ht||"")}" placeholder="ઊંચાઈ લખો"></label>
+      <label>વજન (Weight)<input id="f_wt" type="text" value="${esc(v.wt||"")}" placeholder="વજન લખો"></label>
     </div>
     <div class="g2">
-      <label>વાર્ષિક આવક<input id="f_inc" type="text" value="${esc(v.inc||"")}" placeholder="દા.ત. 5 લાખ / નોકરી"></label>
+      <label>વાર્ષિક આવક<input id="f_inc" type="text" value="${esc(v.inc||"")}" placeholder="આવક લખો"></label>
       <label>સગાઈ માટે રસ છે?<select id="f_sagaiOpen"><option value="yes" ${(v.sagaiOpen||"yes")=="yes"?"selected":""}>હા, સગાઈ યોગ્ય</option><option value="no" ${v.sagaiOpen=="no"?"selected":""}>હમણાં નહીં</option></select></label>
     </div>
   </div>
@@ -398,7 +392,7 @@ function openProfileForm(title, v, isRoot, cb){
   <div class="f-sec">૨. જન્મ તારીખ, ઉંમર અને ગુજરાતી તિથિ</div>
   <div class="g2">
     <label>અંગ્રેજી જન્મ તારીખ<input id="f_dob" type="date" value="${esc(v.dob||"")}" onchange="autoFillYr(this.value)"></label>
-    <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" value="${esc(v.yr||"")}" placeholder="દા.ત. 1983"></label>
+    <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" value="${esc(v.yr||"")}" placeholder="જન્મ વર્ષ લખો"></label>
   </div>
   <label>ગુજરાતી જન્મ તિથિ (મહિનો • સુદ/વદ • તિથિ)</label>
   <div class="g3">
@@ -419,9 +413,9 @@ function openProfileForm(title, v, isRoot, cb){
   </div>
 
   <div class="f-sec">૩. ત્રણેય કુળ-સંબંધો (ગામ અને અટક/જાતિ)</div>
-  <label>A. મોસાળપક્ષ (મારા મામાનું ઘર)<input id="f_mos" type="text" value="${esc(v.mos||"")}" placeholder="દા.ત. ભાવનગર (ગેલડા)"></label>
-  <label>B. પોહાળપક્ષ (પિતાના મામાનું ઘર)<input id="f_poh" type="text" value="${esc(v.poh||"")}" placeholder="દા.ત. અભેપુરા (ગોહેલ)"></label>
-  <label>C. સાસરીપક્ષ (લગ્ન થયા હોય તો સાસરીનું ઘર)<input id="f_sas" type="text" value="${esc(v.sas||"")}" placeholder="દા.ત. સિદ્ધપુર (ભૈડુસા)"></label>
+  <label>A. મોસાળપક્ષ (મારા મામાનું ઘર)<input id="f_mos" type="text" value="${esc(v.mos||"")}" placeholder="માતાના પિયરની જાતિ અને ગામ લખો"></label>
+  <label>B. પોહાળપક્ષ (પિતાના મામાનું ઘર)<input id="f_poh" type="text" value="${esc(v.poh||"")}" placeholder="પિતાના મોસાળની જાતિ અને ગામ લખો"></label>
+  <label>C. સાસરીપક્ષ (લગ્ન થયા હોય તો સાસરીનું ઘર)<input id="f_sas" type="text" value="${esc(v.sas||"")}" placeholder="સાસરીની જાતિ અને ગામ લખો"></label>
 
   <div class="f-sec">૪. મારો પરિચય / વિચાર (Bio - ૧૦૦ શબ્દો સુધી)</div>
   <textarea id="f_bio" maxlength="600" placeholder="તમારા વિચારો, સામાજિક પ્રવૃત્તિ કે પોતાના વિશે ટૂંકમાં લખો...">${esc(v.bio||"")}</textarea>
@@ -532,10 +526,10 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
 
  $("#sh").innerHTML=`<div class="card"><h3>➕ નામ ઉમેરો (${esc(p.n)})</h3>
   <label>સંબંધ પસંદ કરો<select id="f_rel">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${defaultRel==a?"selected":""}>${b}</option>`).join("")}</select></label>
-  <label>નામ *<input id="f_n" type="text" placeholder="સભ્યનું નામ"></label>
+  <label>નામ *<input id="f_n" type="text" placeholder="નામ લખો"></label>
   <div class="g2">
     <label>જન્મ તારીખ<input id="f_dob" type="date" onchange="if(this.value&&!$('#f_yr').value)$('#f_yr').value=this.value.slice(0,4)"></label>
-    <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" placeholder="1990"></label>
+    <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" placeholder="જન્મ વર્ષ લખો"></label>
   </div>
   <label>સ્થિતિ<select id="f_s">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${defStatus==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>
   <div class="bt"><button onclick="shut()">રદ કરો</button><button class="pr" id="ok">સાચવો</button></div>
@@ -715,7 +709,7 @@ function showFamily(id,skipPush=false){
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પતિ</b><small>ઉમેરેલ નથી</small></div>`);
 
  const rightSlot=wife
-   ? node(wife, husb?"પત્ની":"પત્ની / મુખ્ય")
+   ? node(wife, husb?"પત્ની":"પત્नी / મુખ્ય")
    : (editable
       ? `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પત્ની</b><small>ઉમેરેલ નથી</small></div>`);
@@ -770,7 +764,7 @@ function showFamily(id,skipPush=false){
  if(!skipPush)pushView({v:"fam",id});
 }
 
-// ===== સ્માર્ટ સગાઈ બાયોડેટા વિભાગ (Smart Matrimony Directory & Shareable Biodata Card) =====
+// ===== સ્માર્ટ સગાઈ બાયોડેટા વિભાગ =====
 let sagFilter="all", sagSearch="";
 
 function showSagai(skipPush=false){
@@ -836,7 +830,6 @@ function showSagai(skipPush=false){
  if(!skipPush)pushView({v:"sag"});
 }
 
-// Royal Shareable Biodata Card Modal
 function openBiodata(id){
  const p=get(id);if(!p)return;
  const editable=canManage(p);
@@ -886,7 +879,6 @@ function openBiodata(id){
  try{history.pushState({modal:1},"");}catch(e){}
 }
 
-// Generate HD Image of Biodata Card and Share via WhatsApp / Native Share
 function shareBiodataCard(id){
  const p=get(id);if(!p)return;
  const shakh=p.ja||D.ja||p.sur||"";
@@ -919,21 +911,19 @@ function shareBiodataCard(id){
   (p.mob&&canSee("mob"))?`📞 *સંપર્ક:* ${p.mob}`:"",
   `━━━━━━━━━━━━━━`,
   `🌳 *શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ • Wadbook*`
- ].filter(Boolean).join("\n");
+ ].filter(Boolean).join("
+");
 
- // Draw clean HD Biodata Image on Canvas for direct image sharing
  const cv=document.createElement("canvas");
  cv.width=720; cv.height=960;
  const ctx=cv.getContext("2d");
 
- // Cream & Gold Royal Background
  const grad=ctx.createLinearGradient(0,0,0,960);
  grad.addColorStop(0,"#fffbeb");
  grad.addColorStop(1,"#fef3c7");
  ctx.fillStyle=grad;
  ctx.fillRect(0,0,720,960);
 
- // Ornate Border
  ctx.strokeStyle="#d97706";
  ctx.lineWidth=12;
  ctx.strokeRect(18,18,684,924);
@@ -941,7 +931,6 @@ function shareBiodataCard(id){
  ctx.lineWidth=3;
  ctx.strokeRect(30,30,660,900);
 
- // Header Banner
  ctx.fillStyle="#6b141a";
  ctx.fillRect(30,30,660,86);
  ctx.fillStyle="#fde68a";
@@ -953,7 +942,6 @@ function shareBiodataCard(id){
  ctx.fillText("શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ • સગાઈ બાયોડેટા", 360, 100);
 
  const finishShare=()=>{
-  // Name & Subtitles
   ctx.fillStyle="#3b0a0e";
   ctx.font="bold 34px sans-serif";
   ctx.textAlign="center";
@@ -963,7 +951,6 @@ function shareBiodataCard(id){
   ctx.font="bold 22px sans-serif";
   ctx.fillText([p.sur?"અટક: "+p.sur:"", p.gam?"વતન: "+p.gam:""].filter(Boolean).join("  •  "), 360, 362);
 
-  // Details Box
   ctx.fillStyle="rgba(255,255,255,0.92)";
   ctx.fillRect(60,390,600,480);
   ctx.strokeStyle="#f59e0b";
@@ -1019,7 +1006,6 @@ function shareBiodataCard(id){
   },"image/jpeg",0.9);
  };
 
- // Draw Avatar Circle on Biodata Canvas
  ctx.save();
  ctx.beginPath();
  ctx.arc(360, 205, 72, 0, Math.PI*2);
@@ -1055,16 +1041,13 @@ function show(id,skipPush=false){
  const pv=defaultPriv(p);
  const canSee=k=>(editable || pv[k]!=="me");
 
- // 1. Name Heading uses Jati/Shakha
  const shakh=p.ja||(isSelf?D.ja:"");
  const titleSuffix=shakh||p.sur||"";
 
- // 2. Top Handle: Atak, Vatan, Rahethan, Sampark (Mobile)
  const line1=[p.sur?"અટક: "+esc(p.sur):"", p.gam?"વતન: "+esc(p.gam):"", t].filter(Boolean).join(" • ");
  const mobBadge=(p.mob && canSee("mob") && p.s!="d")?`<a class="call-pill" href="tel:${esc(p.mob)}">📞 ${esc(p.mob)}</a>`:"";
  const line2=[p.rah?"રહેઠાણ: "+esc(p.rah):"", mobBadge].filter(Boolean).join(" • ");
 
- // Date + Auto Age + Gujarati Tithi
  const age=calcAge(p.dob,p.yr);
  const dobStr=fmtDate(p.dob,p.yr);
  const birthFull=dobStr ? (dobStr + (age!==null && p.s!="d" ? ` (${gu(age)} વર્ષ)` : "")) : "";
@@ -1075,7 +1058,6 @@ function show(id,skipPush=false){
  const rw=(a,b,fullW=false)=>b?`<div class="rw${fullW?" full-rw":""}"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})">${avHtml(q)}<div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
 
- // Action Buttons
  const husbObj=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
  const hasSasri=(p.g=="F" && husbObj && husbObj.g!="F");
 
@@ -1106,7 +1088,6 @@ function show(id,skipPush=false){
   </div>`;
  }
 
- // Big Avatar & Cover Banner
  const bigRingStyle=p.img?"background:#fff":((p.s=="d")?"background:#b91c1c;border-color:#ef4444;color:#fff":(p.s=="u"?"background:#15803d;border-color:#22c55e;color:#fff":""));
  const bigAvInner=p.img?`<img src="${p.img}" alt="">`:esc(p.n[0]);
  const coverUrl=p.cover || (isSelf?D.wadCover:"");
@@ -1201,7 +1182,6 @@ function draw(targetId,side="auto"){
 function flt(s){FS=s;document.querySelectorAll("#flt button").forEach((b,i)=>b.classList.toggle("on",["all","d","m","u"][i]==s));
  document.querySelectorAll(".nd").forEach(n=>n.classList.toggle("dim",s!="all"&&n.dataset.s!=s))}
 
-// --- 3D Parallax Zoom & Double-Tap Fullscreen for Banyan Tree ---
 let T={x:0,y:0,z:.8,baseZ:.8},moved=0;const vp=$("#vp"),st=$("#stage"),bg=$("#wadBg");
 const apply=()=>{
  st.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.z})`;
@@ -1256,7 +1236,6 @@ D.me&&get(D.me)?show(D.me):empty();
 
 function soon(){toast("🌿 ટૂંક સમયમાં આવશે")}
 
-// Clean Drawer Menu
 function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
  $("#dp").innerHTML=me?`${avHtml(me)}<div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
@@ -1271,7 +1250,6 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  try{history.pushState({menu:1},"");}catch(e){}
 }
 
-// ===== તુલસી ક્યારો (માતૃપક્ષ) =====
 (function(){
  if(document.getElementById("tk-css"))return;
  const s=document.createElement("style");s.id="tk-css";
