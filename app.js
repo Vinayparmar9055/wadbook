@@ -7,8 +7,56 @@ const ST={d:["red","સ્વર્ગવાસ"],m:["blue","પરિણીત"
 const get=id=>D.ps.find(p=>p.id==id),nid=()=>Math.max(0,...D.ps.map(p=>p.id))+1;
 const kids=p=>D.ps.filter(c=>c.f==p.id&&c.g!="F").sort((a,b)=>(a.yr||9999)-(b.yr||9999));
 
-const FD={n:["નામ","text"],yr:["જન્મ વર્ષ (દા.ત. 1983)","number"],s:["સ્થિતિ","sel"],g:["લિંગ","gen"],sur:["અટક","text"],ja:["જાતિ / શાખ","text"],gam:["મૂળ ગામ","text"],rah:["રહેઠાણ","text"],edu:["ભણતર","text"],job:["વ્યવસાય","text"],rel:["સંબંધ પસંદ કરો","rel"]};
 const RELS={dad:"પિતા",mom:"માતા",bro:"ભાઈ",sis:"બહેન",husb:"પતિ",wife:"પત્ની",son:"દીકરો",dau:"દીકરી"};
+const BLOOD=["A+","A-","B+","B-","O+","O-","AB+","AB-"];
+const GUJ_MONTHS=["કારતક","માગશર","પોષ","મહા","ફાગણ","ચૈત્ર","વૈશાખ","જેઠ","અષાઢ","શ્રાવણ","ભાદરવો","આસો"];
+const GUJ_PAKSH=["સુદ","વદ"];
+const GUJ_TITHI=["એકમ (૧)","બીજ (૨)","ત્રીજ (૩)","ચોથ (૪)","પાંચમ (૫)","છઠ્ઠ (૬)","સાતમ (૭)","આઠમ (૮)","નોમ (૯)","દશમ (૧૦)","અગિયારસ (૧૧)","બારસ (૧૨)","તેરસ (૧૩)","ચૌદશ (૧૪)","પૂનમ (૧૫)","અમાસ (૩૦)"];
+
+const PRIV_OPTS={
+  pub:"🌍 આખો સમાજ",
+  wad:"🌳 વડ / પિયર",
+  fam:"👨‍👩‍👧‍👦 મારો પરિવાર",
+  me:"🔒 ફક્ત હું"
+};
+
+function defaultPriv(p){
+  const isF=(p&&p.g=="F");
+  return Object.assign({
+    mob: isF?"fam":"pub",
+    dob: "pub",
+    kul: "pub",
+    fam: isF?"wad":"pub",
+    tul: isF?"wad":"pub"
+  }, (p&&p.priv)||{});
+}
+
+// --- Automatic Age & Date Helpers ---
+function calcAge(dob, yr){
+  const now=new Date();
+  if(dob && /^\d{4}-\d{2}-\d{2}$/.test(dob)){
+    const [y,m,d]=dob.split("-").map(Number);
+    let age=now.getFullYear()-y;
+    if(now.getMonth()+1<m || (now.getMonth()+1===m && now.getDate()<d))age--;
+    return age>=0?age:null;
+  }
+  if(yr && +yr>1850 && +yr<=now.getFullYear()){
+    return now.getFullYear()-(+yr);
+  }
+  return null;
+}
+
+function fmtDate(iso, yr){
+  if(iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)){
+    const [y,m,d]=iso.split("-");
+    return `${gu(d)}-${gu(m)}-${gu(y)}`;
+  }
+  return yr?gu(yr):"";
+}
+
+function fmtTithi(m,p,t){
+  return [m,p,t].filter(Boolean).join(" ");
+}
 
 // --- Block Browser Pinch-Zoom outside Wad Tree (#vp) ---
 document.addEventListener("touchmove",e=>{
@@ -105,29 +153,156 @@ function pre(p){
  return "શ્રી ";
 }
 
-function form(t,keys,v,cb){
- $("#sh").innerHTML=`<div class="card"><h3>${t}</h3>${keys.map(k=>{const[l,ty]=FD[k],x=v[k]??"";
-  if(ty=="sel")return `<label>${l}<select id="f_${k}">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${x==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>`;
-  if(ty=="gen")return `<label>${l}<select id="f_g"><option value="M">પુરુષ</option><option value="F" ${x=="F"?"selected":""}>સ્ત્રી</option></select></label>`;
-  if(ty=="rel")return `<label>${l}<select id="f_rel">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${x==a?"selected":""}>${b}</option>`).join("")}</select></label>`;
-  return `<label>${l}<input id="f_${k}" type="${ty}" value="${esc(x)}"></label>`}).join("")}
- <div class="bt"><button onclick="shut()">રદ કરો</button><button class="pr" id="ok">સાચવો</button></div></div>`;
+const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
+const privSel=(id,val)=>Object.entries(PRIV_OPTS).map(([k,v])=>`<option value="${k}" ${val==k?"selected":""}>${v}</option>`).join("");
+
+// --- Comprehensive Smart Profile Form (with Gujarati Tithi, Kul-Paksh & 4-Level Privacy) ---
+function openProfileForm(title, v, isRoot, cb){
+ const pv=defaultPriv(v);
+ const jaVal=(v.ja!==undefined)?v.ja:(isRoot?D.ja:"");
+
+ $("#sh").innerHTML=`<div class="card">
+  <h3>${title}</h3>
+
+  <div class="f-sec">૧. મૂળભૂત ઓળખ</div>
+  <div class="g2">
+    <label>નામ *<input id="f_n" type="text" value="${esc(v.n||"")}" placeholder="દા.ત. વિનયભાઈ"></label>
+    <label>અટક<input id="f_sur" type="text" value="${esc(v.sur||"")}" placeholder="દા.ત. પરમાર"></label>
+  </div>
+  <div class="g2">
+    <label>જાતિ / શાખ<input id="f_ja" type="text" value="${esc(jaVal)}" placeholder="દા.ત. ટડાવા"></label>
+    <label>લિંગ<select id="f_g"><option value="M" ${v.g!="F"?"selected":""}>પુરુષ</option><option value="F" ${v.g=="F"?"selected":""}>સ્ત્રી</option></select></label>
+  </div>
+  <div class="g2">
+    <label>સ્થિતિ<select id="f_s" onchange="toggleDeathRow(this.value)">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${(v.s||"m")==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>
+    <label>બ્લડ ગ્રુપ<select id="f_bg">${selOpts(BLOOD,v.bg)}</select></label>
+  </div>
+  <div class="g2">
+    <label>મોબાઇલ નંબર<input id="f_mob" type="tel" value="${esc(v.mob||"")}" placeholder="દા.ત. 9876543210"></label>
+    <label>ભણતર<input id="f_edu" type="text" value="${esc(v.edu||"")}" placeholder="દા.ત. ૧૦ સુધી / B.A."></label>
+  </div>
+  <div class="g2">
+    <label>મૂળ વતન - ગામ<input id="f_gam" type="text" value="${esc(v.gam||"")}" placeholder="દા.ત. ટડાય (બનાસકાંઠા)"></label>
+    <label>હાલ રહેઠાણ<input id="f_rah" type="text" value="${esc(v.rah||"")}" placeholder="દા.ત. ભાવનગર"></label>
+  </div>
+  <label>નોકરી / ધંધો / પોતાનો વ્યવસાય<input id="f_job" type="text" value="${esc(v.job||"")}" placeholder="દા.ત. વેપાર / નોકરી / ખેતી"></label>
+
+  <div class="f-sec">૨. જન્મ તારીખ, ઉંમર અને ગુજરાતી તિથિ</div>
+  <div class="g2">
+    <label>અંગ્રેજી જન્મ તારીખ<input id="f_dob" type="date" value="${esc(v.dob||"")}" onchange="autoFillYr(this.value)"></label>
+    <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" value="${esc(v.yr||"")}" placeholder="દા.ત. 1983"></label>
+  </div>
+  <label>ગુજરાતી જન્મ તિથિ (મહિનો • સુદ/વદ • તિથિ)</label>
+  <div class="g3">
+    <select id="f_gm">${selOpts(GUJ_MONTHS,v.gm)}</select>
+    <select id="f_gp">${selOpts(GUJ_PAKSH,v.gp)}</select>
+    <select id="f_gt">${selOpts(GUJ_TITHI,v.gt)}</select>
+  </div>
+
+  <div id="deathBox" ${v.s=="d"?"":"hidden"}>
+    <div class="f-sec" style="background:#fee2e2;color:#991b1b;border-color:#ef4444">🕊️ સ્વર્ગવાસ તારીખ અને પુણ્યતિથિ</div>
+    <label>અંગ્રેજી મરણ તારીખ<input id="f_dod" type="date" value="${esc(v.dod||"")}"></label>
+    <label>ગુજરાતી પુણ્યતિથિ (મહિનો • સુદ/વદ • તિથિ)</label>
+    <div class="g3">
+      <select id="f_dm">${selOpts(GUJ_MONTHS,v.dm)}</select>
+      <select id="f_dp">${selOpts(GUJ_PAKSH,v.dp)}</select>
+      <select id="f_dt">${selOpts(GUJ_TITHI,v.dt)}</select>
+    </div>
+  </div>
+
+  <div class="f-sec">૩. ત્રણેય કુળ-સંબંધો (ગામ અને અટક)</div>
+  <label>A. મોસાળપક્ષ (મારા મામાનું ઘર)<input id="f_mos" type="text" value="${esc(v.mos||"")}" placeholder="દા.ત. સાયડા (પ્રજાપતિ)"></label>
+  <label>B. સાસરીપક્ષ (લગ્ન થયા હોય તો સાસરીનું ઘર)<input id="f_sas" type="text" value="${esc(v.sas||"")}" placeholder="દા.ત. પાલનપુર (મકવાણા)"></label>
+  <label>C. પોહાળપક્ષ (પિતાના મામાનું ઘર)<input id="f_poh" type="text" value="${esc(v.poh||"")}" placeholder="દા.ત. ડીસા (પટેલ)"></label>
+
+  <div class="f-sec">૪. મારો પરિચય / વિચાર (Bio - ૧૦૦ શબ્દો સુધી)</div>
+  <textarea id="f_bio" maxlength="600" placeholder="તમારા વિચારો, સામાજિક પ્રવૃત્તિ કે પોતાના વિશે ટૂંકમાં લખો...">${esc(v.bio||"")}</textarea>
+
+  <div class="f-sec">૫. પ્રાઇવસી કંટ્રોલ (કોને શું દેખાડવું?)</div>
+  <div class="priv-box">
+    <div class="priv-row"><span>📞 મોબાઇલ નંબર</span><select id="pv_mob">${privSel("mob",pv.mob)}</select></div>
+    <div class="priv-row"><span>🎂 જન્મ તારીખ & ઉંમર</span><select id="pv_dob">${privSel("dob",pv.dob)}</select></div>
+    <div class="priv-row"><span>🌾 મોસાળ / સાસરી / પોહાળ</span><select id="pv_kul">${privSel("kul",pv.kul)}</select></div>
+    <div class="priv-row"><span>👨‍👩‍👧‍👦 મારો પરિવાર</span><select id="pv_fam">${privSel("fam",pv.fam)}</select></div>
+    <div class="priv-row"><span>🌿 તુલસી ક્યારો</span><select id="pv_tul">${privSel("tul",pv.tul)}</select></div>
+  </div>
+
+  <div class="bt"><button onclick="shut()">રદ કરો</button><button class="pr" id="ok">સાચવો</button></div>
+ </div>`;
+
  $("#sh").hidden=false;
  try{history.pushState({modal:1},"");}catch(e){}
  let busy=false;
  $("#ok").onclick=()=>{
   if(busy)return;
-  const o={};keys.forEach(k=>o[k]=$("#f_"+k).value.trim());
-  if(!o.n){alert("નામ લખો");return}
-  if("yr"in o)o.yr=o.yr?+o.yr:"";
+  const n=$("#f_n").value.trim();
+  if(!n){alert("નામ લખો");return;}
+  const dob=$("#f_dob").value.trim();
+  let yr=$("#f_yr").value.trim();
+  if(!yr && dob)yr=dob.slice(0,4);
+  const o={
+   n,
+   sur:$("#f_sur").value.trim(),
+   ja:$("#f_ja").value.trim(),
+   g:$("#f_g").value,
+   s:$("#f_s").value,
+   bg:$("#f_bg").value,
+   mob:$("#f_mob").value.trim(),
+   edu:$("#f_edu").value.trim(),
+   gam:$("#f_gam").value.trim(),
+   rah:$("#f_rah").value.trim(),
+   job:$("#f_job").value.trim(),
+   dob,
+   yr:yr?+yr:"",
+   gm:$("#f_gm").value,
+   gp:$("#f_gp").value,
+   gt:$("#f_gt").value,
+   dod:$("#f_dod").value.trim(),
+   dm:$("#f_dm").value,
+   dp:$("#f_dp").value,
+   dt:$("#f_dt").value,
+   mos:$("#f_mos").value.trim(),
+   sas:$("#f_sas").value.trim(),
+   poh:$("#f_poh").value.trim(),
+   bio:$("#f_bio").value.trim(),
+   priv:{
+    mob:$("#pv_mob").value,
+    dob:$("#pv_dob").value,
+    kul:$("#pv_kul").value,
+    fam:$("#pv_fam").value,
+    tul:$("#pv_tul").value
+   }
+  };
   busy=true;$("#ok").disabled=true;
-  const ok=cb(o);
-  if(ok===false){busy=false;$("#ok").disabled=false;}
- }}
+  cb(o);
+ };
+}
+
+function toggleDeathRow(val){
+ const b=$("#deathBox");
+ if(b)b.hidden=(val!="d");
+}
+function autoFillYr(dob){
+ if(dob && !$("#f_yr").value)$("#f_yr").value=dob.slice(0,4);
+}
 const shut=()=>{$("#sh").hidden=true};
 
-function first(){form("તમારી પ્રોફાઇલ બનાવો",["n","sur","g","ja","gam","rah","edu","job","yr","s"],{s:"m"},o=>{
- D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};save();shut();navStack=[];show(1)})}
+function first(){
+ openProfileForm("તમારી પ્રોફાઇલ બનાવો",{s:"m",g:"M"},true,o=>{
+  D={ps:[{id:1,f:null,...o}],me:1,ja:o.ja};
+  save();shut();navStack=[];show(1);
+ });
+}
+
+function edit(id){
+ const p=get(id);
+ openProfileForm("✏️ વિગત ફેરવો",p,id==D.me,o=>{
+  Object.assign(p,o);
+  if(id==D.me && o.ja)D.ja=o.ja;
+  save();shut();show(id,true);
+  if(!$("#tv").hidden)draw(treeTarget,treeSide);
+ });
+}
 
 function addMember(pid,defaultRel="son",returnToFamily=false){
  const p=get(pid);
@@ -135,22 +310,42 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
  const father=get(fatherId)||p;
  const defStatus=(defaultRel=="wife"||defaultRel=="husb"||defaultRel=="mom")?"m":"u";
 
- form("➕ નામ ઉમેરો",["rel","n","yr","s"],{rel:defaultRel,s:defStatus},o=>{
-  const id=nid(),r=o.rel;
+ $("#sh").innerHTML=`<div class="card"><h3>➕ નામ ઉમેરો</h3>
+  <label>સંબંધ પસંદ કરો<select id="f_rel">${Object.entries(RELS).map(([a,b])=>`<option value="${a}" ${defaultRel==a?"selected":""}>${b}</option>`).join("")}</select></label>
+  <label>નામ *<input id="f_n" type="text" placeholder="સભ્યનું નામ"></label>
+  <div class="g2">
+    <label>જન્મ તારીખ<input id="f_dob" type="date" onchange="if(this.value&&!$('#f_yr').value)$('#f_yr').value=this.value.slice(0,4)"></label>
+    <label>અથવા જન્મ વર્ષ<input id="f_yr" type="number" placeholder="1990"></label>
+  </div>
+  <label>સ્થિતિ<select id="f_s">${Object.entries(ST).map(([a,b])=>`<option value="${a}" ${defStatus==a?"selected":""}>${b[1]}</option>`).join("")}</select></label>
+  <div class="bt"><button onclick="shut()">રદ કરો</button><button class="pr" id="ok">સાચવો</button></div>
+ </div>`;
+ $("#sh").hidden=false;
+ try{history.pushState({modal:1},"");}catch(e){}
+ let busy=false;
+ $("#ok").onclick=()=>{
+  if(busy)return;
+  const r=$("#f_rel").value,n=$("#f_n").value.trim(),dob=$("#f_dob").value.trim(),s=$("#f_s").value;
+  let yr=$("#f_yr").value.trim();
+  if(!yr && dob)yr=dob.slice(0,4);
+  if(!n){alert("નામ લખો");return;}
+  yr=yr?+yr:"";
+  const id=nid();
   const g=(r=="mom"||r=="sis"||r=="wife"||r=="dau")?"F":"M";
 
   if(r=="son"||r=="dau"){
-   const dup=D.ps.find(x=>(x.f===fatherId||x.m===pid) && x.n===o.n && (x.yr||"")===(o.yr||"") && x.g===g);
-   if(dup){alert("આ બાળકનું નામ પરિવારમાં પહેલેથી ઉમેરેલું છે!");return false;}
+   const dup=D.ps.find(x=>(x.f===fatherId||x.m===pid) && x.n===n && (x.yr||"")===yr && x.g===g);
+   if(dup){alert("આ બાળકનું નામ પરિવારમાં પહેલેથી ઉમેરેલું છે!");return;}
   } else {
-   const dup=D.ps.find(x=>x.n===o.n && (x.yr||"")===(o.yr||"") && x.g===g && x.relTo===pid && x.relType===r);
-   if(dup){alert("આ નામ પહેલેથી ઉમેરેલું છે!");return false;}
+   const dup=D.ps.find(x=>x.n===n && (x.yr||"")===yr && x.g===g && x.relTo===pid && x.relType===r);
+   if(dup){alert("આ નામ પહેલેથી ઉમેરેલું છે!");return;}
   }
 
+  busy=true;$("#ok").disabled=true;
   const same=(r=="son"||r=="dau"||r=="bro"||r=="sis"||r=="dad");
-  const m={id,f:null,g,n:o.n,yr:o.yr,s:o.s,sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
+  const m={id,f:null,g,n,dob,yr,s,ja:same?(father.ja||D.ja||""):"",sur:same?(father.sur||""):"",gam:same?(father.gam||""):"",relTo:(r=="mom"||r=="dad"||r=="bro"||r=="sis")?pid:fatherId,relType:r};
   if(r=="dad"){
-    if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");return false;}
+    if(p.f&&get(p.f)){alert("પિતા પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     D.ps.push(m);p.f=id;
     const exMom=D.ps.find(x=>x.relType=="mom"&&(x.relTo==pid||x.relTo==fatherId));
     if(exMom){exMom.sp=id;m.sp=exMom.id;}
@@ -172,18 +367,18 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     m.f=p.f;
     D.ps.push(m);
   } else if(r=="mom"){
-    if(momOf(p)){alert("માતા પહેલેથી ઉમેરેલા છે");return false;}
+    if(momOf(p)){alert("માતા પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     m.sp=p.f||null;
     if(p.f&&get(p.f))get(p.f).sp=id;
     D.ps.push(m);
   } else if(r=="wife"){
-    if(p.sp&&get(p.sp)){alert("પત્ની પહેલેથી ઉમેરેલા છે");return false;}
+    if(p.sp&&get(p.sp)){alert("પત્ની પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     m.sp=pid;
     p.sp=id;
     D.ps.push(m);
     D.ps.forEach(c=>{if(c.f==pid&&!c.m)c.m=id;});
   } else if(r=="husb"){
-    if(p.sp&&get(p.sp)){alert("પતિ પહેલેથી ઉમેરેલા છે");return false;}
+    if(p.sp&&get(p.sp)){alert("પતિ પહેલેથી ઉમેરેલા છે");busy=false;$("#ok").disabled=false;return;}
     m.sp=pid;
     p.sp=id;
     D.ps.push(m);
@@ -191,7 +386,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
   }
   save();shut();
   if(returnToFamily==="tulsi")showTulsi(pid,true);else if(returnToFamily)showFamily(pid,true);else show(pid,true);
- });
+ };
 }
 
 function delMember(id,backId){
@@ -204,11 +399,6 @@ function delMember(id,backId){
  }
 }
 
-function edit(id){const p=get(id),k=["n","yr","s","sur","gam","rah","edu","job"];if(id==D.me)k.splice(3,0,"g","ja");
- form("વિગત ફેરવો",k,p,o=>{Object.assign(p,o);if(id==D.me)D.ja=o.ja;save();shut();show(id,true);if(!$("#tv").hidden)draw(treeTarget,treeSide)})}
-
-const REL=["","પિતા","દાદા","પરદાદા"];
-const dep=q=>{let d=1;while(q.f&&get(q.f)){q=get(q.f);d++}return d};
 function vs(p){
  const husb=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
  let r=(p.g=="F")?((husb&&husb.g!="F")?husb:(p.f&&get(p.f)?get(p.f):p)):p;
@@ -350,10 +540,27 @@ function show(id,skipPush=false){
  cur=id;const p=get(id);if(!p)return empty();
  const isOwner=(id==D.me);
  const[c,t]=ST[p.s],[g,n,u]=vs(p),fam=getFamilyList(p);
- const rw=(a,b)=>b?`<div class="rw"><span>${a}</span><b>${b}</b></div>`:"";
+ const pv=defaultPriv(p);
+ const canSee=k=>(isOwner || pv[k]!=="me");
+
+ // Handle Lines: Shakha + Vatan + Status, and Mobile + Rahethan
+ const shakh=p.ja||(isOwner?D.ja:"");
+ const line1=[shakh?"શાખ: "+esc(shakh):"", p.gam?"વતન: "+esc(p.gam):"", t].filter(Boolean).join(" • ");
+ const mobBadge=(p.mob && canSee("mob"))?`<a class="call-pill" href="tel:${esc(p.mob)}">📞 ${esc(p.mob)}</a>`:"";
+ const line2=[mobBadge, p.rah?"રહેઠાણ: "+esc(p.rah):""].filter(Boolean).join(" • ");
+
+ // Date + Auto Age + Gujarati Tithi
+ const age=calcAge(p.dob,p.yr);
+ const dobStr=fmtDate(p.dob,p.yr);
+ const birthFull=dobStr ? (dobStr + (age!==null && p.s!="d" ? ` (${gu(age)} વર્ષ)` : "")) : "";
+ const gujBirth=fmtTithi(p.gm,p.gp,p.gt);
+ const deathFull=fmtDate(p.dod,"");
+ const gujDeath=fmtTithi(p.dm,p.dp,p.dt);
+
+ const rw=(a,b,fullW=false)=>b?`<div class="rw${fullW?" full-rw":""}"><span>${a}</span><b>${b}</b></div>`:"";
  const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})"><i class="r ${ST[q.s][0]}">${esc(q.n[0])}</i><div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
 
- // Owner View vs Visitor View (Including Sasri Wad + Piyar Wad + Tulsi Kyaro for married women!)
+ // Owner View vs Visitor View
  const husbObj=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
  const hasSasri=(p.g=="F" && husbObj && husbObj.g!="F");
 
@@ -368,28 +575,45 @@ function show(id,skipPush=false){
   actionButtons=`<div class="ac2">
     <button class="pm" onclick="tab('tv',false,${id},'sasri')">🌳 સાસરી વડ</button>
     <button class="pm" onclick="tab('tv',false,${id},'piyar')">🌳 પિયર વડ</button>
-    <button onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>
-    <button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
+    ${canSee("fam")?`<button onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
+    ${canSee("tul")?`<button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>`:""}
     <button class="full-w" style="font-size:15px;padding:11px" onclick="shareProfile(${id})">📤 પ્રોફાઇલ શેર કરો</button>
   </div>`;
  } else {
   const wadLabel=(p.g=="F")?"🌳 પિયર વડ":"🌳 તેમનો વડ";
   actionButtons=`<div class="ac2">
     <button class="pm" onclick="tab('tv',false,${id},'piyar')">${wadLabel}</button>
-    <button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>
-    <button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>
+    ${canSee("fam")?`<button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
+    ${canSee("tul")?`<button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>`:""}
     <button onclick="shareProfile(${id})">📤 શેર કરો</button>
   </div>`;
  }
 
+ const infoRows=[
+  canSee("dob") ? rw("જન્મ તારીખ", birthFull) : "",
+  canSee("dob") ? rw("જન્મ તિથિ", esc(gujBirth)) : "",
+  (p.s=="d" && deathFull) ? rw("સ્વર્ગવાસ", deathFull) : "",
+  (p.s=="d" && gujDeath) ? rw("પુણ્યતિથિ", esc(gujDeath)) : "",
+  rw("બ્લડ ગ્રુપ", esc(p.bg)),
+  rw("ભણતર", esc(p.edu)),
+  rw("વ્યવસાય", esc(p.job)),
+  rw("રહેઠાણ", esc(p.rah)),
+  rw("મૂળ વતન", esc(p.gam)),
+  canSee("kul") ? rw("મોસાળપક્ષ", esc(p.mos), true) : "",
+  canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : "",
+  canSee("kul") ? rw("પોહાળપક્ષ", esc(p.poh), true) : ""
+ ].filter(Boolean).join("");
+
  $("#pf").innerHTML=`<div class="cv"></div>
  <div class="pr"><i class="r big ${c}">${esc(p.n[0])}</i>
  <h2>${esc(pre(p)+full(p))}${p.sur?" "+esc(p.sur):""}</h2>
- <p class="ln">${[p.job,p.rah].filter(Boolean).map(esc).join(" • ")}</p><p class="bio">${D.ja?"શાખ: "+esc(D.ja)+" • ":""}${t}</p>
+ ${line1?`<p class="ln">${line1}</p>`:""}
+ ${line2?`<p class="bio">${line2}</p>`:""}
+ ${p.bio?`<div class="bio-box">“${esc(p.bio)}”</div>`:""}
  <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isOwner?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય</small></div></div>
  ${actionButtons}
- <div class="bx">${rw("જન્મ વર્ષ",p.yr?gu(p.yr):"")}${rw("ભણતર",esc(p.edu))}${rw("વ્યવસાય",esc(p.job))}${rw("રહેઠાણ",esc(p.rah))}${rw("મૂળ ગામ",esc(p.gam))}</div>
- ${fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>`:""}${fam.map(([q,r])=>card(q,r)).join("")}</div>`;
+ ${infoRows?`<div class="bx">${infoRows}</div>`:""}
+ ${canSee("fam") && fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>${fam.map(([q,r])=>card(q,r)).join("")}`:(!canSee("fam")?`<div class="priv-note">🔒 પરિવારની વિગત પ્રાઇવેટ રાખવામાં આવી છે</div>`:"")}</div>`;
  $("#tv").hidden=true;$("#pf").hidden=false;
  setNav("pf");
  $("#pf").scrollTop=0;
@@ -399,7 +623,7 @@ function show(id,skipPush=false){
 function shareProfile(id){
  const p=get(id)||get(D.me);
  if(!p)return;
- const txt=`🌳 Wadbook પરિવાર પરિચય\n${pre(p)+full(p)} ${p.sur||""}\nગામ: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
+ const txt=`🌳 Wadbook પરિવાર પરિચય\n${pre(p)+full(p)} ${p.sur||""}\nવતન: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
  if(navigator.share){navigator.share({title:"Wadbook",text:txt}).catch(()=>{});}
  else{alert(txt);}
 }
