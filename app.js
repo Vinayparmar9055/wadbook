@@ -709,7 +709,7 @@ function showFamily(id,skipPush=false){
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પતિ</b><small>ઉમેરેલ નથી</small></div>`);
 
  const rightSlot=wife
-   ? node(wife, husb?"પત્ની":"પત્नी / મુખ્ય")
+   ? node(wife, husb?"પત્ની":"પત્ની / મુખ્ય")
    : (editable
       ? `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પત્ની</b><small>ઉમેરેલ નથી</small></div>`);
@@ -891,9 +891,9 @@ function shareBiodataCard(id){
  const canSee=k=>(editable || pv[k]!=="me");
 
  const lines=[
-  `॥ શ્રી ગણેશાય નમઃ ॥`,
-  `💍 *સગાઈ બાયોડેટા (Wadbook)*`,
-  `━━━━━━━━━━━━━━`,
+  "॥ શ્રી ગણેશાય નમઃ ॥",
+  "💍 *સગાઈ બાયોડેટા (Wadbook)*",
+  "━━━━━━━━━━━━━━",
   `👤 *નામ:* ${pre(p)+full(p)} ${shakh}`,
   p.sur?`🏷️ *અટક:* ${p.sur}`:"",
   (dobStr&&canSee("dob"))?`🎂 *જન્મ:* ${dobStr}${age!==null?` (${gu(age)} વર્ષ)`:""}`:"",
@@ -909,10 +909,9 @@ function shareBiodataCard(id){
   (p.mos&&canSee("kul"))?`🌾 *મોસાળપક્ષ:* ${p.mos}`:"",
   (p.poh&&canSee("kul"))?`🌿 *પોહાળપક્ષ:* ${p.poh}`:"",
   (p.mob&&canSee("mob"))?`📞 *સંપર્ક:* ${p.mob}`:"",
-  `━━━━━━━━━━━━━━`,
-  `🌳 *શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ • Wadbook*`
- ].filter(Boolean).join("
-");
+  "━━━━━━━━━━━━━━",
+  "🌳 *શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ • Wadbook*"
+ ].filter(Boolean).join("\n");
 
  const cv=document.createElement("canvas");
  cv.width=720; cv.height=960;
@@ -1081,7 +1080,7 @@ function show(id,skipPush=false){
   const wadLabel=(p.g=="F")?"🌳 પિયર વડ":"🌳 તેમનો વડ";
   actionButtons=`<div class="ac2">
     <button class="pm" onclick="tab('tv',false,${id},'piyar')">${wadLabel}</button>
-    ${canSee("fam")?`<button class="pm" onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
+    ${canSee("fam")?`<button onclick="showFamily(${id})">👨‍👩‍👧‍👦 તેમનો પરિવાર</button>`:""}
     ${canSee("tul")?`<button class="gr-btn" onclick="showTulsi(${id})">🌿 તુલસી ક્યારો</button>`:""}
     ${p.s==="u"?`<button class="gr-btn" onclick="openBiodata(${id})">💍 સગાઈ બાયોડેટા</button>`:`<button onclick="shareProfile(${id})">📤 શેર કરો</button>`}
     ${editable?`<button onclick="addMember(${id})">➕ નામ ઉમેરો</button><button onclick="edit(${id})">✏️ વિગત ફેરવો</button>`:""}
@@ -1142,7 +1141,9 @@ function shareProfile(id){
  const p=get(id)||get(D.me);
  if(!p)return;
  const shakh=p.ja||D.ja||p.sur||"";
- const txt=`🌳 Wadbook પરિવાર પરિચય\n${pre(p)+full(p)} ${shakh}\nવતન: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
+ const txt=`🌳 Wadbook પરિવાર પરિચય
+${pre(p)+full(p)} ${shakh}
+વતન: ${p.gam||"-"} | રહેઠાણ: ${p.rah||"-"}`;
  if(navigator.share){navigator.share({title:"Wadbook",text:txt}).catch(()=>{});}
  else{alert(txt);}
 }
