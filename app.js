@@ -312,8 +312,13 @@ function cleanDuplicates(){
 }
 cleanDuplicates();
 
-function full(p){
+function full(p,ctx){
  if(!p)return "";
+ if(p.g=="F"&&ctx&&ctx.id!=p.id){
+  // pita na parivar ma jotaa: potanu naam + pita nu naam
+  const dad=p.f&&get(p.f);
+  if(dad&&(ctx.id==dad.id||ctx.f==dad.id||(p.m&&ctx.id==p.m)||(dad.sp&&ctx.id==dad.sp)))return p.n+" "+dad.n;
+ }
  if(p.g=="F"){
   const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
   if(husb)return p.n+" "+husb.n;
@@ -331,6 +336,15 @@ function pre(p){
   return p.s=="u"?"કુ. ":"સૌ. ";
  }
  return "શ્રી ";
+}
+
+// pita na parivar ma married dikri ni nichhe "પતિ: ..." batavo
+function husbNote(q,ctx){
+ if(!q||q.g!="F"||q.s=="u"||!ctx||ctx.id==q.id)return "";
+ const dad=q.f&&get(q.f);
+ if(!dad||!(ctx.id==dad.id||ctx.f==dad.id||(q.m&&ctx.id==q.m)||(dad.sp&&ctx.id==dad.sp)))return "";
+ const h=D.ps.find(x=>x.sp==q.id||(q.sp&&x.id==q.sp));
+ return h?" • પતિ: "+esc(h.n+(h.ja?" ("+h.ja+")":"")):"";
 }
 
 const selOpts=(arr,val)=>`<option value="">-- પસંદ કરો --</option>`+arr.map(x=>`<option value="${esc(x)}" ${val==x?"selected":""}>${esc(x)}</option>`).join("");
@@ -701,8 +715,8 @@ function showFamily(id,skipPush=false){
    <div class="fm">
      <div onclick="show(${q.id})">${avHtml(q)}</div>
      <div onclick="show(${q.id})">
-       <b>${esc(pre(q)+full(q))}</b>
-       <small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
+       <b>${esc(pre(q)+full(q,p))}</b>
+       <small>${rel}${husbNote(q,p)}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
      </div>
      ${editable&&q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
      <span onclick="show(${q.id})">જુઓ ›</span>
@@ -1066,7 +1080,7 @@ function show(id,skipPush=false){
  const gujDeath=fmtTithi(p.dm,p.dp,p.dt);
 
  const rw=(a,b,fullW=false)=>b?`<div class="rw${fullW?" full-rw":""}"><span>${a}</span><b>${b}</b></div>`:"";
- const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})">${avHtml(q)}<div><b>${esc(pre(q)+full(q))}</b><small>${rel}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
+ const card=(q,rel)=>`<a class="fm" onclick="show(${q.id})">${avHtml(q)}<div><b>${esc(pre(q)+full(q,p))}</b><small>${rel}${husbNote(q,p)}${q.yr?" • જન્મ "+gu(q.yr):""}</small></div><span>જુઓ ›</span></a>`;
 
  // Action Buttons
  const husbObj=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
@@ -1117,6 +1131,7 @@ function show(id,skipPush=false){
   (p.s!="d") ? rw("વ્યવસાય", esc(p.job)) : "",
   (p.s=="u" && (p.ht||p.wt)) ? rw("ઊંચાઈ / વજન", esc([p.ht,p.wt].filter(Boolean).join(" • "))) : "",
   (p.s=="u" && p.inc) ? rw("વાર્ષિક આવક", esc(p.inc)) : "",
+  (p.g=="F"&&p.f&&get(p.f)&&canSee("kul")) ? rw("પિયર (પિતાનું ઘર)", esc(pre(get(p.f))+full(get(p.f))+(get(p.f).ja?" ("+get(p.f).ja+")":"")), true) : "",
   canSee("kul") ? rw("મોસાળપક્ષ", esc(p.mos), true) : "",
   canSee("kul") ? rw("પોહાળપક્ષ", esc(p.poh), true) : "",
   canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : ""
