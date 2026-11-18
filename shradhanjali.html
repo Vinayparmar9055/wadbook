@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Wadbook - અવસાન નોંધ અને શ્રદ્ધાંજલિ કાર્ડ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700;800&family=Noto+Serif+Gujarati:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- html2canvas for HD Image Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #5c190d;
+      --primary-dark: #3b0d05;
+      --gold: #c9963b;
+      --gold-light: #f6e7c1;
+      --bg-cream: #fbf6ec;
+      --text-dark: #2c140c;
+      --border-soft: #e2cfa8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans Gujarati', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-cream);
+      color: var(--text-dark);
+      padding-bottom: 90px;
+    }
+
+    /* Top App Header */
+    .app-header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: #fff;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    .app-header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+    .app-header span {
+      font-size: 11px;
+      display: block;
+      color: #e8d5b5;
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    /* Section Cards */
+    .form-box {
+      background: #fff;
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(92, 25, 13, 0.05);
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1.5px dashed var(--border-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Wadbook Profile Selector */
+    .wadbook-sync-box {
+      background: linear-gradient(to right, #fff8eb, #fdf0d5);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .wadbook-sync-box label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5a382b;
+      margin-bottom: 4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid #dfd0b8;
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text-dark);
+      background: #fffdf9;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      background: #fff;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 62px;
+    }
+
+    /* Photo Upload & Controls */
+    .photo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .upload-btn {
+      flex: 1;
+      background: #fdf4e3;
+      border: 1.5px dashed var(--gold);
+      color: var(--primary);
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .photo-sliders {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .photo-sliders input[type="range"] {
+      padding: 0;
+      accent-color: var(--primary);
+    }
+
+    /* Preset Pills (Card Type) */
+    .pill-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .pill-scroll::-webkit-scrollbar { display: none; }
+    .pill-btn {
+      white-space: nowrap;
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border-soft);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+    }
+    .pill-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* Frame Selector Thumbnails */
+    .frame-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .frame-opt {
+      border: 2px solid #e2cfa8;
+      border-radius: 10px;
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fffaf0;
+      color: var(--primary);
+    }
+    .frame-opt.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* ================= LIVE CARD PREVIEW CANVAS ================= */
+    .preview-wrapper {
+      background: #e8dec8;
+      padding: 12px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .preview-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    #cardCanvas {
+      width: 100%;
+      max-width: 390px;
+      min-height: 560px;
+      position: relative;
+      padding: 18px 16px;
+      text-align: center;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* 6 DISTINCT ROYAL & TRADITIONAL THEMES */
+    .theme-1 {
+      background: radial-gradient(circle at center, #fffdf7 45%, #f5e6c8 100%);
+      border: 10px solid #6b1d0f;
+      outline: 3px solid #d4a347;
+      outline-offset: -7px;
+      color: #361209;
+    }
+    .theme-2 {
+      background: linear-gradient(180deg, #fbf0d9 0%, #fffcf5 50%, #f3dfc0 100%);
+      border: 8px double #8c5811;
+      box-shadow: inset 0 0 0 4px #e6be73;
+      color: #422505;
+    }
+    .theme-3 {
+      background: linear-gradient(180deg, #ffffff 0%, #f7f4ee 100%);
+      border: 6px solid #b58938;
+      outline: 1.5px solid #6b1d0f;
+      outline-offset: -10px;
+      color: #261710;
+    }
+    .theme-4 {
+      background: radial-gradient(circle, #fffaf0 55%, #ead4ac 100%);
+      border-top: 16px solid #59160b;
+      border-bottom: 16px solid #59160b;
+      border-left: 6px solid #c9963b;
+      border-right: 6px solid #c9963b;
+      color: #381108;
+    }
+    .theme-5 {
+      background: linear-gradient(135deg, #fff6e5 0%, #fffdf9 50%, #fae7c7 100%);
+      border: 8px solid #7d2614;
+      border-radius: 18px;
+      outline: 2px dashed #c9963b;
+      outline-offset: -6px;
+      color: #3d140a;
+    }
+    .theme-6 {
+      background: radial-gradient(circle, #4f1309 0%, #2b0803 100%);
+      border: 8px solid #d9a74a;
+      outline: 2px solid #fff3d6;
+      outline-offset: -6px;
+      color: #fff6e3;
+    }
+
+    /* Corner Ornaments (SVG Decorations) */
+    .corner-ornament {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .c-tl { top: 4px; left: 4px; }
+    .c-tr { top: 4px; right: 4px; transform: scaleX(-1); }
+    .c-bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
+    .c-br { bottom: 4px; right: 4px; transform: scale(-1, -1); }
+
+    /* Card Top Header */
+    .card-mantra {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      opacity: 0.9;
+      margin-bottom: 2px;
+    }
+    .card-main-heading {
+      font-family: 'Noto Serif Gujarati', serif;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 2px 0;
+    }
+    .theme-6 .card-main-heading { color: #ffd984; }
+
+    .card-sub-ribbon {
+      display: inline-block;
+      background: #6b1d0f;
+      color: #fff5df;
+      padding: 4px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1.5px solid #e0b15a;
+      margin: 4px auto 8px;
+    }
+    .theme-6 .card-sub-ribbon {
+      background: #d9a74a;
+      color: #2b0803;
+    }
+
+    /* Center Photo + Hanging Diyas + Floral Garland + Agarbatti */
+    .photo-shrine-area {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0 8px;
+    }
+
+    .side-diya {
+      width: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .portrait-ring {
+      position: relative;
+      width: 146px;
+      height: 162px;
+      border-radius: 50%;
+      border: 4px solid #c9963b;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      overflow: hidden;
+      background: #eee3ce;
+      z-index: 2;
+    }
+    .portrait-ring.square-frame {
+      border-radius: 14px;
+      width: 138px;
+      height: 156px;
+    }
+    .portrait-ring img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform-origin: center;
+    }
+
+    /* Natural Flower Garland Overlay (SVG Wreath) */
+    .garland-overlay {
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 185px;
+      height: 75px;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    /* Name Banner */
+    .swargvas-tag {
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 8px;
+      opacity: 0.9;
+    }
+    .person-name-banner {
+      background: linear-gradient(90deg, #59150a, #7d2212, #59150a);
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 25px;
+      font-size: 17px;
+      font-weight: 800;
+      border: 1.5px solid #e3b459;
+      margin: 4px 0;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+    }
+    .theme-6 .person-name-banner {
+      background: linear-gradient(90deg, #b88328, #e8bd68, #b88328);
+      color: #260702;
+    }
+
+    .village-line {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    /* Main Message & Ritual Table */
+    .message-body {
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 600;
+      padding: 0 6px;
+      margin-bottom: 6px;
+    }
+
+    .ritual-box {
+      background: rgba(201, 150, 59, 0.14);
+      border: 1.5px solid #c9963b;
+      border-radius: 12px;
+      padding: 8px 10px;
+      margin: 4px 0;
+      font-size: 12.5px;
+      text-align: left;
+    }
+    .ritual-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+      border-bottom: 1px dashed rgba(130, 85, 25, 0.25);
+    }
+    .ritual-row:last-child { border-bottom: none; }
+    .ritual-row strong { min-width: 75px; }
+
+    /* Shokatur Family Section */
+    .family-section {
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .family-badge {
+      display: inline-block;
+      background: #6b1d0f;
+      color: #fff;
+      padding: 2px 14px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .theme-6 .family-badge { background: #d9a74a; color: #2b0803; }
+
+    .family-names-text {
+      font-weight: 700;
+      line-height: 1.45;
+      white-space: pre-line;
+    }
+
+    /* Footer Prayer & Agarbatti Stands */
+    .card-footer {
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(180, 130, 50, 0.35);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .prayer-center {
+      flex: 1;
+      padding: 0 4px;
+    }
+    .prayer-line {
+      font-size: 10.5px;
+      line-height: 1.35;
+      margin-bottom: 3px;
+    }
+    .om-shanti {
+      font-size: 16px;
+      font-weight: 800;
+      color: #781d0e;
+    }
+    .theme-6 .om-shanti { color: #ffd984; }
+
+    .wadbook-watermark {
+      font-size: 9px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    /* Sticky Bottom Action Bar */
+    .bottom-actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.12);
+      z-index: 200;
+    }
+    .btn-download {
+      flex: 1;
+      background: linear-gradient(135deg, #6b1d0f, #420f06);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-whatsapp {
+      flex: 1.3;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Bar -->
+  <header class="app-header">
+    <div>
+      <h1>Wadbook પત્રિકા મેકર</h1>
+      <span>શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ</span>
+    </div>
+    <button class="back-btn" onclick="history.back()">← પાછા જાઓ</button>
+  </header>
+
+  <div class="container">
+
+    <!-- 1. Card Type & Frame Selection -->
+    <div class="form-box">
+      <div class="section-title">૧. પત્રિકાનો પ્રકાર અને ફ્રેમ પસંદ કરો</div>
+      
+      <div class="input-group" style="margin-bottom: 10px;">
+        <label>પત્રિકાનો પ્રકાર (ક્લિક કરો):</label>
+        <div class="pill-scroll" id="typePills">
+          <button class="pill-btn active" onclick="setCardType('અવસાન નોંધ', 'શોક સંદેશ', this)">અવસાન નોંધ</button>
+          <button class="pill-btn" onclick="setCardType('શ્રદ્ધાંજલિ', 'અશ્રુભીની શ્રદ્ધાંજલિ', this)">શ્રદ્ધાંજલિ</button>
+          <button class="pill-btn" onclick="setCardType('ભાવપૂર્વક શ્રદ્ધાંજલિ', 'સ્વર્ગવાસ આત્મા', this)">ભાવપૂર્વક શ્રદ્ધાંજલિ</button>
+          <button class="pill-btn" onclick="setCardType('બેસણું', 'શોક સભા / બેસણું', this)">બેસણું</button>
+          <button class="pill-btn" onclick="setCardType('અંતિમયાત્રા', 'અવસાન નોંધ', this)">અંતિમયાત્રા</button>
+          <button class="pill-btn" onclick="setCardType('ઘડા ભરવાનું મુહૂર્ત', 'ઉત્તરક્રિયા વિધિ', this)">ઘડાનું મુહૂર્ત</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>ફ્રેમ અને બોર્ડર ડિઝાઇન (૬ વિકલ્પ):</label>
+        <div class="frame-selector" id="frameSelector">
+          <div class="frame-opt active" onclick="setTheme('theme-1', false, this)">૧. રોયલ હાર</div>
+          <div class="frame-opt" onclick="setTheme('theme-2', false, this)">૨. સુવર્ણ મંદિર</div>
+          <div class="frame-opt" onclick="setTheme('theme-3', true, this)">૩. શ્વેત શાંતિ</div>
+          <div class="frame-opt" onclick="setTheme('theme-4', false, this)">૪. પરંપરાગત</div>
+          <div class="frame-opt" onclick="setTheme('theme-5', true, this)">૫. કમળ દીપ</div>
+          <div class="frame-opt" onclick="setTheme('theme-6', false, this)">૬. મરૂન ગોલ્ડ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Live Preview Section (Always visible & updates live) -->
+    <div class="preview-wrapper">
+      <div class="preview-label">✨ લાઈવ કાર્ડ પ્રીવ્યુ (નીચે ફોર્મ ભરશો તેમ અહીં બદલાશે)</div>
+
+      <div id="cardCanvas" class="theme-1">
+        <!-- 4 Corner Royal Ornaments -->
+        <svg class="corner-ornament c-tl" viewBox="0 0 60 60"><path d="M4,4 L45,4 C30,10 10,30 4,45 Z M10,10 C22,10 32,16 36,24 C24,20 18,26 14,36 C12,26 10,18 10,10 Z" fill="#c9963b"/></svg>
+        <svg class="corner-ornament c-tr" viewBox="0 0 60 60"><path d="M4,4 L45,4 C30,10 10,30 4,45 Z M10,10 C22,10 32,16 36,24 C24,20 18,26 14,36 C12,26 10,18 10,10 Z" fill="#c9963b"/></svg>
+        <svg class="corner-ornament c-bl" viewBox="0 0 60 60"><path d="M4,4 L45,4 C30,10 10,30 4,45 Z M10,10 C22,10 32,16 36,24 C24,20 18,26 14,36 C12,26 10,18 10,10 Z" fill="#c9963b"/></svg>
+        <svg class="corner-ornament c-br" viewBox="0 0 60 60"><path d="M4,4 L45,4 C30,10 10,30 4,45 Z M10,10 C22,10 32,16 36,24 C24,20 18,26 14,36 C12,26 10,18 10,10 Z" fill="#c9963b"/></svg>
+
+        <!-- Header -->
+        <div>
+          <div class="card-mantra">॥ ૐ શાંતિ શાંતિ ॥</div>
+          <div class="card-main-heading" id="prevHeading">અવસાન નોંધ</div>
+          <div class="card-sub-ribbon" id="prevSubHeading">શોક સંદેશ</div>
+        </div>
+
+        <!-- Photo + Hanging Diyas + Natural Flower Garland -->
+        <div class="photo-shrine-area">
+          <!-- Left Hanging Diya -->
+          <div class="side-diya">
+            <svg width="38" height="78" viewBox="0 0 40 80">
+              <line x1="20" y1="0" x2="20" y2="42" stroke="#b88328" stroke-width="2" stroke-dasharray="3,2"/>
+              <path d="M20,26 Q26,35 20,42 Q14,35 20,26 Z" fill="#ff9800"/>
+              <path d="M20,31 Q23,36 20,41 Q17,36 20,31 Z" fill="#fff59d"/>
+              <path d="M6,44 Q20,58 34,44 L28,54 L12,54 Z" fill="#b88328"/>
+            </svg>
+          </div>
+
+          <!-- Portrait Frame -->
+          <div class="portrait-ring" id="portraitBox">
+            <img id="prevPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='220' viewBox='0 0 200 220'><rect width='200' height='220' fill='%23efe3cc'/><circle cx='100' cy='82' r='36' fill='%23c4a77d'/><path d='M40,200 C40,145 160,145 160,200' fill='%23c4a77d'/></svg>" alt="ફોટો" />
+          </div>
+
+          <!-- Right Hanging Diya -->
+          <div class="side-diya">
+            <svg width="38" height="78" viewBox="0 0 40 80">
+              <line x1="20" y1="0" x2="20" y2="42" stroke="#b88328" stroke-width="2" stroke-dasharray="3,2"/>
+              <path d="M20,26 Q26,35 20,42 Q14,35 20,26 Z" fill="#ff9800"/>
+              <path d="M20,31 Q23,36 20,41 Q17,36 20,31 Z" fill="#fff59d"/>
+              <path d="M6,44 Q20,58 34,44 L28,54 L12,54 Z" fill="#b88328"/>
+            </svg>
+          </div>
+
+          <!-- Natural White & Rose Flower Garland (SVG) -->
+          <svg class="garland-overlay" viewBox="0 0 220 90">
+            <!-- Green Leaves -->
+            <ellipse cx="42" cy="34" rx="14" ry="6" transform="rotate(35 42 34)" fill="#4a7c36"/>
+            <ellipse cx="178" cy="34" rx="14" ry="6" transform="rotate(-35 178 34)" fill="#4a7c36"/>
+            <ellipse cx="68" cy="58" rx="15" ry="6" transform="rotate(20 68 58)" fill="#5b9144"/>
+            <ellipse cx="152" cy="58" rx="15" ry="6" transform="rotate(-20 152 58)" fill="#5b9144"/>
+            <ellipse cx="110" cy="68" rx="18" ry="7" fill="#3f6e2d"/>
+            <!-- White Lily / Mogra Flowers -->
+            <circle cx="48" cy="36" r="11" fill="#fffdf7" stroke="#e0cfa8" stroke-width="1.5"/>
+            <circle cx="48" cy="36" r="4" fill="#f2c94c"/>
+            <circle cx="66" cy="52" r="13" fill="#ffffff" stroke="#e0cfa8" stroke-width="1.5"/>
+            <circle cx="66" cy="52" r="4.5" fill="#f2c94c"/>
+            <circle cx="88" cy="63" r="13" fill="#fffdf7" stroke="#e0cfa8" stroke-width="1.5"/>
+            <circle cx="88" cy="63" r="4.5" fill="#f2c94c"/>
+            <!-- Center Red/Pink Rose -->
+            <circle cx="110" cy="66" r="15" fill="#c92a3e"/>
+            <circle cx="110" cy="66" r="9" fill="#e6495c"/>
+            <circle cx="110" cy="66" r="4" fill="#ffccd5"/>
+            <!-- Right Side Flowers -->
+            <circle cx="132" cy="63" r="13" fill="#fffdf7" stroke="#e0cfa8" stroke-width="1.5"/>
+            <circle cx="132" cy="63" r="4.5" fill="#f2c94c"/>
+            <circle cx="154" cy="52" r="13" fill="#ffffff" stroke="#e0cfa8" stroke-width="1.5"/>
+            <circle cx="154" cy="52" r="4.5" fill="#f2c94c"/>
+            <circle cx="172" cy="36" r="11" fill="#fffdf7" stroke="#e0cfa8" stroke-width="1.5"/>
+            <circle cx="172" cy="36" r="4" fill="#f2c94c"/>
+          </svg>
+        </div>
+
+        <!-- Name & Village -->
+        <div>
+          <div class="swargvas-tag">✦ સ્વર્ગવાસ આત્મા ✦</div>
+          <div class="person-name-banner" id="prevFullName">સ્વ. પ્રજાપતિ બાબુભાઈ મોહનભાઈ</div>
+          <div class="village-line" id="prevLocation">મૂળ વતન: ટડાવા • હાલ રહેઠાણ: ભાવનગર</div>
+        </div>
+
+        <!-- Main Text Message -->
+        <div class="message-body" id="prevMessage">
+          ખેદ સાથે જણાવવાનું કે આજ રોજ તારીખ ૧૮/૧૧/૨૦૨૬, બુધવારના રોજ તેમનું દુઃખદ અવસાન થયેલ છે.
+        </div>
+
+        <!-- Ritual / Date / Time / Place Details -->
+        <div class="ritual-box" id="prevRitualBox">
+          <div class="ritual-row" id="rowTithi">
+            <strong>તારીખ / તિથિ:</strong>
+            <span id="prevDateTithi">૧૮/૧૧/૨૦૨૬ (કારતક સુદ-૮)</span>
+          </div>
+          <div class="ritual-row" id="rowTime">
+            <strong>સમય:</strong>
+            <span id="prevTime">સવારે ૯:૦૦ થી ૧૨:૦૦ કલાકે</span>
+          </div>
+          <div class="ritual-row" id="rowPlace">
+            <strong>સ્થળ:</strong>
+            <span id="prevPlace">તેમના નિવાસસ્થાને, મુ. ટડાવા, તા. થરાદ</span>
+          </div>
+        </div>
+
+        <!-- Shokatur Family Names -->
+        <div class="family-section" id="prevFamilySection">
+          <div class="family-badge">❖ શોકાતુર પરિવાર ❖</div>
+          <div class="family-names-text" id="prevFamilyNames">સમસ્ત પ્રજાપતિ પરિવાર (ટડાવા)
+મો. 98765 43210</div>
+        </div>
+
+        <!-- Footer with Agarbatti Stands & Om Shanti -->
+        <div class="card-footer">
+          <!-- Left Agarbatti Stand -->
+          <svg width="32" height="58" viewBox="0 0 36 65">
+            <path d="M18,22 Q14,12 18,4" stroke="#aaa" stroke-width="1.2" fill="none"/>
+            <path d="M22,24 Q26,14 22,6" stroke="#aaa" stroke-width="1.2" fill="none"/>
+            <line x1="18" y1="44" x2="14" y2="22" stroke="#5c2c16" stroke-width="1.8"/>
+            <line x1="18" y1="44" x2="18" y2="20" stroke="#5c2c16" stroke-width="1.8"/>
+            <line x1="18" y1="44" x2="22" y2="23" stroke="#5c2c16" stroke-width="1.8"/>
+            <ellipse cx="18" cy="48" rx="9" ry="6" fill="#c9963b"/>
+            <rect x="11" y="54" width="14" height="4" rx="2" fill="#8c5811"/>
+          </svg>
+
+          <div class="prayer-center">
+            <div class="prayer-line" id="prevPrayer">પરમ કૃપાળુ પરમાત્મા તેમની પવિત્ર આત્માને શાંતિ અર્પે એવી પ્રાર્થના.</div>
+            <div class="om-shanti">॥ ૐ શાંતિ શાંતિ શાંતિ ॥</div>
+            <div class="wadbook-watermark">Wadbook • શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ</div>
+          </div>
+
+          <!-- Right Agarbatti Stand -->
+          <svg width="32" height="58" viewBox="0 0 36 65">
+            <path d="M18,22 Q14,12 18,4" stroke="#aaa" stroke-width="1.2" fill="none"/>
+            <path d="M22,24 Q26,14 22,6" stroke="#aaa" stroke-width="1.2" fill="none"/>
+            <line x1="18" y1="44" x2="14" y2="22" stroke="#5c2c16" stroke-width="1.8"/>
+            <line x1="18" y1="44" x2="18" y2="20" stroke="#5c2c16" stroke-width="1.8"/>
+            <line x1="18" y1="44" x2="22" y2="23" stroke="#5c2c16" stroke-width="1.8"/>
+            <ellipse cx="18" cy="48" rx="9" ry="6" fill="#c9963b"/>
+            <rect x="11" y="54" width="14" height="4" rx="2" fill="#8c5811"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Form Inputs (Fully Editable) -->
+    <div class="form-box">
+      <div class="section-title">૨. સ્વર્ગસ્થની માહિતી અને ફોટો</div>
+
+      <!-- Wadbook Member Quick Fill -->
+      <div class="wadbook-sync-box">
+        <label>🌳 Wadbook પ્રોફાઇલમાંથી સીધી માહિતી લો (વૈકલ્પિક):</label>
+        <select id="wadbookMemberSelect" onchange="loadFromWadbook(this.value)">
+          <option value="">-- નવી માહિતી જાતે લખો અથવા સભ્ય પસંદ કરો --</option>
+        </select>
+      </div>
+
+      <!-- Gallery Photo Upload + Zoom/Position -->
+      <div class="input-group" style="margin-bottom: 12px;">
+        <label>ફોટો અપલોડ કરો (ગેલેરીમાંથી):</label>
+        <div class="photo-row">
+          <label class="upload-btn" for="photoInput">
+            📷 ગેલેરીમાંથી ફોટો લો
+            <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+          </label>
+          <div class="photo-sliders">
+            <span>ઝૂમ (Zoom):</span>
+            <input type="range" id="zoomRange" min="1" max="2.2" step="0.05" value="1" oninput="adjustPhoto()">
+            <span>ઉપર-નીચે (Position):</span>
+            <input type="range" id="posYRange" min="-40" max="40" step="2" value="0" oninput="adjustPhoto()">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="input-group full-width">
+          <label>મુખ્ય શીર્ષક (એડિટ કરી શકો છો):</label>
+          <input type="text" id="inHeading" value="અવસાન નોંધ" oninput="updateCard()">
+        </div>
+
+        <div class="input-group full-width">
+          <label>સ્વર્ગસ્થનું પૂરું નામ (સ્વ. સાથે):</label>
+          <input type="text" id="inName" value="સ્વ. પ્રજાપતિ બાબુભાઈ મોહનભાઈ" oninput="updateCard()">
+        </div>
+
+        <div class="input-group">
+          <label>જાતિ / શાખા:</label>
+          <input type="text" id="inJati" placeholder="દા.ત. પ્રજાપતિ / ટડાવા" value="પ્રજાપતિ" oninput="updateCard()">
+        </div>
+
+        <div class="input-group">
+          <label>અટક:</label>
+          <input type="text" id="inAtak" placeholder="દા.ત. જાણદિયા / પરમાર" value="જાણદિયા" oninput="updateCard()">
+        </div>
+
+        <div class="input-group">
+          <label>મૂળ વતન (ગામ):</label>
+          <input type="text" id="inVatan" value="ટડાવા (બનાસકાંઠા)" oninput="updateCard()">
+        </div>
+
+        <div class="input-group">
+          <label>હાલ રહેઠાણ:</label>
+          <input type="text" id="inRahethan" value="ભાવનગર" oninput="updateCard()">
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Event, Tithi & Family Details -->
+    <div class="form-box">
+      <div class="section-title">૩. તારીખ, તિથિ, વિધિ અને પરિવારના નામ</div>
+
+      <div class="form-grid">
+        <div class="input-group">
+          <label>તારીખ અને વાર:</label>
+          <input type="text" id="inDate" value="૧૮/૧૧/૨૦૨૬, બુધવાર" oninput="updateCard()">
+        </div>
+
+        <div class="input-group">
+          <label>ગુજરાતી તિથિ:</label>
+          <input type="text" id="inTithi" value="કારતક સુદ-૮" oninput="updateCard()">
+        </div>
+
+        <div class="input-group full-width">
+          <label>મુખ્ય સંદેશ / લખાણ (ગમે તે ફેરફાર કરી શકો):</label>
+          <textarea id="inMessage" oninput="updateCard()">ખેદ સાથે જણાવવાનું કે આજ રોજ તારીખ ૧૮/૧૧/૨૦૨૬, બુધવારના રોજ તેમનું દુઃખદ અવસાન થયેલ છે.</textarea>
+        </div>
+
+        <div class="input-group full-width">
+          <label>વિધિનો સમય (અંતિમયાત્રા / બેસણું / ઘડાનું મુહૂર્ત):</label>
+          <input type="text" id="inTime" value="સવારે ૯:૦૦ થી ૧૨:૦૦ કલાકે" oninput="updateCard()">
+        </div>
+
+        <div class="input-group full-width">
+          <label>સ્થળ / સરનામું:</label>
+          <input type="text" id="inPlace" value="તેમના નિવાસસ્થાને, મુ. ટડાવા, તા. થરાદ" oninput="updateCard()">
+        </div>
+
+        <div class="input-group full-width">
+          <label>શોકાતુર પરિવારના સભ્યોના નામ અને મોબાઇલ નંબર:</label>
+          <textarea id="inFamily" rows="3" oninput="updateCard()">પ્રજાપતિ ભરતભાઈ બાબુભાઈ (પુત્ર)
+પ્રજાપતિ શૈલેષભાઈ બાબુભાઈ (પુત્ર)
+સમસ્ત જાણદિયા પરિવાર • મો. 98765 43210</textarea>
+        </div>
+
+        <div class="input-group full-width">
+          <label>નીચેની પ્રાર્થના:</label>
+          <input type="text" id="inPrayer" value="પરમ કૃપાળુ પરમાત્મા તેમની પવિત્ર આત્માને શાંતિ અર્પે એવી પ્રાર્થના." oninput="updateCard()">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Fixed Bottom Buttons -->
+  <div class="bottom-actions">
+    <button class="btn-download" onclick="exportCardImage(false)">📥 ડાઉનલોડ (HD)</button>
+    <button class="btn-whatsapp" onclick="exportCardImage(true)">📲 વોટ્સએપ પર શેર કરો</button>
+  </div>
+
+  <script>
+    const defaultDemoMembers = [
+      { id: 'm1', name: 'સ્વ. પ્રજાપતિ કરશનભાઈ', jati: 'પ્રજાપતિ', atak: 'ટડાવા', vatan: 'ટડાવા (બનાસકાંઠા)', rahethan: 'ભાવનગર', photo: '' },
+      { id: 'm2', name: 'સ્વ. ગંગાબેન જયમલભાઈ', jati: 'પ્રજાપતિ', atak: 'ડોડગામ', vatan: 'લોરવાડા', rahethan: 'મહેસાણા', photo: '' }
+    ];
+
+    function initWadbookMembers() {
+      const select = document.getElementById('wadbookMemberSelect');
+      let storedMembers = [];
+      try {
+        const raw = localStorage.getItem('wadbook_members') || localStorage.getItem('members');
+        if (raw) storedMembers = JSON.parse(raw);
+      } catch (e) {}
+
+      const list = storedMembers.length > 0 ? storedMembers : defaultDemoMembers;
+      window._wbMembers = list;
+
+      list.forEach((m, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `${m.name || m.fullName} (${m.vatan || m.village || 'બનાસકાંઠા'})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function loadFromWadbook(index) {
+      if (index === '') return;
+      const m = window._wbMembers[index];
+      if (!m) return;
+
+      let rawName = m.name || m.fullName || '';
+      if (!rawName.startsWith('સ્વ.')) rawName = 'સ્વ. ' + rawName;
+
+      document.getElementById('inName').value = rawName;
+      document.getElementById('inJati').value = m.jati || 'પ્રજાપતિ';
+      document.getElementById('inAtak').value = m.atak || '';
+      document.getElementById('inVatan').value = m.vatan || m.village || '';
+      document.getElementById('inRahethan').value = m.rahethan || m.city || '';
+
+      if (m.photo || m.avatar) {
+        document.getElementById('prevPhoto').src = m.photo || m.avatar;
+      }
+      updateCard();
+    }
+
+    function setCardType(heading, subHeading, btn) {
+      document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.getElementById('inHeading').value = heading;
+      document.getElementById('prevSubHeading').textContent = subHeading;
+
+      const name = document.getElementById('inName').value;
+      const date = document.getElementById('inDate').value;
+      const tithi = document.getElementById('inTithi').value;
+      const msgBox = document.getElementById('inMessage');
+
+      if (heading === 'બેસણું') {
+        msgBox.value = `${tithi} ને ${date} ના રોજ ${name} નું બેસણું રાખેલ છે.`;
+      } else if (heading === 'અંતિમયાત્રા') {
+        msgBox.value = `આજ રોજ ${date} ના રોજ ${name} નું દુઃખદ અવસાન થયેલ છે. તેમની અંતિમયાત્રા નીચે મુજબના સમયે નીકળશે.`;
+      } else if (heading === 'ઘડા ભરવાનું મુહૂર્ત') {
+        msgBox.value = `${tithi} ને ${date} ના રોજ ${name} ના ઘડા ભરવાનું મુહૂર્ત રાખેલ છે.`;
+      } else if (heading === 'શ્રદ્ધાંજલિ' || heading === 'ભાવપૂર્વક શ્રદ્ધાંજલિ') {
+        msgBox.value = `${date} (${tithi}) ના રોજ દેવલોક પામેલ ${name} ને અશ્રુભીની શ્રદ્ધાંજલિ.`;
+      } else {
+        msgBox.value = `ખેદ સાથે જણાવવાનું કે આજ રોજ તારીખ ${date} ના રોજ તેમનું દુઃખદ અવસાન થયેલ છે.`;
+      }
+      updateCard();
+    }
+
+    function setTheme(themeClass, isSquare, el) {
+      document.querySelectorAll('.frame-opt').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+
+      const card = document.getElementById('cardCanvas');
+      card.className = themeClass;
+
+      const portrait = document.getElementById('portraitBox');
+      if (isSquare) {
+        portrait.classList.add('square-frame');
+      } else {
+        portrait.classList.remove('square-frame');
+      }
+    }
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('prevPhoto').src = e.target.result;
+        document.getElementById('zoomRange').value = 1;
+        document.getElementById('posYRange').value = 0;
+        adjustPhoto();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function adjustPhoto() {
+      const zoom = document.getElementById('zoomRange').value;
+      const posY = document.getElementById('posYRange').value;
+      const img = document.getElementById('prevPhoto');
+      img.style.transform = `scale(${zoom}) translateY(${posY}px)`;
+    }
+
+    function updateCard() {
+      const heading = document.getElementById('inHeading').value.trim();
+      const name = document.getElementById('inName').value.trim();
+      const jati = document.getElementById('inJati').value.trim();
+      const atak = document.getElementById('inAtak').value.trim();
+      const vatan = document.getElementById('inVatan').value.trim();
+      const rahethan = document.getElementById('inRahethan').value.trim();
+      const date = document.getElementById('inDate').value.trim();
+      const tithi = document.getElementById('inTithi').value.trim();
+      const message = document.getElementById('inMessage').value.trim();
+      const time = document.getElementById('inTime').value.trim();
+      const place = document.getElementById('inPlace').value.trim();
+      const family = document.getElementById('inFamily').value.trim();
+      const prayer = document.getElementById('inPrayer').value.trim();
+
+      document.getElementById('prevHeading').textContent = heading || 'અવસાન નોંધ';
+
+      let displayName = name;
+      if (atak && !name.includes(atak)) {
+        displayName += ` (${atak})`;
+      }
+      document.getElementById('prevFullName').textContent = displayName;
+
+      let locParts = [];
+      if (jati) locParts.push(`જાતિ: ${jati}`);
+      if (vatan) locParts.push(`મૂળ વતન: ${vatan}`);
+      if (rahethan) locParts.push(`હાલ: ${rahethan}`);
+      document.getElementById('prevLocation').textContent = locParts.join(' • ');
+
+      document.getElementById('prevMessage').textContent = message;
+
+      const dateTithiText = [date, tithi ? `(${tithi})` : ''].filter(Boolean).join(' ');
+      document.getElementById('prevDateTithi').textContent = dateTithiText;
+      document.getElementById('rowTithi').style.display = dateTithiText ? 'flex' : 'none';
+
+      document.getElementById('prevTime').textContent = time;
+      document.getElementById('rowTime').style.display = time ? 'flex' : 'none';
+
+      document.getElementById('prevPlace').textContent = place;
+      document.getElementById('rowPlace').style.display = place ? 'flex' : 'none';
+
+      document.getElementById('prevFamilyNames').textContent = family;
+      document.getElementById('prevFamilySection').style.display = family ? 'block' : 'none';
+
+      document.getElementById('prevPrayer').textContent = prayer;
+    }
+
+    async function exportCardImage(shareMode) {
+      const cardEl = document.getElementById('cardCanvas');
+      const btn = shareMode ? document.querySelector('.btn-whatsapp') : document.querySelector('.btn-download');
+      const oldText = btn.textContent;
+      btn.textContent = '⏳ કાર્ડ બની રહ્યું છે...';
+
+      try {
+        const canvas = await html2canvas(cardEl, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: null
+        });
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const fileName = `Wadbook_${document.getElementById('inHeading').value || 'Shradhanjali'}.jpg`;
+
+        if (shareMode && navigator.share) {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], fileName, { type: 'image/jpeg' });
+          await navigator.share({
+            title: 'Wadbook શ્રદ્ધાંજલિ પત્રિકા',
+            text: `॥ ૐ શાંતિ ॥ ${document.getElementById('inName').value}`,
+            files: [file]
+          });
+        } else {
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = dataUrl;
+          link.click();
+        }
+      } catch (err) {
+        alert('કાર્ડ સેવ કરવામાં મુશ્કેલી આવી: ' + err.message);
+      } finally {
+        btn.textContent = oldText;
+      }
+    }
+
+    initWadbookMembers();
+    updateCard();
+  </script>
+</body>
+</html>
