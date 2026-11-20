@@ -809,8 +809,37 @@ function showFamily(id,skipPush=false){
 // ===== સ્માર્ટ સગાઈ બાયોડેટા વિભાગ =====
 let sagFilter="all", sagSearch="";
 
+// Potana vad (pitrupaksh kul) ma aavta badha sabhya: topmost pita thi niche na badha dikra-dikri (patilineal)
+function myVadIds(){
+ try{
+  const me=D.me&&get(D.me);
+  if(!me)return null;
+  // 1) topmost pita sudhi upar jao
+  let root=me,guard=0;
+  while(root.f&&get(root.f)&&guard++<50)root=get(root.f);
+  // 2) root thi niche badha dikra-dikri (f link thi)
+  const ids=new Set([root.id]);
+  const meJa=me.ja||D.ja||"";
+  let grew=true;
+  while(grew){
+   grew=false;
+   const wives=new Set(D.ps.filter(x=>x.sp&&ids.has(x.sp)&&!ids.has(x.id)).map(x=>x.id));
+   D.ps.forEach(p=>{
+    if(ids.has(p.id))return;
+    if(!((p.f&&ids.has(p.f))||(!p.f&&p.m&&wives.has(p.m))))return;
+    // bija shakh ni vyakti hoy to bahar
+    const pj=p.ja||D.ja||"";
+    if(pj&&meJa&&pj!==meJa)return;
+    ids.add(p.id);grew=true;
+   });
+  }
+  return ids;
+ }catch(e){return null;}
+}
+
 function showSagai(skipPush=false){
- const list=D.ps.filter(p=>p.s==="u" && p.sagaiOpen!=="no");
+ const vad=myVadIds();
+ const list=D.ps.filter(p=>p.s==="u" && p.sagaiOpen!=="no" && (!vad || vad.has(p.id)));
  const filtered=list.filter(p=>{
   if(sagFilter==="M" && p.g==="F")return false;
   if(sagFilter==="F" && p.g!=="F")return false;
@@ -848,12 +877,12 @@ function showSagai(skipPush=false){
       <button onclick="show(${p.id})">👤 પ્રોફાઇલ જુઓ</button>
     </div>
   </div>`;
- }).join("") : `<div class="priv-note">🟢 અત્યારે કોઈ અપરિણીત સભ્ય મળ્યા નથી.<br><small>પ્રોફાઇલ કે "+ નામ ઉમેરો" માં સ્થિતિ <b>"અપરિણીત"</b> રાખવાથી નામ અહીં આપમેળે દેખાશે.</small></div>`;
+ }).join("") : `<div class="priv-note">🟢 તમારા વડમાં અત્યારે કોઈ અપરિણીત સભ્ય મળ્યા નથી.<br><small>પ્રોફાઇલ કે "+ નામ ઉમેરો" માં સ્થિતિ <b>"અપરિણીત"</b> રાખવાથી નામ અહીં આપમેળે દેખાશે.</small></div>`;
 
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
     <h2>💍 સગાઈ બાયોડેટા વિભાગ</h2>
-    <p>લીલા સર્કલ (અપરિણીત) ધરાવતા સમાજના યુવાન-યુવતીઓ</p>
+    <p>તમારા વડ (${esc(D.ja||"")} પરિવાર) ના અપરિણીત દીકરા-દીકરીઓ</p>
   </div>
 
   <div class="sag-tabs">
