@@ -1,5 +1,7 @@
 /**
- * Wadbook Smart Gujarati Typing Engine v2 (Case-Insensitive Mobile Gboard Support + Exact Gujarati Phonetics)
+ * Wadbook Smart Gujarati Typing Engine v3
+ * Fix: CSS template-string (backtick) properly closed, popup CSS inside style,
+ * auto lang="gu", autocapitalize off, Karshan -> કરશન
  */
 (function () {
   if (window.__wbGujaratiTypingLoaded) return;
@@ -7,7 +9,6 @@
 
   let gujaratiEnabled = true;
 
-  // Common Gujarati name suffixes & community words
   const wordDictionary = {
     'wadbook': 'Wadbook',
     'prajapati': 'પ્રજાપતિ',
@@ -29,8 +30,8 @@
     'janadiya': 'જાણદિયા',
     'vinay': 'વિનય',
     'vinaybhai': 'વિનયભાઈ',
-    'karshanbhai': 'કર્ષણભાઈ',
-    'karshan': 'કર્ષણ',
+    'karshanbhai': 'કરશનભાઈ',
+    'karshan': 'કરશન',
     'kishanbhai': 'કિશનભાઈ',
     'rameshbhai': 'રમેશભાઈ',
     'maheshbhai': 'મહેશભાઈ',
@@ -54,7 +55,6 @@
     'shrimati': 'શ્રીમતી'
   };
 
-  // Multi-letter patterns checked first (case-insensitive except retroflex T/D/N/S/L when mid-word)
   const vowelsInd = [
     ['au', 'ઔ'], ['ou', 'ઔ'], ['ai', 'ઐ'], ['ei', 'ઐ'],
     ['aa', 'આ'], ['ee', 'ઈ'], ['ii', 'ઈ'],
@@ -89,8 +89,6 @@
   ];
 
   function normalizeForMobileCaps(word) {
-    // Mobile keyboards auto-capitalize the 1st letter (e.g., "Vinaybhai" -> "vinaybhai", "Tadava" -> "tadava")
-    // Lowercase the first character if the rest of the word is lowercase!
     if (word.length > 1 && word[0] >= 'A' && word[0] <= 'Z' && word.slice(1) === word.slice(1).toLowerCase()) {
       return word[0].toLowerCase() + word.slice(1);
     }
@@ -107,7 +105,6 @@
     const lower = rawWord.toLowerCase();
     if (wordDictionary[lower]) return wordDictionary[lower];
 
-    // Handle Gujarati name suffixes naturally: -bhai -> -ભાઈ, -ben -> -બેન, -kumar -> -કુમાર, -lal -> -લાલ
     let suffix = '';
     let stem = normalizeForMobileCaps(rawWord);
 
@@ -136,7 +133,6 @@
     while (i < len) {
       const rest = stem.slice(i);
 
-      // Nasal 'n' or 'm' before a consonant -> anusvara 'ં'
       if ((rest[0] === 'n' || rest[0] === 'm') && i > 0 && i + 1 < len) {
         const nextChar = rest[1];
         if (!'aeiouAEIOUyYhHnNmM'.includes(nextChar) && /[a-zA-Z]/.test(nextChar)) {
@@ -146,7 +142,6 @@
         }
       }
 
-      // Match consonant
       let matchedC = null;
       for (const [en, gu] of consonants) {
         if (rest.startsWith(en)) {
@@ -181,7 +176,6 @@
         continue;
       }
 
-      // Match independent vowel
       let matchedV = null;
       for (const [vEn, vGu] of vowelsInd) {
         if (rest.startsWith(vEn)) {
@@ -230,7 +224,6 @@
     el.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  // Handle both keydown (desktop/some Android) AND input event (Gboard mobile space/punctuation)
   document.addEventListener('keydown', function (e) {
     if (!gujaratiEnabled) return;
     const el = e.target;
@@ -283,7 +276,6 @@
   function createFloatingUI() {
     const style = document.createElement('style');
     style.textContent = `
-      /* Clean Compact Toggle Button docked cleanly at bottom-right above keyboard/bar */
       #wbGuBar {
         position: fixed;
         bottom: 66px;
@@ -340,8 +332,6 @@
         background: #5c190d;
         color: #fff;
       }
-    `;
-
       #wbGuPopupOverlay {
         position: fixed;
         inset: 0;
@@ -400,7 +390,7 @@
         font-weight: 800;
         cursor: pointer;
       }
-
+    `;
     document.head.appendChild(style);
 
     const pill = document.createElement('div');
@@ -408,14 +398,6 @@
     pill.innerHTML = '<span>🇮🇳 ગુજરાતી: <b>ચાલુ</b></span>';
     pill.onmousedown = pill.ontouchstart = function (e) {
       e.preventDefault();
-    };
-    pill.onclick = function () {
-      gujaratiEnabled = !gujaratiEnabled;
-      pill.classList.toggle('off', !gujaratiEnabled);
-      pill.innerHTML = gujaratiEnabled
-        ? '<span>🇮🇳 ગુજરાતી: <b>ચાલુ</b></span>'
-        : '<span>🔤 English: <b>ON</b></span>';
-      strip.style.display = (gujaratiEnabled && activeField) ? 'flex' : 'none';
     };
     document.body.appendChild(pill);
 
@@ -425,8 +407,6 @@
     strip.innerHTML = quickItems.map(k => `<button type="button" class="wb-q-key" data-k="${k}">${k}</button>`).join('');
     document.body.appendChild(strip);
 
-
-    // Clean Gujarati Keyboard Tip Popup (shows once per session when user taps an input)
     const popupOverlay = document.createElement('div');
     popupOverlay.id = 'wbGuPopupOverlay';
     popupOverlay.innerHTML = `
@@ -440,7 +420,18 @@
     `;
     document.body.appendChild(popupOverlay);
 
+    let activeField = null;
     let popupShownThisSession = false;
+
+    pill.onclick = function () {
+      gujaratiEnabled = !gujaratiEnabled;
+      pill.classList.toggle('off', !gujaratiEnabled);
+      pill.innerHTML = gujaratiEnabled
+        ? '<span>🇮🇳 ગુજરાતી: <b>ચાલુ</b></span>'
+        : '<span>🔤 English: <b>ON</b></span>';
+      strip.style.display = (gujaratiEnabled && activeField) ? 'flex' : 'none';
+    };
+
     function maybeShowGujaratiPopup(targetInput) {
       if (popupShownThisSession) return;
       popupShownThisSession = true;
@@ -448,15 +439,12 @@
       document.getElementById('wbGuPopupOkBtn').onclick = function () {
         popupOverlay.style.display = 'none';
         if (targetInput) {
-          setTimeout(function() { targetInput.focus(); }, 50);
+          setTimeout(function () { targetInput.focus(); }, 50);
         }
       };
     }
-    window.__showWbGuPopup = function() { maybeShowGujaratiPopup(null); };
+    window.__showWbGuPopup = function () { maybeShowGujaratiPopup(null); };
 
-    let activeField = null;
-
-    // Keep floating pill & quick bar right above the mobile keyboard using visualViewport
     function syncViewportPosition() {
       if (!window.visualViewport) return;
       const vv = window.visualViewport;
@@ -478,33 +466,40 @@
       window.visualViewport.addEventListener('scroll', syncViewportPosition);
     }
 
-    strip.addEventListener('touchstart', function (e) {
-      const btn = e.target.closest('.wb-q-key');
+    function insertQuickKey(btn) {
       if (!btn || !activeField) return;
-      e.preventDefault();
       const ch = btn.dataset.k;
-      const start = activeField.selectionStart || activeField.value.length;
-      const end = activeField.selectionEnd || activeField.value.length;
+      const start = activeField.selectionStart == null ? activeField.value.length : activeField.selectionStart;
+      const end = activeField.selectionEnd == null ? activeField.value.length : activeField.selectionEnd;
       activeField.value = activeField.value.slice(0, start) + ch + activeField.value.slice(end);
       activeField.setSelectionRange(start + ch.length, start + ch.length);
       activeField.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    strip.addEventListener('touchstart', function (e) {
+      const btn = e.target.closest('.wb-q-key');
+      if (!btn) return;
+      e.preventDefault();
+      insertQuickKey(btn);
     }, { passive: false });
 
     strip.addEventListener('mousedown', function (e) {
       const btn = e.target.closest('.wb-q-key');
-      if (!btn || !activeField) return;
+      if (!btn) return;
       e.preventDefault();
-      const ch = btn.dataset.k;
-      const start = activeField.selectionStart || activeField.value.length;
-      const end = activeField.selectionEnd || activeField.value.length;
-      activeField.value = activeField.value.slice(0, start) + ch + activeField.value.slice(end);
-      activeField.setSelectionRange(start + ch.length, start + ch.length);
-      activeField.dispatchEvent(new Event('input', { bubbles: true }));
+      insertQuickKey(btn);
     });
 
     document.addEventListener('focusin', function (e) {
       if (isEligibleInput(e.target)) {
         activeField = e.target;
+        // Ask the phone keyboard to use Gujarati and not auto-capitalize
+        try {
+          e.target.setAttribute('lang', 'gu');
+          e.target.setAttribute('autocapitalize', 'off');
+          e.target.setAttribute('autocorrect', 'off');
+          e.target.setAttribute('spellcheck', 'false');
+        } catch (err) {}
         maybeShowGujaratiPopup(e.target);
         syncViewportPosition();
         pill.style.display = 'flex';
