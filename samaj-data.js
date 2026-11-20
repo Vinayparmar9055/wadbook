@@ -141,9 +141,22 @@ function getMemberValue(type, m) {
  * સભ્ય યાદીના નામ સાથે મેચ થાય છે કે નહીં
  */
 function samajMatch(type, m, listName) {
-  const val = getMemberValue(type, m);
-  if (!val) return false;
-  return samajNameVariants(listName).includes(val);
+  return samajPlaceRoles(type, m, listName).length > 0;
+}
+
+/**
+ * કયા કારણે મેચ થયું: ["વતન"], ["હાલ રહેઠાણ"], બંને, અથવા ["શાખ"]
+ */
+function samajPlaceRoles(type, m, listName) {
+  const variants = samajNameVariants(listName);
+  const roles = [];
+  if (type === "shakh") {
+    if (variants.includes(getMemberValue("shakh", m))) roles.push("શાખ");
+    return roles;
+  }
+  if (variants.includes(cleanSamajName(m.village || m.gam || m.nativePlace || m.city || ""))) roles.push("વતન");
+  if (variants.includes(cleanSamajName(m.res || ""))) roles.push("હાલ રહેઠાણ");
+  return roles;
 }
 
 /**
@@ -157,16 +170,28 @@ function getWadbookRecords() {
     if (raw) {
       const D = JSON.parse(raw);
       const ps = (D && Array.isArray(D.ps)) ? D.ps : [];
+      const byId = id => ps.find(x => x && x.id == id);
+      const fullName = p => {
+        if (p.g === "F") {
+          const husb = ps.find(x => x && (x.sp == p.id || (p.sp && x.id == p.sp)));
+          if (husb) return p.n + " " + husb.n;
+          const dad = p.f && byId(p.f);
+          if (dad) return p.n + " " + dad.n;
+          return p.n || "";
+        }
+        const dad = p.f && byId(p.f);
+        return (p.n || "") + (dad ? " " + dad.n : "");
+      };
       ps.forEach(p => {
         if (!p) return;
-        const father = p.f ? ps.find(x => x && x.id == p.f) : null;
-        const nm = [p.n, p.sur].filter(Boolean).join(" ") || p.n || "";
         out.push({
           id: p.id,
           familyId: p.f || "",
-          name: nm + (p.g === "F" && father && father.n ? " (" + father.n + " ની દીકરી)" : ""),
+          name: fullName(p).trim(),
+          sur: p.sur || "",
           shakh: p.ja || (D && D.ja) || "",
           village: p.gam || "",
+          res: p.rah || "",
           photo: p.img || ""
         });
       });
@@ -196,6 +221,7 @@ function getDynamicSamajLists() {
   members.forEach(m => {
     addIfNew(shakh, "shakh", m.shakh);
     addIfNew(villages, "village", m.village);
+    addIfNew(villages, "village", m.res);
   });
 
   return { shakh, villages, members };
@@ -240,4 +266,17 @@ function searchSamajAutoComplete(query, filterType = "all") {
   }
 
   return results;
+}
+
+
+/**
+ * સભ્યના નામથી શોધ (બધા શબ્દો મળવા જોઈએ; નામ + અટક)
+ */
+function searchMembersByName(query) {
+  const words = String(query || "").toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  return getWadbookRecords().filter(m => {
+    const hay = ((m.name || "") + " " + (m.sur || "")).toLowerCase();
+    return words.every(w => hay.includes(w));
+  });
 }

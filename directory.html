@@ -183,7 +183,7 @@
       <h1>ગામ અને શાખ ડિરેક્ટરી</h1>
     </div>
     <div class="search-wrap">
-      <input type="text" id="dirSearch" class="search-input" placeholder="ગામ અથવા શાખ શોધો (દા.ત. થરાદ, ટડાવા)..." oninput="handleSearch()" />
+      <input type="text" id="dirSearch" class="search-input" placeholder="નામ, ગામ અથવા શાખ શોધો (દા.ત. વિનય, ભાવનગર, ટડાવા)..." oninput="handleSearch()" />
       <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
     </div>
   </div>
@@ -249,6 +249,35 @@
       }
     }
 
+    function memberCardHtml(m, filter) {
+      const name = m.name || "નામ ઉપલબ્ધ નથી";
+      const photoHtml = m.photo
+        ? `<img src="${m.photo}" class="avatar" alt="" />`
+        : `<div class="avatar">${name.charAt(0)}</div>`;
+      const roles = filter ? samajPlaceRoles(filter.type, m, filter.name) : [];
+      const roleTag = (filter && filter.type === "village" && roles.length)
+        ? `<div class="member-meta" style="color:#8b4513;font-weight:700;">📍 ${roles.join(" + ")}</div>` : "";
+      const meta = [
+        m.sur ? "અટક: " + m.sur : "",
+        m.shakh ? "શાખ: " + m.shakh : "",
+        m.village ? "વતન: " + m.village : "",
+        m.res ? "હાલ: " + m.res : ""
+      ].filter(Boolean).join(" • ");
+      return `
+        <div class="member-card">
+          ${photoHtml}
+          <div class="member-info">
+            <div class="member-name">${name}</div>
+            ${roleTag}
+            <div class="member-meta">${meta || "-"}</div>
+            <div class="action-row">
+              <button class="btn-sm btn-tree" onclick="openWad('${m.id || ""}', '${m.familyId || ""}')">🌳 મારો વડ</button>
+              <button class="btn-sm btn-prof" onclick="openProfile('${m.id || ""}')">👤 પ્રોફાઇલ</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
     function render() {
       const { shakh, villages, members } = getDynamicSamajLists();
       document.getElementById("cnt-village").textContent = villages.length;
@@ -266,7 +295,7 @@
         let html = `
           <div class="detail-header">
             <div>
-              <div style="font-size:12px;color:var(--muted);">${selectedFilter.type === "village" ? "ગામ / શહેર" : "પેટા જાતિ (શાખ)"}</div>
+              <div style="font-size:12px;color:var(--muted);">${selectedFilter.type === "village" ? "ગામ / શહેર (વતન + હાલ રહેઠાણ)" : "પેટા જાતિ (શાખ)"}</div>
               <div style="font-size:18px;font-weight:700;color:var(--primary-dark);">${selectedFilter.name}</div>
             </div>
             <div class="item-badge">${matchedMembers.length} સભ્યો</div>
@@ -277,32 +306,11 @@
           html += `
             <div class="empty-box">
               <p style="font-size:16px;font-weight:600;margin-bottom:6px;">હજુ સુધી કોઈ સભ્ય નોંધાયેલ નથી</p>
-              <p style="font-size:13px;">મુખ્ય પેજ પર જઈને "${selectedFilter.name}" ના પરિવારના સભ્યો ઉમેરો, અહીં આપમેળે દેખાશે.</p>
+              <p style="font-size:13px;">મુખ્ય પેજ પર સભ્ય ઉમેરતી વખતે "${selectedFilter.name}" લખશો તો અહીં આપમેળે દેખાશે.</p>
             </div>
           `;
         } else {
-          matchedMembers.forEach(m => {
-            const name = m.name || m.fullName || "નામ ઉપલબ્ધ નથી";
-            const shakhName = m.shakh || m.subcaste || "-";
-            const villageName = m.village || m.gam || "-";
-            const photoHtml = m.photo
-              ? `<img src="${m.photo}" class="avatar" alt="${name}" />`
-              : `<div class="avatar">${name.charAt(0)}</div>`;
-
-            html += `
-              <div class="member-card">
-                ${photoHtml}
-                <div class="member-info">
-                  <div class="member-name">${name}</div>
-                  <div class="member-meta">શાખ: ${shakhName} • ગામ: ${villageName}</div>
-                  <div class="action-row">
-                    <button class="btn-sm btn-tree" onclick="openWad('${m.id || ""}', '${m.familyId || ""}')">🌳 મારો વડ</button>
-                    <button class="btn-sm btn-prof" onclick="openProfile('${m.id || ""}')">👤 પ્રોફાઇલ</button>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
+          matchedMembers.forEach(m => { html += memberCardHtml(m, selectedFilter); });
         }
         container.innerHTML = html;
         return;
@@ -317,12 +325,22 @@
         return name.toLowerCase().includes(query) || alias.includes(query);
       });
 
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="empty-box">કોઈ ગામ કે શાખ મળી નથી.</div>`;
+      const people = query ? searchMembersByName(query) : [];
+
+      if (filtered.length === 0 && people.length === 0) {
+        container.innerHTML = `<div class="empty-box">કોઈ ગામ, શાખ કે સભ્ય મળ્યા નથી.</div>`;
         return;
       }
 
-      let gridHtml = `<div class="grid">`;
+      let peopleHtml = "";
+      if (people.length) {
+        peopleHtml = `<div class="sec-title" style="font-weight:800;color:var(--primary-dark);margin:6px 2px 8px;">👥 સભ્યો (${people.length})</div>`;
+        people.slice(0, 50).forEach(m => { peopleHtml += memberCardHtml(m, null); });
+      }
+
+      let gridHtml = peopleHtml;
+      if (filtered.length) gridHtml += `<div class="sec-title" style="font-weight:800;color:var(--primary-dark);margin:10px 2px 8px;">${currentTab === "village" ? "📍 ગામ / શહેર" : "🏷️ શાખ"}</div>`;
+      gridHtml += `<div class="grid">`;
       filtered.forEach(name => {
         const count = members.filter(m => samajMatch(currentTab, m, name)).length;
 
