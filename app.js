@@ -333,7 +333,9 @@ function pre(p){
  if(p.g=="F"){
   const husb=D.ps.find(x=>x.sp==p.id||(p.sp&&x.id==p.sp));
   if(husb&&husb.s=="d")return "ગં.સ્વ. ";
-  return p.s=="u"?"કુ. ":"સૌ. ";
+  if(p.s=="u")return "કુ. ";
+  // pati hayat hoy tyare "અખંડ સૌભાગ્યવતી" -> અં. સૌ.
+  return husb?"અં. સૌ. ":"સૌ. ";
  }
  return "શ્રી ";
 }
