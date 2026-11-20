@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="gu">
 <head>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      for (var r of regs) { r.unregister(); }
+    });
+  }
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      for (var n of names) { caches.delete(n); }
+    });
+  }
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#6b141a">
@@ -579,9 +591,12 @@
       popupOverlay.style.display = 'flex';
       document.getElementById('wbGuPopupOkBtn').onclick = function () {
         popupOverlay.style.display = 'none';
-        if (targetInput) targetInput.focus();
+        if (targetInput) {
+          setTimeout(function() { targetInput.focus(); }, 50);
+        }
       };
     }
+    window.__showWbGuPopup = function() { maybeShowGujaratiPopup(null); };
 
     let activeField = null;
 

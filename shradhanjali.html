@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="gu">
 <head>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      for (var r of regs) { r.unregister(); }
+    });
+  }
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      for (var n of names) { caches.delete(n); }
+    });
+  }
+</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Wadbook - શ્રદ્ધાંજલિ અને અવસાન નોંધ પત્રિકા મેકર</title>
@@ -1361,7 +1373,7 @@
 
     function handleBack() {
       if (currentScreen === 'preview') {
-        showScreen('form');
+        showScreen('form'); if (window.__showWbGuPopup) window.__showWbGuPopup();
         document.getElementById('topBarTitle').textContent = selectedCategory;
       } else if (currentScreen === 'form') {
         showScreen('home');
@@ -1401,7 +1413,7 @@
       else if (catName === 'પુણ્યતિથિ') evLabel.textContent = 'પુણ્યતિથિની તારીખ';
       else evLabel.textContent = 'બેસણાંની તારીખ';
 
-      showScreen('form');
+      showScreen('form'); if (window.__showWbGuPopup) window.__showWbGuPopup();
     }
 
     /* ================= PROFESSIONAL CROP MODAL LOGIC (EXACTLY LIKE SCREENSHOT 2!) ================= */
@@ -2284,9 +2296,12 @@
       popupOverlay.style.display = 'flex';
       document.getElementById('wbGuPopupOkBtn').onclick = function () {
         popupOverlay.style.display = 'none';
-        if (targetInput) targetInput.focus();
+        if (targetInput) {
+          setTimeout(function() { targetInput.focus(); }, 50);
+        }
       };
     }
+    window.__showWbGuPopup = function() { maybeShowGujaratiPopup(null); };
 
     let activeField = null;
 

@@ -447,9 +447,12 @@
       popupOverlay.style.display = 'flex';
       document.getElementById('wbGuPopupOkBtn').onclick = function () {
         popupOverlay.style.display = 'none';
-        if (targetInput) targetInput.focus();
+        if (targetInput) {
+          setTimeout(function() { targetInput.focus(); }, 50);
+        }
       };
     }
+    window.__showWbGuPopup = function() { maybeShowGujaratiPopup(null); };
 
     let activeField = null;
 
