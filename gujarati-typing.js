@@ -289,7 +289,7 @@
         bottom: 66px;
         right: 12px;
         z-index: 9999;
-        display: flex;
+        display: none;
         align-items: center;
         gap: 5px;
         background: #2b1d14;
@@ -341,11 +341,74 @@
         color: #fff;
       }
     `;
+
+      #wbGuPopupOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      #wbGuPopupCard {
+        background: #fffdf8;
+        border: 2px solid #c9963b;
+        border-radius: 18px;
+        max-width: 330px;
+        width: 100%;
+        padding: 20px 18px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        font-family: 'Noto Sans Gujarati', sans-serif;
+        color: #2b1d14;
+      }
+      #wbGuPopupCard .p-icon {
+        font-size: 32px;
+        margin-bottom: 6px;
+      }
+      #wbGuPopupCard .p-title {
+        font-size: 16.5px;
+        font-weight: 800;
+        color: #5c190d;
+        margin-bottom: 8px;
+      }
+      #wbGuPopupCard .p-msg {
+        font-size: 14px;
+        line-height: 1.5;
+        font-weight: 600;
+        color: #3d281a;
+        margin-bottom: 14px;
+      }
+      #wbGuPopupCard .p-tip {
+        font-size: 12px;
+        background: #f7eedc;
+        border: 1px dashed #c9963b;
+        border-radius: 10px;
+        padding: 7px 10px;
+        color: #5c190d;
+        margin-bottom: 15px;
+      }
+      #wbGuPopupCard .p-btn {
+        background: #2b1d14;
+        color: #fff;
+        border: 1.5px solid #d4a347;
+        border-radius: 22px;
+        padding: 9px 26px;
+        font-size: 14.5px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
     document.head.appendChild(style);
 
     const pill = document.createElement('div');
     pill.id = 'wbGuBar';
     pill.innerHTML = '<span>🇮🇳 ગુજરાતી: <b>ચાલુ</b></span>';
+    pill.onmousedown = pill.ontouchstart = function (e) {
+      e.preventDefault();
+    };
     pill.onclick = function () {
       gujaratiEnabled = !gujaratiEnabled;
       pill.classList.toggle('off', !gujaratiEnabled);
@@ -362,6 +425,32 @@
     strip.innerHTML = quickItems.map(k => `<button type="button" class="wb-q-key" data-k="${k}">${k}</button>`).join('');
     document.body.appendChild(strip);
 
+
+    // Clean Gujarati Keyboard Tip Popup (shows once per session when user taps an input)
+    const popupOverlay = document.createElement('div');
+    popupOverlay.id = 'wbGuPopupOverlay';
+    popupOverlay.innerHTML = `
+      <div id="wbGuPopupCard">
+        <div class="p-icon">⌨️🇮🇳</div>
+        <div class="p-title">Wadbook ગુજરાતી સૂચના</div>
+        <div class="p-msg">બને ત્યાં સુધી ગુજરાતી કીબોર્ડ યૂઝ કરો.</div>
+        <div class="p-tip">જો ફોનમાં ગુજરાતી કીબોર્ડ ન હોય, તો English માં લખશો તો પણ આપમેળે ગુજરાતી થશે.</div>
+        <button type="button" class="p-btn" id="wbGuPopupOkBtn">સમજાઈ ગયું ✓</button>
+      </div>
+    `;
+    document.body.appendChild(popupOverlay);
+
+    let popupShownThisSession = false;
+    function maybeShowGujaratiPopup(targetInput) {
+      if (popupShownThisSession) return;
+      popupShownThisSession = true;
+      popupOverlay.style.display = 'flex';
+      document.getElementById('wbGuPopupOkBtn').onclick = function () {
+        popupOverlay.style.display = 'none';
+        if (targetInput) targetInput.focus();
+      };
+    }
+
     let activeField = null;
 
     // Keep floating pill & quick bar right above the mobile keyboard using visualViewport
@@ -375,6 +464,10 @@
       } else {
         pill.style.bottom = '66px';
         strip.style.bottom = '104px';
+        if (!isEligibleInput(document.activeElement)) {
+          pill.style.display = 'none';
+          strip.style.display = 'none';
+        }
       }
     }
     if (window.visualViewport) {
@@ -409,12 +502,25 @@
     document.addEventListener('focusin', function (e) {
       if (isEligibleInput(e.target)) {
         activeField = e.target;
+        maybeShowGujaratiPopup(e.target);
         syncViewportPosition();
-        if (gujaratiEnabled) strip.style.display = 'flex';
+        pill.style.display = 'flex';
+        strip.style.display = gujaratiEnabled ? 'flex' : 'none';
       } else {
         activeField = null;
+        pill.style.display = 'none';
         strip.style.display = 'none';
       }
+    });
+
+    document.addEventListener('focusout', function () {
+      setTimeout(function () {
+        if (!isEligibleInput(document.activeElement)) {
+          activeField = null;
+          pill.style.display = 'none';
+          strip.style.display = 'none';
+        }
+      }, 120);
     });
   }
 
