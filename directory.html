@@ -264,7 +264,7 @@
         m.res ? "હાલ: " + m.res : ""
       ].filter(Boolean).join(" • ");
       return `
-        <div class="member-card">
+        <div class="member-card" style="cursor:pointer;" onclick="openProfile('${m.id || ""}')">
           ${photoHtml}
           <div class="member-info">
             <div class="member-name">${name}</div>
