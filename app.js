@@ -1282,6 +1282,17 @@ function empty(){$("#tv").hidden=true;$("#pf").hidden=false;
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
 D.me&&get(D.me)?show(D.me):empty();
 
+// directory.html thi aavta link: index.html?view=tree|profile&member=ID
+(function(){
+ try{
+  const q=new URLSearchParams(location.search),v=q.get("view"),m=q.get("member");
+  if(v&&m&&get(m)){
+   if(v==="tree")tab("tv",true,get(m).id);else show(get(m).id,true);
+   history.replaceState(null,"",location.pathname);
+  }
+ }catch(e){}
+})();
+
 function soon(){toast("🌿 ટૂંક સમયમાં આવશે")}
 
 // Clean Drawer Menu
@@ -1290,7 +1301,7 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  $("#dp").innerHTML=me?`${avHtml(me)}<div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
  const it=[
   ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","menu(0);showSagai()","hl"],
-  ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","soon()","soon"],
+  ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","location.href='directory.html'",""],
   ["📤","મારો વડ શેર કરો","વોટ્સએપ પર પરિવારની લિંક મોકલો","menu(0);shareProfile(D.me)",""],
   ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]
  ];

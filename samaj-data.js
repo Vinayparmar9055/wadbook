@@ -2,6 +2,9 @@
  * શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ - Wadbook
  * ડાયનેમિક ગામ અને પેટા જાતિ (શાખ) ડેટાબેઝ
  * નોંધ: ભવિષ્યમાં નવું નામ ઉમેરવા માટે ફક્ત યાદીમાં અલ્પવિરામ (,) કરીને નામ લખો.
+ *
+ * v2: app.js નો અસલી ડેટા ("wadbook-v1" -> D.ps) વાંચે છે,
+ *     "ટડાય ( બનાસકાંઠા )" જેવા નામ "ટડાય" સાથે મેચ થાય છે.
  */
 
 const BASE_SHAKH_LIST = [
@@ -106,36 +109,72 @@ const SEARCH_ALIASES = {
 };
 
 /**
- * localStorage માંથી તમામ સભ્યો અને પરિવારો વાંચવાનું યુનિવર્સલ ફંક્શન
+ * નામ સાફ કરે: "ટડાય ( બનાસકાંઠા )" -> "ટડાય", વધારાની જગ્યા કાઢે, નાના અક્ષર
+ */
+function cleanSamajName(s) {
+  return String(s || "")
+    .replace(/[\(\[（][^\)\]）]*[\)\]）]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * યાદીના નામના બધા રૂપ: "ખોયડા - ખોરડા" -> ["ખોયડા - ખોરડા", "ખોયડા", "ખોરડા"]
+ */
+function samajNameVariants(name) {
+  const full = cleanSamajName(name);
+  const parts = full.split(/\s*[-\/]\s*/).map(x => x.trim()).filter(Boolean);
+  return Array.from(new Set([full, ...parts]));
+}
+
+/**
+ * સભ્યની શાખ / ગામ (સાફ કરેલ)
+ */
+function getMemberValue(type, m) {
+  return type === "shakh"
+    ? cleanSamajName(m.shakh || m.subcaste || m.gotra || "")
+    : cleanSamajName(m.village || m.gam || m.nativePlace || m.city || "");
+}
+
+/**
+ * સભ્ય યાદીના નામ સાથે મેચ થાય છે કે નહીં
+ */
+function samajMatch(type, m, listName) {
+  const val = getMemberValue(type, m);
+  if (!val) return false;
+  return samajNameVariants(listName).includes(val);
+}
+
+/**
+ * Wadbook (app.js) નો અસલી ડેટા વાંચે છે: localStorage "wadbook-v1" -> { ps:[...], ja:"..." }
+ * ps માં દરેક સભ્ય: n=નામ, sur=અટક, ja=જાતિ/શાખ, gam=મૂળ ગામ, img=ફોટો, f=પિતાનો id
  */
 function getWadbookRecords() {
-  const possibleKeys = ["wadbook_data", "wadbook_families", "wadbook_members", "families", "members"];
-  let allMembers = [];
-
-  for (const key of possibleKeys) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      const parsed = JSON.parse(raw);
-
-      if (Array.isArray(parsed)) {
-        parsed.forEach(item => {
-          if (item.members && Array.isArray(item.members)) {
-            item.members.forEach(m => allMembers.push({ ...m, familyId: item.id || m.familyId, familyHead: item.headName || item.name }));
-          } else {
-            allMembers.push(item);
-          }
+  const out = [];
+  try {
+    const raw = localStorage.getItem("wadbook-v1");
+    if (raw) {
+      const D = JSON.parse(raw);
+      const ps = (D && Array.isArray(D.ps)) ? D.ps : [];
+      ps.forEach(p => {
+        if (!p) return;
+        const father = p.f ? ps.find(x => x && x.id == p.f) : null;
+        const nm = [p.n, p.sur].filter(Boolean).join(" ") || p.n || "";
+        out.push({
+          id: p.id,
+          familyId: p.f || "",
+          name: nm + (p.g === "F" && father && father.n ? " (" + father.n + " ની દીકરી)" : ""),
+          shakh: p.ja || (D && D.ja) || "",
+          village: p.gam || "",
+          photo: p.img || ""
         });
-      } else if (parsed && typeof parsed === "object") {
-        if (Array.isArray(parsed.members)) allMembers.push(...parsed.members);
-        if (Array.isArray(parsed.nodes)) allMembers.push(...parsed.nodes);
-      }
-      if (allMembers.length > 0) break;
-    } catch (e) {
-      console.warn("Data parse warning:", e);
+      });
     }
+  } catch (e) {
+    console.warn("Wadbook data read warning:", e);
   }
-  return allMembers;
+  return out;
 }
 
 /**
@@ -143,21 +182,23 @@ function getWadbookRecords() {
  */
 function getDynamicSamajLists() {
   const members = getWadbookRecords();
-  const shakhSet = new Set(BASE_SHAKH_LIST);
-  const villageSet = new Set(BASE_VILLAGE_LIST);
+  const shakh = BASE_SHAKH_LIST.slice();
+  const villages = BASE_VILLAGE_LIST.slice();
+
+  const addIfNew = (list, type, rawVal) => {
+    const val = String(rawVal || "").replace(/[\(\[（][^\)\]）]*[\)\]）]/g, " ").replace(/\s+/g, " ").trim();
+    if (!val) return;
+    const key = val.toLowerCase();
+    const exists = list.some(n => samajNameVariants(n).includes(key));
+    if (!exists) list.push(val);
+  };
 
   members.forEach(m => {
-    const s = (m.shakh || m.subcaste || m.gotra || "").trim();
-    const v = (m.village || m.gam || m.nativePlace || m.city || "").trim();
-    if (s) shakhSet.add(s);
-    if (v) villageSet.add(v);
+    addIfNew(shakh, "shakh", m.shakh);
+    addIfNew(villages, "village", m.village);
   });
 
-  return {
-    shakh: Array.from(shakhSet),
-    villages: Array.from(villageSet),
-    members
-  };
+  return { shakh, villages, members };
 }
 
 /**
@@ -168,15 +209,7 @@ function searchSamajAutoComplete(query, filterType = "all") {
   const q = (query || "").trim().toLowerCase();
   const results = [];
 
-  const countMatches = (type, name) => {
-    const target = name.toLowerCase();
-    return members.filter(m => {
-      const val = type === "shakh"
-        ? (m.shakh || m.subcaste || m.gotra || "").trim().toLowerCase()
-        : (m.village || m.gam || m.nativePlace || m.city || "").trim().toLowerCase();
-      return val === target || (val && target.includes(val));
-    }).length;
-  };
+  const countMatches = (type, name) => members.filter(m => samajMatch(type, m, name)).length;
 
   if (filterType === "all" || filterType === "village") {
     villages.forEach(name => {

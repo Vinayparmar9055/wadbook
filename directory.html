@@ -261,12 +261,7 @@
         document.getElementById("tabBar").style.display = "none";
         const target = selectedFilter.name.toLowerCase();
 
-        const matchedMembers = members.filter(m => {
-          const val = selectedFilter.type === "shakh"
-            ? (m.shakh || m.subcaste || m.gotra || "").trim().toLowerCase()
-            : (m.village || m.gam || m.nativePlace || m.city || "").trim().toLowerCase();
-          return val === target || (val && target.includes(val));
-        });
+        const matchedMembers = members.filter(m => samajMatch(selectedFilter.type, m, selectedFilter.name));
 
         let html = `
           <div class="detail-header">
@@ -329,13 +324,7 @@
 
       let gridHtml = `<div class="grid">`;
       filtered.forEach(name => {
-        const target = name.toLowerCase();
-        const count = members.filter(m => {
-          const val = currentTab === "shakh"
-            ? (m.shakh || m.subcaste || m.gotra || "").trim().toLowerCase()
-            : (m.village || m.gam || m.nativePlace || m.city || "").trim().toLowerCase();
-          return val === target || (val && target.includes(val));
-        }).length;
+        const count = members.filter(m => samajMatch(currentTab, m, name)).length;
 
         gridHtml += `
           <div class="item-card" onclick="openItem('${currentTab}', '${name.replace(/'/g, "\'")}')">
