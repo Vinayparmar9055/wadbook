@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ગામ અને શાખ ડિરેક્ટરી - Wadbook</title>
+  <style>
+    :root {
+      --primary: #8b4513;
+      --primary-dark: #5c2d0c;
+      --gold: #d4af37;
+      --bg: #fdf8f2;
+      --card: #ffffff;
+      --text: #2c1e16;
+      --muted: #7a6658;
+      --border: #eadbc8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans Gujarati', sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: #fff;
+      padding: 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    .header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .header h1 { font-size: 18px; font-weight: 700; }
+
+    .search-wrap { position: relative; }
+    .search-input {
+      width: 100%;
+      padding: 11px 38px 11px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--gold);
+      font-size: 15px;
+      outline: none;
+      background: #fff;
+    }
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--muted);
+      display: none;
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 98px;
+      z-index: 90;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+    }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: #fffaf3;
+    }
+
+    .container { padding: 14px; max-width: 720px; margin: 0 auto; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(139,69,19,0.06);
+      cursor: pointer;
+      transition: transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .item-card:active { transform: scale(0.98); }
+    .item-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .item-badge {
+      display: inline-block;
+      font-size: 12px;
+      background: #f5ebe0;
+      color: var(--primary-dark);
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    .detail-header {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .member-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold);
+      background: #f3e5d8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+    .member-info { flex: 1; }
+    .member-name { font-size: 16px; font-weight: 700; }
+    .member-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .action-row { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-sm {
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-tree { background: #2e7d32; color: #fff; }
+    .btn-prof { background: #f5ebe0; color: var(--primary-dark); }
+    .empty-box {
+      text-align: center;
+      padding: 32px 16px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-top">
+      <button class="back-btn" onclick="goBack()">← પાછા</button>
+      <h1>ગામ અને શાખ ડિરેક્ટરી</h1>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="dirSearch" class="search-input" placeholder="ગામ અથવા શાખ શોધો (દા.ત. થરાદ, ટડાવા)..." oninput="handleSearch()" />
+      <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabBar">
+    <div class="tab active" id="tab-village" onclick="switchTab('village')">ગામ / શહેર (<span id="cnt-village">0</span>)</div>
+    <div class="tab" id="tab-shakh" onclick="switchTab('shakh')">પેટા જાતિ / શાખ (<span id="cnt-shakh">0</span>)</div>
+  </div>
+
+  <div class="container" id="mainContainer"></div>
+
+  <script src="samaj-data.js"></script>
+  <script src="gujarati-typing.js"></script>
+  <script>
+    let currentTab = "village";
+    let selectedFilter = null;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const type = params.get("type");
+      const name = params.get("name");
+      if (type && name) {
+        currentTab = type;
+        selectedFilter = { type, name };
+      }
+      render();
+    });
+
+    function switchTab(tab) {
+      currentTab = tab;
+      selectedFilter = null;
+      document.getElementById("tab-village").classList.toggle("active", tab === "village");
+      document.getElementById("tab-shakh").classList.toggle("active", tab === "shakh");
+      document.getElementById("tabBar").style.display = "flex";
+      render();
+    }
+
+    function handleSearch() {
+      const val = document.getElementById("dirSearch").value;
+      document.getElementById("clearBtn").style.display = val ? "block" : "none";
+      selectedFilter = null;
+      render();
+    }
+
+    function clearSearch() {
+      document.getElementById("dirSearch").value = "";
+      document.getElementById("clearBtn").style.display = "none";
+      selectedFilter = null;
+      render();
+    }
+
+    function openItem(type, name) {
+      selectedFilter = { type, name };
+      render();
+    }
+
+    function goBack() {
+      if (selectedFilter) {
+        selectedFilter = null;
+        render();
+      } else {
+        window.location.href = "index.html";
+      }
+    }
+
+    function render() {
+      const { shakh, villages, members } = getDynamicSamajLists();
+      document.getElementById("cnt-village").textContent = villages.length;
+      document.getElementById("cnt-shakh").textContent = shakh.length;
+
+      const container = document.getElementById("mainContainer");
+      const query = document.getElementById("dirSearch").value.trim().toLowerCase();
+
+      if (selectedFilter) {
+        document.getElementById("tabBar").style.display = "none";
+        const target = selectedFilter.name.toLowerCase();
+
+        const matchedMembers = members.filter(m => {
+          const val = selectedFilter.type === "shakh"
+            ? (m.shakh || m.subcaste || m.gotra || "").trim().toLowerCase()
+            : (m.village || m.gam || m.nativePlace || m.city || "").trim().toLowerCase();
+          return val === target || (val && target.includes(val));
+        });
+
+        let html = `
+          <div class="detail-header">
+            <div>
+              <div style="font-size:12px;color:var(--muted);">${selectedFilter.type === "village" ? "ગામ / શહેર" : "પેટા જાતિ (શાખ)"}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--primary-dark);">${selectedFilter.name}</div>
+            </div>
+            <div class="item-badge">${matchedMembers.length} સભ્યો</div>
+          </div>
+        `;
+
+        if (matchedMembers.length === 0) {
+          html += `
+            <div class="empty-box">
+              <p style="font-size:16px;font-weight:600;margin-bottom:6px;">હજુ સુધી કોઈ સભ્ય નોંધાયેલ નથી</p>
+              <p style="font-size:13px;">મુખ્ય પેજ પર જઈને "${selectedFilter.name}" ના પરિવારના સભ્યો ઉમેરો, અહીં આપમેળે દેખાશે.</p>
+            </div>
+          `;
+        } else {
+          matchedMembers.forEach(m => {
+            const name = m.name || m.fullName || "નામ ઉપલબ્ધ નથી";
+            const shakhName = m.shakh || m.subcaste || "-";
+            const villageName = m.village || m.gam || "-";
+            const photoHtml = m.photo
+              ? `<img src="${m.photo}" class="avatar" alt="${name}" />`
+              : `<div class="avatar">${name.charAt(0)}</div>`;
+
+            html += `
+              <div class="member-card">
+                ${photoHtml}
+                <div class="member-info">
+                  <div class="member-name">${name}</div>
+                  <div class="member-meta">શાખ: ${shakhName} • ગામ: ${villageName}</div>
+                  <div class="action-row">
+                    <button class="btn-sm btn-tree" onclick="openWad('${m.id || ""}', '${m.familyId || ""}')">🌳 મારો વડ</button>
+                    <button class="btn-sm btn-prof" onclick="openProfile('${m.id || ""}')">👤 પ્રોફાઇલ</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        }
+        container.innerHTML = html;
+        return;
+      }
+
+      document.getElementById("tabBar").style.display = "flex";
+      const list = currentTab === "village" ? villages : shakh;
+
+      const filtered = list.filter(name => {
+        if (!query) return true;
+        const alias = (SEARCH_ALIASES[name] || "").toLowerCase();
+        return name.toLowerCase().includes(query) || alias.includes(query);
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-box">કોઈ ગામ કે શાખ મળી નથી.</div>`;
+        return;
+      }
+
+      let gridHtml = `<div class="grid">`;
+      filtered.forEach(name => {
+        const target = name.toLowerCase();
+        const count = members.filter(m => {
+          const val = currentTab === "shakh"
+            ? (m.shakh || m.subcaste || m.gotra || "").trim().toLowerCase()
+            : (m.village || m.gam || m.nativePlace || m.city || "").trim().toLowerCase();
+          return val === target || (val && target.includes(val));
+        }).length;
+
+        gridHtml += `
+          <div class="item-card" onclick="openItem('${currentTab}', '${name.replace(/'/g, "\'")}')">
+            <div class="item-title">${name}</div>
+            <div class="item-badge">${count} સભ્યો</div>
+          </div>
+        `;
+      });
+      gridHtml += `</div>`;
+      container.innerHTML = gridHtml;
+    }
+
+    function openWad(memberId, familyId) {
+      window.location.href = `index.html?view=tree&member=${encodeURIComponent(memberId)}&family=${encodeURIComponent(familyId)}`;
+    }
+
+    function openProfile(memberId) {
+      window.location.href = `index.html?view=profile&member=${encodeURIComponent(memberId)}`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+/**
+ * શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ - Wadbook
+ * ડાયનેમિક ગામ અને પેટા જાતિ (શાખ) ડેટાબેઝ
+ * નોંધ: ભવિષ્યમાં નવું નામ ઉમેરવા માટે ફક્ત યાદીમાં અલ્પવિરામ (,) કરીને નામ લખો.
+ */
+
+const BASE_SHAKH_LIST = [
+  "ટડાવા", "જાણદિયા", "ભોરેલા", "ડોડગામા", "ભૈડુસા",
+  "ડાડી", "ચૌહાણ", "સાતરીયા", "આબુવા", "સાયડિયા",
+  "વાવેસા", "રામેડીયા", "મકવાણા", "ઘોડા", "બગેડીયા",
+  "સરવાળિયા", "ભાટવેરા", "સપરેડીયા", "મોરવાડીયા", "ભાટી",
+  "થરાદરા", "ડાંગરીયા", "ધુણેલા", "ધોણેસલા", "સેણુવા",
+  "ચિબડીયા", "ગોહેલ / ગોહિલ"
+];
+
+const BASE_VILLAGE_LIST = [
+  "પાલડી", "હરસડ", "ઉચપા", "જમપુર", "પળાદર",
+  "ભાટવર", "ખોયડા - ખોરડા", "જમડા", "નેહડા - નેહડી", "કોડ",
+  "વડમ", "વાણાસણ", "ગોળીયું - ગોળીયા", "દાંતીયાનીઢાણી - દાંટિયાઢાણી", "સોતાના - સોતાણા",
+  "પાલડી મીઠી", "વાઘાસણ", "વાવ", "ખીમાણાવાસ", "મારવાડ",
+  "જોડીયા", "રડકા", "તાકવા", "ભાવનગર", "અમદાવાદ",
+  "કલોલ", "કડી", "મહેસાણા", "ઉંઝા", "સિદ્ધપુર",
+  "પાટણ", "પાલનપુર", "ડીસા", "થરાદ", "અભેપુરા",
+  "હારીજ", "દેવપુરા", "ચેમ્બુઆ", "જેટલા", "પારલુ",
+  "બાવળીયારી", "સાયડા", "કણભુણ", "મમાણા", "વેડલા",
+  "સપ્રેડા", "સાંગા", "મોરવાડા"
+];
+
+// સામાન્ય જોડણી અને અંગ્રેજી સર્ચ માટે સ્માર્ટ કીવર્ડ મેપિંગ (વૈકલ્પિક)
+const SEARCH_ALIASES = {
+  "ટડાવા": "tadava tadawa ટડાવ",
+  "જાણદિયા": "janadiya jandiya જાણદીયા",
+  "ભોરેલા": "bhorela",
+  "ડોડગામા": "dodgama",
+  "ભૈડુસા": "bhaidusa bhendsa ભેંડસા",
+  "ડાડી": "dadi",
+  "ચૌહાણ": "chauhan chouhan",
+  "સાતરીયા": "satariya satriya સાતરિયા",
+  "આબુવા": "abuva abuwa",
+  "સાયડિયા": "saydiya sayadiya સાયડીયા",
+  "વાવેસા": "vavesa wavesa",
+  "રામેડીયા": "ramediya રામેડિયા",
+  "મકવાણા": "makwana makvana",
+  "ઘોડા": "ghoda",
+  "બગેડીયા": "bagediya bagadiya બગેડિયા બગડીયા",
+  "સરવાળિયા": "sarvaliya sarwaliya સરવાળીયા",
+  "ભાટવેરા": "bhatvera bhatwera",
+  "સપરેડીયા": "saprediya સપરેડિયા",
+  "મોરવાડીયા": "morvadiya morwadiya મોરવાડિયા",
+  "ભાટી": "bhati",
+  "થરાદરા": "tharadra",
+  "ડાંગરીયા": "dangariya ડાંગરિયા",
+  "ધુણેલા": "dhunela",
+  "ધોણેસલા": "dhonesla",
+  "સેણુવા": "senuva senuwa",
+  "ચિબડીયા": "chibdiya chibadiya ચિબડિયા",
+  "ગોહેલ / ગોહિલ": "gohel gohil ગોહેલ ગોહિલ",
+  "પાલડી": "paldi paladi",
+  "હરસડ": "harsad",
+  "ઉચપા": "uchpa uchapa",
+  "જમપુર": "jampur",
+  "પળાદર": "paladar pladar",
+  "ભાટવર": "bhatvar bhatwar",
+  "ખોયડા - ખોરડા": "khoyda khorda ખોયડા ખોરડા",
+  "જમડા": "jamda",
+  "નેહડા - નેહડી": "nehda nehdi નેહડા નેહડી",
+  "કોડ": "kod",
+  "વડમ": "vadam wadam",
+  "વાણાસણ": "vanasan wanasan",
+  "ગોળીયું - ગોળીયા": "goliyu goliya ગોળીયું ગોળીયા",
+  "દાંતીયાનીઢાણી - દાંટિયાઢાણી": "dantiyanidhani dantiyadhani dhani ઢાણી દાંતીયા",
+  "સોતાના - સોતાણા": "sotana sontana સોતાના સોતાણા સોંતાણા",
+  "પાલડી મીઠી": "paldi mithi mithi paldi મીઠી",
+  "વાઘાસણ": "vaghasan waghasan",
+  "વાવ": "vav wav",
+  "ખીમાણાવાસ": "khimanavas khimanawas ખીમાણા",
+  "મારવાડ": "marvad marwad",
+  "જોડીયા": "jodiya જોડિયા",
+  "રડકા": "radka",
+  "તાકવા": "takva takwa ટાકવા",
+  "ભાવનગર": "bhavnagar",
+  "અમદાવાદ": "ahmedabad amdavad",
+  "કલોલ": "kalol",
+  "કડી": "kadi",
+  "મહેસાણા": "mehsana mahesana",
+  "ઉંઝા": "unjha unja ઊંઝા",
+  "સિદ્ધપુર": "sidhpur siddhpur",
+  "પાટણ": "patan",
+  "પાલનપુર": "palanpur",
+  "ડીસા": "deesa disa",
+  "થરાદ": "tharad",
+  "અભેપુરા": "abhepura abepura અબેપુરા",
+  "હારીજ": "harij",
+  "દેવપુરા": "devpura dewpura",
+  "ચેમ્બુઆ": "chembua shembua શેમ્બુઆ",
+  "જેટલા": "jetla jetala",
+  "પારલુ": "parlu paralu",
+  "બાવળીયારી": "bavaliyari bawaliyari બાવળિયારી",
+  "સાયડા": "sayda sayada",
+  "કણભુણ": "kanbhun કણભુણા",
+  "મમાણા": "mamana",
+  "વેડલા": "vedla wedla",
+  "સપ્રેડા": "sapreda",
+  "સાંગા": "sanga",
+  "મોરવાડા": "morvada morwada"
+};
+
+/**
+ * localStorage માંથી તમામ સભ્યો અને પરિવારો વાંચવાનું યુનિવર્સલ ફંક્શન
+ */
+function getWadbookRecords() {
+  const possibleKeys = ["wadbook_data", "wadbook_families", "wadbook_members", "families", "members"];
+  let allMembers = [];
+
+  for (const key of possibleKeys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+
+      if (Array.isArray(parsed)) {
+        parsed.forEach(item => {
+          if (item.members && Array.isArray(item.members)) {
+            item.members.forEach(m => allMembers.push({ ...m, familyId: item.id || m.familyId, familyHead: item.headName || item.name }));
+          } else {
+            allMembers.push(item);
+          }
+        });
+      } else if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed.members)) allMembers.push(...parsed.members);
+        if (Array.isArray(parsed.nodes)) allMembers.push(...parsed.nodes);
+      }
+      if (allMembers.length > 0) break;
+    } catch (e) {
+      console.warn("Data parse warning:", e);
+    }
+  }
+  return allMembers;
+}
+
+/**
+ * બેઝ લિસ્ટ + યુઝરે નવા ઉમેરેલા ગામ/શાખ બંનેને ભેગા કરીને સંપૂર્ણ ડાયનેમિક યાદી આપે છે
+ */
+function getDynamicSamajLists() {
+  const members = getWadbookRecords();
+  const shakhSet = new Set(BASE_SHAKH_LIST);
+  const villageSet = new Set(BASE_VILLAGE_LIST);
+
+  members.forEach(m => {
+    const s = (m.shakh || m.subcaste || m.gotra || "").trim();
+    const v = (m.village || m.gam || m.nativePlace || m.city || "").trim();
+    if (s) shakhSet.add(s);
+    if (v) villageSet.add(v);
+  });
+
+  return {
+    shakh: Array.from(shakhSet),
+    villages: Array.from(villageSet),
+    members
+  };
+}
+
+/**
+ * ઓટો-સજેશન સર્ચ ફંક્શન (ગુજરાતી + English બંનેમાં કામ કરે)
+ */
+function searchSamajAutoComplete(query, filterType = "all") {
+  const { shakh, villages, members } = getDynamicSamajLists();
+  const q = (query || "").trim().toLowerCase();
+  const results = [];
+
+  const countMatches = (type, name) => {
+    const target = name.toLowerCase();
+    return members.filter(m => {
+      const val = type === "shakh"
+        ? (m.shakh || m.subcaste || m.gotra || "").trim().toLowerCase()
+        : (m.village || m.gam || m.nativePlace || m.city || "").trim().toLowerCase();
+      return val === target || (val && target.includes(val));
+    }).length;
+  };
+
+  if (filterType === "all" || filterType === "village") {
+    villages.forEach(name => {
+      const alias = (SEARCH_ALIASES[name] || "").toLowerCase();
+      if (!q || name.toLowerCase().includes(q) || alias.includes(q)) {
+        results.push({
+          type: "village",
+          label: "ગામ / શહેર",
+          name,
+          count: countMatches("village", name)
+        });
+      }
+    });
+  }
+
+  if (filterType === "all" || filterType === "shakh") {
+    shakh.forEach(name => {
+      const alias = (SEARCH_ALIASES[name] || "").toLowerCase();
+      if (!q || name.toLowerCase().includes(q) || alias.includes(q)) {
+        results.push({
+          type: "shakh",
+          label: "શાખ",
+          name,
+          count: countMatches("shakh", name)
+        });
+      }
+    });
+  }
+
+  return results;
+}
