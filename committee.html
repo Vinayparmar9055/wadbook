@@ -54,6 +54,15 @@
   .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--maroon);}
   .f textarea{min-height:64px;resize:vertical;}
   .phrow{display:flex;align-items:center;gap:12px;}
+  .rules{background:#fff8e6;border:1.5px solid #e0b15a;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.6;color:#4a3525;}
+  .rules summary{font-weight:800;color:var(--maroon);font-size:14px;cursor:pointer;list-style:none;}
+  .rules summary::-webkit-details-marker{display:none;}
+  .rules ul{margin:8px 0 0 18px;}
+  .rules li{margin-bottom:4px;}
+  .rules .soon{margin-top:8px;font-size:12px;color:#7a6658;background:#fff;border:1px dashed #d4b98a;border-radius:9px;padding:6px 9px;}
+  .term{display:inline-block;background:#e8f0fe;color:#1a56b8;border-radius:8px;padding:2px 8px;font-size:11.5px;font-weight:800;margin-top:4px;}
+  .term.old{background:#fdecea;color:#b02a37;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .note{font-size:11.5px;color:#7a6658;margin-top:14px;line-height:1.5;text-align:center;}
 </style>
 </head>
@@ -79,6 +88,28 @@
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const uid = () => "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  const RULES_HTML = `<details class="rules" open>
+    <summary>ℹ️ સમિતિમાં જોડાવાના નિયમો (વાંચો)</summary>
+    <div style="margin-top:6px">ગુર્જર સમાજમાં દરેક શહેર અને ગામમાં એક પ્રમુખ, ઉપપ્રમુખ, ખજાનચી, મંત્રી, કારોબારી વગેરે હોય છે.</div>
+    <ul>
+      <li>જે પ્રમુખ હોય તે જ <b>સૌથી પહેલા</b> પોતાનું નામ ઉમેરે.</li>
+      <li>પ્રમુખનો Wadbook માં <b>પોતાનો વડ બનેલો</b> હોવો જોઈએ.</li>
+      <li>પ્રમુખ નામ ઉમેરે ત્યારે તે શહેરના બીજા વડના <b>સમાજના ૫ સભ્યો</b> "હા" કહીને ખાતરી (confirm) કરે.</li>
+      <li>ખાતરી થયા પછી જ પ્રમુખ તે શહેરની સમિતિમાં <b>ઉપપ્રમુખ, ખજાનચી, મંત્રી, કારોબારી સભ્યો</b> ના નામ ઉમેરી શકે.</li>
+      <li>દરેક હોદ્દા સાથે <b>મુદત</b> લખાય છે, જેમ કે <b>2024 થી 2027</b>.</li>
+    </ul>
+    <div class="soon">⏳ નોંધ: ૫ સભ્યોની ખાતરી (confirm) ની સુવિધા ટૂંક સમયમાં આવશે. ત્યાં સુધી સમિતિ ની વિગત સાચી જ ભરવી.</div>
+  </details>`;
+
+  const G2A = s => String(s || "").replace(/[૦-૯]/g, c => String("૦૧૨૩૪૫૬૭૮૯".indexOf(c)));
+  const yr = s => { const v = G2A(s).replace(/[^0-9]/g, ""); return v.length === 4 ? v : ""; };
+  function termHtml(m) {
+    if (!m.from && !m.to) return "";
+    const txt = m.from && m.to ? m.from + " – " + m.to : (m.from ? m.from + " થી" : "સુધી " + m.to);
+    const old = m.to && Number(m.to) < new Date().getFullYear();
+    return `<div><span class="term${old ? " old" : ""}">🗓️ ${esc(txt)}${old ? " • મુદત પૂરી" : ""}</span></div>`;
+  }
 
   function seed() {
     const m = (post, name) => ({ id: uid(), post, name, mobile: "", village: "", note: "", photo: "" });
@@ -123,7 +154,7 @@
   function renderCities() {
     $("#ttl").innerHTML = 'સમિતિ / કારોબારી<small>શહેર મુજબ પ્રમુખ, મંત્રી અને સભ્યો</small>';
     const list = DB.cities.filter(c => !q || c.name.toLowerCase().includes(q.toLowerCase()));
-    let h = `<input class="search" id="q" type="search" placeholder="🔍 શહેર / સમિતિ શોધો..." value="${esc(q)}" oninput="WBC.search(this.value)">
+    let h = RULES_HTML + `<input class="search" id="q" type="search" placeholder="🔍 શહેર / સમિતિ શોધો..." value="${esc(q)}" oninput="WBC.search(this.value)">
       <div class="row"><button class="btn p full" onclick="WBC.addCity()">➕ નવું શહેર / સમિતિ ઉમેરો</button></div>`;
     if (!list.length) {
       h += `<div class="empty">કોઈ સમિતિ મળી નથી.<br>ઉપર "નવું શહેર / સમિતિ ઉમેરો" દબાવો.</div>`;
@@ -132,7 +163,7 @@
         `<div class="city" onclick="WBC.open('${c.id}')"><b>${esc(c.name)}</b><span class="pill">👥 ${c.members.length} સભ્યો</span></div>`
       ).join("") + `</div>`;
     }
-    h += `<div class="note">નોંધ: આ યાદી આ ફોનમાં સેવ થાય છે. દરેક શહેર ની સમિતિ ઉમેરો, નામ અને વિગત ભરો.</div>`;
+    h += `<div class="note">નોંધ: આ યાદી આ ફોનમાં સેવ થાય છે.</div>`;
     $("#app").innerHTML = h;
     const el = $("#q");
     if (el && q) { el.focus(); try { el.setSelectionRange(q.length, q.length); } catch (e) {} }
@@ -152,6 +183,7 @@
         <span class="post">${esc(m.post)}</span>
         <div class="nm">${esc(m.name)}</div>
         ${lines.length ? `<div class="ln">${lines.join("<br>")}</div>` : ""}
+        ${termHtml(m)}
         <div class="act">
           ${tel ? `<a class="call" href="tel:${esc(tel)}">📞 ફોન કરો</a>` : ""}
           <button onclick="WBC.editMember('${m.id}')">✏️ ફેરવો</button>
@@ -165,7 +197,7 @@
     const c = getCity(curCity);
     if (!c) { view = "cities"; return render(); }
     $("#ttl").innerHTML = esc(c.name) + '<small>' + c.members.length + ' સભ્યો</small>';
-    let h = `<div class="row">
+    let h = RULES_HTML + `<div class="row">
       <button class="btn p" onclick="WBC.addMember()">➕ સભ્ય ઉમેરો</button>
       <button class="btn w" onclick="WBC.share()">📤 શેર કરો</button>
       <button class="btn s" onclick="WBC.renameCity()">✏️ નામ</button>
@@ -194,7 +226,7 @@
   let formPhoto = "";
 
   function memberForm(m) {
-    m = m || { post: "કારોબારી સભ્યશ્રી", name: "", mobile: "", village: "", note: "", photo: "" };
+    m = m || { post: "કારોબારી સભ્યશ્રી", name: "", mobile: "", village: "", note: "", photo: "", from: "", to: "" };
     formPhoto = m.photo || "";
     const opts = POSTS.map(p => `<option ${p === m.post ? "selected" : ""}>${p}</option>`).join("");
     return `<h3>${m.id ? "સભ્યની વિગત ફેરવો" : "નવા સભ્ય ઉમેરો"}</h3>
@@ -206,6 +238,7 @@
       </div>
       <div class="f"><label>હોદ્દો</label><select id="fPost">${opts}</select></div>
       <div class="f"><label>પૂરું નામ (દા.ત. જસુભાઈ મનજીભાઈ પરમાર) *</label><input id="fName" type="text" value="${esc(m.name)}" placeholder="નામ લખો"></div>
+      <div class="f"><label>હોદ્દાની મુદત (દા.ત. 2024 થી 2027)</label><div class="two"><input id="fFrom" type="tel" maxlength="4" value="${esc(m.from || "")}" placeholder="થી (2024)"><input id="fTo" type="tel" maxlength="4" value="${esc(m.to || "")}" placeholder="સુધી (2027)"></div></div>
       <div class="f"><label>મોબાઈલ નંબર</label><input id="fMobile" type="tel" value="${esc(m.mobile)}" placeholder="મોબાઈલ નંબર"></div>
       <div class="f"><label>ગામ / શહેર</label><input id="fVillage" type="text" value="${esc(m.village)}" placeholder="ગામ / શહેર"></div>
       <div class="f"><label>બીજી વિગત (વ્યવસાય, સરનામું વગેરે)</label><textarea id="fNote" placeholder="વધુ વિગત">${esc(m.note)}</textarea></div>
@@ -282,7 +315,12 @@
       const c = getCity(curCity); if (!c) return;
       const name = ($("#fName").value || "").trim();
       if (!name) { alert("નામ લખો."); return; }
+      const from = yr($("#fFrom").value), to = yr($("#fTo").value);
+      if (($("#fFrom").value || "").trim() && !from) { alert("મુદત માં 4 આંકડાનું વર્ષ લખો (દા.ત. 2024)."); return; }
+      if (($("#fTo").value || "").trim() && !to) { alert("મુદત માં 4 આંકડાનું વર્ષ લખો (દા.ત. 2027)."); return; }
+      if (from && to && Number(to) < Number(from)) { alert("'સુધી' નું વર્ષ 'થી' કરતા મોટું હોવું જોઈએ."); return; }
       const rec = {
+        from, to,
         post: $("#fPost").value,
         name,
         mobile: ($("#fMobile").value || "").trim(),
@@ -302,7 +340,7 @@
       POSTS.concat(Array.from(new Set(c.members.map(m => m.post).filter(p => !known.has(p))))).forEach(p => {
         const ms = c.members.filter(m => m.post === p); if (!ms.length) return;
         t += "\n*" + (POST_TITLE[p] || p) + "*\n";
-        ms.forEach(m => { t += "• " + m.name + (m.village ? " (" + m.village + ")" : "") + (m.mobile ? " - " + m.mobile : "") + "\n"; });
+        ms.forEach(m => { t += "• " + m.name + (m.village ? " (" + m.village + ")" : "") + (m.mobile ? " - " + m.mobile : "") + (m.from || m.to ? " [" + (m.from || "") + " – " + (m.to || "") + "]" : "") + "\n"; });
       });
       t += "\n_Wadbook_";
       if (navigator.share) { navigator.share({ text: t }).catch(() => {}); }
