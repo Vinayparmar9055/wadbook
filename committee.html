@@ -201,7 +201,6 @@
     let h = RULES_HTML + `<div class="row">
       <button class="btn p" onclick="WBC.addMember()">➕ સભ્ય ઉમેરો</button>
       <button class="btn w" onclick="WBC.share()">📤 શેર કરો</button>
-      <button class="btn s" onclick="WBC.renameCity()">✏️ નામ</button>
       <button class="btn d" onclick="WBC.delCity()">🗑️ સમિતિ કાઢો</button>
     </div>`;
     if (!c.members.length) {
@@ -246,7 +245,7 @@
         </div>
       </div>
       <div class="f"><label>હોદ્દો</label><select id="fPost">${opts}</select></div>
-      <div class="f"><label>પૂરું નામ (દા.ત. જસુભાઈ મનજીભાઈ પરમાર) *</label><input id="fName" type="text" value="${esc(m.name)}" placeholder="નામ લખો"></div>
+      <div class="f"><label>પૂરું નામ * ${m.pid ? "(Wadbook મુજબ, બદલી શકાતું નથી)" : "(દા.ત. જસુભાઈ મનજીભાઈ પરમાર)"}</label><input id="fName" type="text" value="${esc(m.name)}" placeholder="નામ લખો" ${m.pid ? "readonly" : ""}></div>
       <div class="f"><label>હોદ્દાની મુદત (દા.ત. ૨૦૨૬ થી ૨૦૨૯)</label><div class="two"><input id="fFrom" type="tel" maxlength="4" value="${esc(m.from || "")}" placeholder="થી (૨૦૨૬)"><input id="fTo" type="tel" maxlength="4" value="${esc(m.to || "")}" placeholder="સુધી (૨૦૨૯)"></div></div>
       <div class="f"><label>મોબાઈલ નંબર</label><input id="fMobile" type="tel" value="${esc(m.mobile)}" placeholder="મોબાઈલ નંબર"></div>
       <div class="f"><label>ગામ / શહેર</label><input id="fVillage" type="text" value="${esc(m.village)}" placeholder="ગામ / શહેર"></div>
@@ -396,20 +395,26 @@
       const D = wbData(); if (!D) return;
       const p = D.ps.find(x => x && x.id == id); if (!p) return;
       formPid = String(p.id);
-      const nm = wbFull(D, p) + (p.sur && !wbFull(D, p).includes(p.sur) ? " " + p.sur : "");
+      const base = wbFull(D, p);
+      const sh = wbShakh(D, p);
+      // Wadbook ma jem dekhay che em: naam + shakh (shakh na hoy to atak)
+      const nm = (base + " " + (sh || p.sur || "")).trim();
       $("#fName").value = nm;
+      $("#fName").readOnly = true;
       $("#fVillage").value = p.rah || p.gam || "";
+      const isMe = String(D.me) === String(p.id);
       const mobPriv = (p.priv && p.priv.mob) || (p.g === "F" ? "fam" : "pub");
       let mobNote = "";
-      if (p.mob && mobPriv === "pub") $("#fMobile").value = p.mob;
-      else if (p.mob) mobNote = " (મોબાઈલ ખાનગી છે, હાથે લખો)";
-      const sh = wbShakh(D, p);
-      if (sh && !($("#fNote").value || "").trim()) $("#fNote").value = "શાખ: " + sh + (p.gam ? " • વતન: " + p.gam : "");
+      if (p.mob && (isMe || mobPriv === "pub")) $("#fMobile").value = p.mob;
+      else if (p.mob) mobNote = " (મોબાઈલ તેમણે ખાનગી રાખ્યો છે, હાથે લખો)";
+      if (!($("#fNote").value || "").trim()) {
+        const parts = [p.sur ? "અટક: " + p.sur : "", sh ? "શાખ: " + sh : "", p.gam ? "વતન: " + p.gam : ""].filter(Boolean);
+        $("#fNote").value = parts.join(" • ");
+      }
       if (p.img) { try { resizeSrc(p.img, data => { formPhoto = data; const pp = $("#phPrev"); if (pp) pp.innerHTML = `<img src="${data}">`; }); } catch (e) {} }
-      const l = $("#wbLinked"); if (l) l.innerHTML = "✅ જોડાયેલ: " + esc(nm) + esc(mobNote) + ' <a href="#" style="color:#b02a37" onclick="WBC.wbUnlink();return false">(જોડાણ કાઢો)</a>';
+      const l = $("#wbLinked"); if (l) l.innerHTML = "✅ જોડાયેલ: " + esc(nm) + esc(mobNote);
       const r = $("#wbRes"); if (r) r.innerHTML = "";
     },
-    wbUnlink() { formPid = ""; const l = $("#wbLinked"); if (l) l.innerHTML = ""; },
     openProfile(pid) { window.location.href = "index.html?view=profile&member=" + encodeURIComponent(pid); },
     close: closeSheet
   };

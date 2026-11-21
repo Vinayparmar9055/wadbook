@@ -1110,6 +1110,23 @@ function shareBiodataCard(id){
  }
 }
 
+// Samiti (committee.html) ma jodayela hodda no badge: ખાતરી થયા પછી 🥇, tya sudhi ⏳
+function committeeBadges(pid){
+ try{
+  const C=JSON.parse(localStorage.getItem("wadbook-committee-v1")||"null");
+  if(!C||!Array.isArray(C.cities))return "";
+  const out=[];
+  C.cities.forEach(c=>(c.members||[]).forEach(m=>{
+   if(String(m.pid||"")!==String(pid))return;
+   const term=(m.from||m.to)?" • "+(m.from||"")+" – "+(m.to||""):"";
+   const ok=m.verified===true;
+   const post=String(m.post||"").replace("કારોબારી સભ્યશ્રી","કારોબારી સભ્ય");
+   out.push(`<span style="display:inline-block;margin:3px 3px 0;padding:4px 12px;border-radius:14px;font-size:12.5px;font-weight:800;${ok?"background:linear-gradient(135deg,#fff3c4,#f6d365);color:#5c3a00;border:1.5px solid #d4a347":"background:#f3f0ea;color:#6b5a4a;border:1.5px dashed #b9a88f"}">${ok?"🥇":"⏳"} ${esc(post)} • ${esc(c.name)}${esc(term)}${ok?"":" (ખાતરી બાકી)"}</span>`);
+  }));
+  return out.length?`<div style="text-align:center;margin:4px 0 2px">${out.join("")}</div>`:"";
+ }catch(e){return "";}
+}
+
 function show(id,skipPush=false){
  cur=id;const p=get(id);if(!p)return empty();
  const isSelf=(id==D.me);
@@ -1210,6 +1227,7 @@ function show(id,skipPush=false){
  ${memorialNote}
  ${line1?`<p class="ln">${line1}</p>`:""}
  ${line2?`<p class="bio">${line2}</p>`:""}
+ ${committeeBadges(p.id)}
  ${p.bio?`<div class="bio-box">“${esc(p.bio)}”</div>`:""}
  <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isSelf?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr" onclick="showSagai(false,${id})"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય ›</small></div></div>
  ${actionButtons}
