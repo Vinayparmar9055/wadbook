@@ -181,7 +181,8 @@
       <div class="ph">${ph}</div>
       <div class="mi">
         <span class="post">${esc(m.post)}</span>
-        <div class="nm">${esc(m.name)}</div>
+        <div class="nm"${m.pid ? ` style="cursor:pointer;text-decoration:underline dotted" onclick="WBC.openProfile('${esc(m.pid)}')"` : ""}>${esc(m.name)}</div>
+        ${m.pid ? `<div class="ln" style="color:#15803d;font-weight:700">🌳 Wadbook સાથે જોડાયેલ • નામ દબાવો → પ્રોફાઇલ</div>` : ""}
         ${lines.length ? `<div class="ln">${lines.join("<br>")}</div>` : ""}
         ${termHtml(m)}
         <div class="act">
@@ -224,12 +225,20 @@
   function closeSheet() { $("#sheetHost").innerHTML = ""; }
 
   let formPhoto = "";
+  let formPid = "";
 
   function memberForm(m) {
     m = m || { post: "કારોબારી સભ્યશ્રી", name: "", mobile: "", village: "", note: "", photo: "", from: "", to: "" };
     formPhoto = m.photo || "";
+    formPid = m.pid || "";
     const opts = POSTS.map(p => `<option ${p === m.post ? "selected" : ""}>${p}</option>`).join("");
     return `<h3>${m.id ? "સભ્યની વિગત ફેરવો" : "નવા સભ્ય ઉમેરો"}</h3>
+      <div class="f" style="background:#fff8e6;border:1.5px solid #e0b15a;border-radius:12px;padding:10px">
+        <label>🌳 Wadbook માંથી સભ્ય પસંદ કરો (વડ સાથે જોડો)</label>
+        <input id="wbQ" type="text" placeholder="નામ લખીને શોધો..." oninput="WBC.wbSearch(this.value)">
+        <div id="wbRes" style="margin-top:8px"></div>
+        <div id="wbLinked" style="font-size:12.5px;font-weight:700;color:#15803d;margin-top:6px">${formPid ? "✅ Wadbook સાથે જોડાયેલ છે" : ""}</div>
+      </div>
       <div class="f phrow">
         <div class="ph" id="phPrev">${formPhoto ? `<img src="${formPhoto}">` : "📷"}</div>
         <div><label style="margin-bottom:6px">ફોટો</label>
@@ -246,23 +255,44 @@
   }
 
   /* ---------- photo resize ---------- */
+  function resizeSrc(src, cb) {
+    const img = new Image();
+    img.onload = () => {
+      const W = 240, H = 300, c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d");
+      const s = Math.max(W / img.width, H / img.height);
+      const w = img.width * s, h = img.height * s;
+      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      cb(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.src = src;
+  }
   function resizePhoto(file, cb) {
     const r = new FileReader();
-    r.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const W = 240, H = 300, c = document.createElement("canvas");
-        c.width = W; c.height = H;
-        const ctx = c.getContext("2d");
-        const s = Math.max(W / img.width, H / img.height);
-        const w = img.width * s, h = img.height * s;
-        ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
-        cb(c.toDataURL("image/jpeg", 0.8));
-      };
-      img.src = r.result;
-    };
+    r.onload = () => resizeSrc(r.result, cb);
     r.readAsDataURL(file);
   }
+
+  /* ---------- Wadbook profiles (same phone data) ---------- */
+  function wbData() {
+    try { const D = JSON.parse(localStorage.getItem("wadbook-v1")); return (D && Array.isArray(D.ps)) ? D : null; }
+    catch (e) { return null; }
+  }
+  function wbFull(D, p) {
+    const byId = id => D.ps.find(x => x && x.id == id);
+    let nm;
+    if (p.g === "F") {
+      const husb = D.ps.find(x => x && (x.sp == p.id || (p.sp && x.id == p.sp)));
+      const dad = p.f && byId(p.f);
+      nm = (p.n || "") + (husb ? " " + husb.n : (dad ? " " + dad.n : ""));
+    } else {
+      const dad = p.f && byId(p.f);
+      nm = (p.n || "") + (dad ? " " + dad.n : "");
+    }
+    return nm.trim();
+  }
+  function wbShakh(D, p) { return p.ja || D.ja || ""; }
 
   /* ---------- public API ---------- */
   window.WBC = {
@@ -321,6 +351,7 @@
       if (from && to && Number(to) < Number(from)) { alert("'સુધી' નું વર્ષ 'થી' કરતા મોટું હોવું જોઈએ."); return; }
       const rec = {
         from, to,
+        pid: formPid || "",
         post: $("#fPost").value,
         name,
         mobile: ($("#fMobile").value || "").trim(),
@@ -346,6 +377,40 @@
       if (navigator.share) { navigator.share({ text: t }).catch(() => {}); }
       else { window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank"); }
     },
+    wbSearch(v) {
+      const host = $("#wbRes"); if (!host) return;
+      const D = wbData();
+      const words = String(v || "").toLowerCase().split(/\s+/).filter(Boolean);
+      if (!D) { host.innerHTML = '<div class="ln">Wadbook નો ડેટા આ ફોનમાં મળ્યો નથી.</div>'; return; }
+      if (!words.length) { host.innerHTML = ""; return; }
+      const list = D.ps.filter(p => p && words.every(w => (wbFull(D, p) + " " + (p.sur || "")).toLowerCase().includes(w))).slice(0, 8);
+      if (!list.length) { host.innerHTML = '<div class="ln">કોઈ સભ્ય મળ્યા નથી.</div>'; return; }
+      host.innerHTML = list.map(p =>
+        `<div class="mem" style="padding:8px;margin-bottom:6px;cursor:pointer" onclick="WBC.wbPick('${esc(p.id)}')">
+          <div class="ph" style="width:44px;height:54px;font-size:20px">${p.img ? `<img src="${p.img}">` : esc((p.n || "?").charAt(0))}</div>
+          <div class="mi"><div class="nm" style="font-size:14px">${esc(wbFull(D, p))}</div>
+          <div class="ln">${esc([wbShakh(D, p), p.gam, p.rah ? "હાલ: " + p.rah : ""].filter(Boolean).join(" • "))}</div></div></div>`
+      ).join("");
+    },
+    wbPick(id) {
+      const D = wbData(); if (!D) return;
+      const p = D.ps.find(x => x && x.id == id); if (!p) return;
+      formPid = String(p.id);
+      const nm = wbFull(D, p) + (p.sur && !wbFull(D, p).includes(p.sur) ? " " + p.sur : "");
+      $("#fName").value = nm;
+      $("#fVillage").value = p.rah || p.gam || "";
+      const mobPriv = (p.priv && p.priv.mob) || (p.g === "F" ? "fam" : "pub");
+      let mobNote = "";
+      if (p.mob && mobPriv === "pub") $("#fMobile").value = p.mob;
+      else if (p.mob) mobNote = " (મોબાઈલ ખાનગી છે, હાથે લખો)";
+      const sh = wbShakh(D, p);
+      if (sh && !($("#fNote").value || "").trim()) $("#fNote").value = "શાખ: " + sh + (p.gam ? " • વતન: " + p.gam : "");
+      if (p.img) { try { resizeSrc(p.img, data => { formPhoto = data; const pp = $("#phPrev"); if (pp) pp.innerHTML = `<img src="${data}">`; }); } catch (e) {} }
+      const l = $("#wbLinked"); if (l) l.innerHTML = "✅ જોડાયેલ: " + esc(nm) + esc(mobNote) + ' <a href="#" style="color:#b02a37" onclick="WBC.wbUnlink();return false">(જોડાણ કાઢો)</a>';
+      const r = $("#wbRes"); if (r) r.innerHTML = "";
+    },
+    wbUnlink() { formPid = ""; const l = $("#wbLinked"); if (l) l.innerHTML = ""; },
+    openProfile(pid) { window.location.href = "index.html?view=profile&member=" + encodeURIComponent(pid); },
     close: closeSheet
   };
 
