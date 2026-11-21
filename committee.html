@@ -93,13 +93,13 @@
     <summary>ℹ️ સમિતિમાં જોડાવાના નિયમો (વાંચો)</summary>
     <div style="margin-top:6px">ગુર્જર સમાજમાં દરેક શહેર અને ગામમાં એક પ્રમુખ, ઉપપ્રમુખ, ખજાનચી, મંત્રી, કારોબારી વગેરે હોય છે.</div>
     <ul>
-      <li>જે પ્રમુખ હોય તે જ <b>સૌથી પહેલા</b> પોતાનું નામ ઉમેરે.</li>
+      <li>જે પ્રમુખ હોય, તે જ <b>સૌથી પહેલા</b> પોતાનું નામ ઉમેરે.</li>
       <li>પ્રમુખનો Wadbook માં <b>પોતાનો વડ બનેલો</b> હોવો જોઈએ.</li>
-      <li>પ્રમુખ નામ ઉમેરે ત્યારે તે શહેરના બીજા વડના <b>સમાજના ૫ સભ્યો</b> "હા" કહીને ખાતરી (confirm) કરે.</li>
-      <li>ખાતરી થયા પછી જ પ્રમુખ તે શહેરની સમિતિમાં <b>ઉપપ્રમુખ, ખજાનચી, મંત્રી, કારોબારી સભ્યો</b> ના નામ ઉમેરી શકે.</li>
-      <li>દરેક હોદ્દા સાથે <b>મુદત</b> લખાય છે, જેમ કે <b>2024 થી 2027</b>.</li>
+      <li>પ્રમુખ નામ ઉમેરે ત્યારે તે શહેર/ગામના બીજા વડના <b>સમાજના ૫ સભ્યો</b> "હા" કહીને ખાતરી (confirm) કરે.</li>
+      <li>ખાતરી થયા પછી જ પ્રમુખ તે શહેર/ગામની સમિતિમાં <b>ઉપપ્રમુખ, ખજાનચી, મંત્રી, કારોબારી સભ્યોના</b> નામ ઉમેરી શકે.</li>
+      <li>દરેક હોદ્દા સાથે <b>મુદત</b> લખાય છે, જેમ કે <b>૨૦૨૬ થી ૨૦૨૯</b>.</li>
     </ul>
-    <div class="soon">⏳ નોંધ: ૫ સભ્યોની ખાતરી (confirm) ની સુવિધા ટૂંક સમયમાં આવશે. ત્યાં સુધી સમિતિ ની વિગત સાચી જ ભરવી.</div>
+    <div class="soon">⏳ નોંધ: ૫ સભ્યો દ્વારા ખાતરી (confirm) કરવાની સુવિધા ટૂંક સમયમાં આવશે. ત્યાં સુધી સમિતિની વિગત સાચી જ ભરવી.</div>
   </details>`;
 
   const G2A = s => String(s || "").replace(/[૦-૯]/g, c => String("૦૧૨૩૪૫૬૭૮૯".indexOf(c)));
@@ -163,7 +163,7 @@
         `<div class="city" onclick="WBC.open('${c.id}')"><b>${esc(c.name)}</b><span class="pill">👥 ${c.members.length} સભ્યો</span></div>`
       ).join("") + `</div>`;
     }
-    h += `<div class="note">નોંધ: આ યાદી આ ફોનમાં સેવ થાય છે.</div>`;
+    h += `<div class="note">નોંધ: આ યાદી આ ફોનમાં સેવ થાય છે. એપ અનઇન્સ્ટોલ કરવાથી કે ડેટા ક્લિયર કરવાથી આ યાદી ડિલીટ થઈ શકે છે.</div>`;
     $("#app").innerHTML = h;
     const el = $("#q");
     if (el && q) { el.focus(); try { el.setSelectionRange(q.length, q.length); } catch (e) {} }
@@ -238,7 +238,7 @@
       </div>
       <div class="f"><label>હોદ્દો</label><select id="fPost">${opts}</select></div>
       <div class="f"><label>પૂરું નામ (દા.ત. જસુભાઈ મનજીભાઈ પરમાર) *</label><input id="fName" type="text" value="${esc(m.name)}" placeholder="નામ લખો"></div>
-      <div class="f"><label>હોદ્દાની મુદત (દા.ત. 2024 થી 2027)</label><div class="two"><input id="fFrom" type="tel" maxlength="4" value="${esc(m.from || "")}" placeholder="થી (2024)"><input id="fTo" type="tel" maxlength="4" value="${esc(m.to || "")}" placeholder="સુધી (2027)"></div></div>
+      <div class="f"><label>હોદ્દાની મુદત (દા.ત. ૨૦૨૬ થી ૨૦૨૯)</label><div class="two"><input id="fFrom" type="tel" maxlength="4" value="${esc(m.from || "")}" placeholder="થી (૨૦૨૬)"><input id="fTo" type="tel" maxlength="4" value="${esc(m.to || "")}" placeholder="સુધી (૨૦૨૯)"></div></div>
       <div class="f"><label>મોબાઈલ નંબર</label><input id="fMobile" type="tel" value="${esc(m.mobile)}" placeholder="મોબાઈલ નંબર"></div>
       <div class="f"><label>ગામ / શહેર</label><input id="fVillage" type="text" value="${esc(m.village)}" placeholder="ગામ / શહેર"></div>
       <div class="f"><label>બીજી વિગત (વ્યવસાય, સરનામું વગેરે)</label><textarea id="fNote" placeholder="વધુ વિગત">${esc(m.note)}</textarea></div>
@@ -316,8 +316,8 @@
       const name = ($("#fName").value || "").trim();
       if (!name) { alert("નામ લખો."); return; }
       const from = yr($("#fFrom").value), to = yr($("#fTo").value);
-      if (($("#fFrom").value || "").trim() && !from) { alert("મુદત માં 4 આંકડાનું વર્ષ લખો (દા.ત. 2024)."); return; }
-      if (($("#fTo").value || "").trim() && !to) { alert("મુદત માં 4 આંકડાનું વર્ષ લખો (દા.ત. 2027)."); return; }
+      if (($("#fFrom").value || "").trim() && !from) { alert("મુદત માં 4 આંકડાનું વર્ષ લખો (દા.ત. ૨૦૨૬)."); return; }
+      if (($("#fTo").value || "").trim() && !to) { alert("મુદત માં 4 આંકડાનું વર્ષ લખો (દા.ત. ૨૦૨૯)."); return; }
       if (from && to && Number(to) < Number(from)) { alert("'સુધી' નું વર્ષ 'થી' કરતા મોટું હોવું જોઈએ."); return; }
       const rec = {
         from, to,
