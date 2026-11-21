@@ -256,7 +256,7 @@ function renderState(st){
  else if(st.v==="fam")showFamily(st.id,true);
  else if(st.v==="tv")tab("tv",true,st.id,st.side||"auto");
  else if(st.v==="tul")showTulsi(st.id,true);
- else if(st.v==="sag")showSagai(true);
+ else if(st.v==="sag")showSagai(true,st.id||null);
 }
 window.addEventListener("popstate",()=>{
  if(!$("#cropModal").hidden){
@@ -660,7 +660,8 @@ function vs(p){
  let r=(p.g=="F")?((husb&&husb.g!="F")?husb:(p.f&&get(p.f)?get(p.f):p)):p;
  while(r.f&&get(r.f))r=get(r.f);
  let n=0,m=0,u=0;
- (function w(q,d){n++;if(q.s=="u")u++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);
+ (function w(q,d){n++;m=Math.max(m,d);kids(q).forEach(x=>w(x,d+1))})(r,1);
+ u=vadUnmarried(p.id);
  return[m,n,u];
 }
 
@@ -809,36 +810,40 @@ function showFamily(id,skipPush=false){
 // ===== સ્માર્ટ સગાઈ બાયોડેટા વિભાગ =====
 let sagFilter="all", sagSearch="";
 
-// Potana vad (pitrupaksh kul) ma aavta badha sabhya: topmost pita thi niche na badha dikra-dikri (patilineal)
-function myVadIds(){
+// Koi pan vyakti na vad (pitrupaksh kul) ma aavta badha sabhya: topmost pita thi niche na badha dikra-dikri
+// (dikri sasre jay to pan potana pita na vad ma ganay; patni mate pati no vad)
+function vadFor(pid){
  try{
-  const me=D.me&&get(D.me);
-  if(!me)return null;
-  // 1) topmost pita sudhi upar jao
-  let root=me,guard=0;
+  const p=pid&&get(pid);
+  if(!p)return null;
+  const husb=(p.g=="F")?D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id):null;
+  let root=(p.g=="F")?((husb&&husb.g!="F")?husb:(p.f&&get(p.f)?get(p.f):p)):p;
+  let guard=0;
   while(root.f&&get(root.f)&&guard++<50)root=get(root.f);
-  // 2) root thi niche badha dikra-dikri (f link thi)
   const ids=new Set([root.id]);
-  const meJa=me.ja||D.ja||"";
   let grew=true;
   while(grew){
    grew=false;
    const wives=new Set(D.ps.filter(x=>x.sp&&ids.has(x.sp)&&!ids.has(x.id)).map(x=>x.id));
-   D.ps.forEach(p=>{
-    if(ids.has(p.id))return;
-    if(!((p.f&&ids.has(p.f))||(!p.f&&p.m&&wives.has(p.m))))return;
-    // bija shakh ni vyakti hoy to bahar
-    const pj=p.ja||D.ja||"";
-    if(pj&&meJa&&pj!==meJa)return;
-    ids.add(p.id);grew=true;
+   D.ps.forEach(q=>{
+    if(ids.has(q.id))return;
+    if((q.f&&ids.has(q.f))||(!q.f&&q.m&&wives.has(q.m))){ids.add(q.id);grew=true;}
    });
   }
-  return ids;
+  return {ids,root};
  }catch(e){return null;}
 }
+function vadUnmarried(pid){
+ const V=vadFor(pid);
+ if(!V)return 0;
+ return D.ps.filter(x=>x.s==="u"&&x.sagaiOpen!=="no"&&V.ids.has(x.id)).length;
+}
 
-function showSagai(skipPush=false){
- const vad=myVadIds();
+let sagFor=null;
+function showSagai(skipPush=false,forId){
+ if(forId!==undefined)sagFor=forId;else if(!skipPush)sagFor=null;
+ const V=vadFor(sagFor||D.me);
+ const vad=V&&V.ids;
  const list=D.ps.filter(p=>p.s==="u" && p.sagaiOpen!=="no" && (!vad || vad.has(p.id)));
  const filtered=list.filter(p=>{
   if(sagFilter==="M" && p.g==="F")return false;
@@ -882,7 +887,7 @@ function showSagai(skipPush=false){
  $("#pf").innerHTML=`<div class="pad">
   <div class="hd">
     <h2>💍 સગાઈ બાયોડેટા વિભાગ</h2>
-    <p>તમારા વડ (${esc(D.ja||"")} પરિવાર) ના અપરિણીત દીકરા-દીકરીઓ</p>
+    <p>${sagFor&&sagFor!=D.me?"આ વડ":"તમારા વડ"} (${esc((V&&V.root&&V.root.ja)||D.ja||"")} પરિવાર) ના અપરિણીત દીકરા-દીકરીઓ</p>
   </div>
 
   <div class="sag-tabs">
@@ -898,7 +903,7 @@ function showSagai(skipPush=false){
 
  $("#tv").hidden=true;$("#pf").hidden=false;
  setNav("sag");
- if(!skipPush)pushView({v:"sag"});
+ if(!skipPush)pushView({v:"sag",id:sagFor});
 }
 
 // Royal Shareable Biodata Card Modal
@@ -1206,7 +1211,7 @@ function show(id,skipPush=false){
  ${line1?`<p class="ln">${line1}</p>`:""}
  ${line2?`<p class="bio">${line2}</p>`:""}
  ${p.bio?`<div class="bio-box">“${esc(p.bio)}”</div>`:""}
- <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isSelf?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr" onclick="showSagai()"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય ›</small></div></div>
+ <div class="st"><div><b>${gu(g)} પેઢી</b><small>${isSelf?"મારો વડ 🌳":(hasSasri?"સાસરી વડ 🌳":(p.g=="F"?"પિયર વડ 🌳":"તેમનો વડ 🌳"))}</small></div><div><b>${gu(n)} સભ્યો</b><small>કુલ પરિવાર</small></div><div class="gr" onclick="showSagai(false,${id})"><b>${gu(u)} અપરિણીત</b><small>સગાઈ યોગ્ય ›</small></div></div>
  ${actionButtons}
  ${infoRows?`<div class="bx">${infoRows}</div>`:""}
  ${canSee("fam") && fam.length?`<h3 class="fh">પરિવારના સભ્યો</h3>${fam.map(([q,r])=>card(q,r)).join("")}`:(!canSee("fam")?`<div class="priv-note">🔒 પરિવારની વિગત પ્રાઇવેટ રાખવામાં આવી છે</div>`:"")}</div>`;
