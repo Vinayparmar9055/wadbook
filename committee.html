@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#5c2a0f">
+<title>Wadbook - સમિતિ / કારોબારી</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--dark:#2b1d14;--maroon:#5c190d;--gold:#c9963b;--bg:#fcf7ee;--line:#e6d5b4;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Noto Sans Gujarati',sans-serif;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:#2c1c12;min-height:100vh;padding-bottom:40px;}
+  .top{background:linear-gradient(135deg,#5c2a0f,#85420f);color:#fff;padding:14px 14px 14px;position:sticky;top:0;z-index:50;box-shadow:0 3px 12px rgba(0,0,0,.25);}
+  .top-row{display:flex;align-items:center;gap:10px;}
+  .back{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:10px;padding:8px 13px;font-size:14px;font-weight:700;cursor:pointer;}
+  .top h1{font-size:17.5px;font-weight:800;line-height:1.25;}
+  .top small{display:block;font-size:12px;opacity:.85;font-weight:500;}
+  .wrap{max-width:560px;margin:0 auto;padding:14px;}
+  .search{width:100%;padding:12px 14px;border:2px solid var(--gold);border-radius:14px;font-size:14.5px;background:#fff;outline:none;margin-bottom:12px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:800;cursor:pointer;}
+  .btn.p{background:var(--dark);color:#fff;border:1.5px solid var(--gold);}
+  .btn.s{background:#fff;color:var(--maroon);border:1.5px solid var(--line);}
+  .btn.d{background:#fdecea;color:#b02a37;border:1.5px solid #f5c2c7;}
+  .btn.w{background:#e7f8ec;color:#15803d;border:1.5px solid #b7e4c7;}
+  .btn.full{width:100%;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .city{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 12px;cursor:pointer;box-shadow:0 2px 8px rgba(43,29,20,.07);}
+  .city:active{transform:scale(.98);}
+  .city b{display:block;font-size:15.5px;color:var(--maroon);margin-bottom:6px;}
+  .pill{display:inline-block;background:#f5ebd8;border:1px solid #dec79b;border-radius:10px;padding:3px 9px;font-size:12px;font-weight:700;color:#5c190d;}
+  .empty{background:#fff;border:1.5px dashed var(--line);border-radius:14px;padding:26px 16px;text-align:center;color:#6e5846;font-size:14px;line-height:1.6;}
+  .grp{font-size:14.5px;font-weight:800;color:var(--maroon);margin:16px 2px 8px;display:flex;align-items:center;gap:8px;}
+  .grp::before{content:"";width:4px;height:17px;background:#c84b31;border-radius:3px;}
+  .mem{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px;display:flex;gap:12px;box-shadow:0 2px 8px rgba(43,29,20,.06);}
+  .ph{width:74px;height:90px;border-radius:10px;border:2px solid var(--gold);background:#fcefcf;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:var(--maroon);overflow:hidden;flex-shrink:0;}
+  .ph img{width:100%;height:100%;object-fit:cover;}
+  .mi{flex:1;min-width:0;}
+  .mi .post{display:inline-block;background:var(--maroon);color:#fff;border-radius:9px;padding:2px 9px;font-size:11.5px;font-weight:700;margin-bottom:4px;}
+  .mi .nm{font-size:15.5px;font-weight:800;line-height:1.3;color:#2b1d14;}
+  .mi .ln{font-size:12.5px;color:#6e5846;margin-top:3px;line-height:1.45;}
+  .act{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .act a,.act button{border:1.5px solid var(--line);background:#fffaf0;color:var(--maroon);border-radius:9px;padding:5px 10px;font-size:12px;font-weight:800;text-decoration:none;cursor:pointer;}
+  .act a.call{background:#e7f8ec;color:#15803d;border-color:#b7e4c7;}
+  /* sheet */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+  .sheet{background:#fffdf8;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:16px 16px 26px;}
+  .sheet h3{font-size:16.5px;font-weight:800;color:var(--maroon);margin-bottom:12px;}
+  .f{margin-bottom:11px;}
+  .f label{display:block;font-size:12.5px;font-weight:700;color:#4a3525;margin-bottom:5px;}
+  .f input,.f select,.f textarea{width:100%;padding:11px 12px;border:1.5px solid #dfd2bc;border-radius:12px;font-size:14px;background:#fff;outline:none;}
+  .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--maroon);}
+  .f textarea{min-height:64px;resize:vertical;}
+  .phrow{display:flex;align-items:center;gap:12px;}
+  .note{font-size:11.5px;color:#7a6658;margin-top:14px;line-height:1.5;text-align:center;}
+</style>
+</head>
+<body>
+<div class="top"><div class="top-row">
+  <button class="back" id="backBtn" onclick="goBack()">← પાછા</button>
+  <h1 id="ttl">સમિતિ / કારોબારી<small>શહેર મુજબ પ્રમુખ, મંત્રી અને સભ્યો</small></h1>
+</div></div>
+<div class="wrap" id="app"></div>
+<div id="sheetHost"></div>
+
+<script>
+(function(){
+  const KEY = "wadbook-committee-v1";
+  const POSTS = ["પ્રમુખશ્રી","ઉપપ્રમુખશ્રી","મંત્રીશ્રી","સહમંત્રીશ્રી","ખજાનચીશ્રી","કારોબારી સભ્યશ્રી"];
+  const POST_TITLE = {"પ્રમુખશ્રી":"પ્રમુખશ્રી","ઉપપ્રમુખશ્રી":"ઉપપ્રમુખશ્રી","મંત્રીશ્રી":"મંત્રીશ્રી","સહમંત્રીશ્રી":"સહમંત્રીશ્રી","ખજાનચીશ્રી":"ખજાનચીશ્રી","કારોબારી સભ્યશ્રી":"કારોબારી સભ્યો"};
+
+  let DB;
+  let view = "cities";   // cities | city
+  let curCity = null;
+  let q = "";
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const uid = () => "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  function seed() {
+    const m = (post, name) => ({ id: uid(), post, name, mobile: "", village: "", note: "", photo: "" });
+    return {
+      cities: [{
+        id: uid(),
+        name: "સમસ્ત બનાસકાંઠા ગુર્જર પ્રજાપતિ જ્ઞાતિ",
+        members: [
+          m("પ્રમુખશ્રી", "જસુભાઈ મનજીભાઈ પરમાર"),
+          m("ઉપપ્રમુખશ્રી", "કાજાભાઈ ચતરાભાઈ પ્રજાપતિ"),
+          m("મંત્રીશ્રી", "સવજીભાઈ આણંદભાઈ ભટ્ટી"),
+          m("કારોબારી સભ્યશ્રી", "ગંગારામભાઈ માસંગભાઈ રાઠોડ"),
+          m("કારોબારી સભ્યશ્રી", "માવજીભાઈ જગજીવનભાઈ ટડાવા"),
+          m("કારોબારી સભ્યશ્રી", "મહેન્દ્રભાઈ હેમાભાઈ ચૌહાણ"),
+          m("કારોબારી સભ્યશ્રી", "કિરણભાઈ કાજાભાઈ સાયડિયા"),
+          m("કારોબારી સભ્યશ્રી", "શંકરભાઈ ખોડીદાસભાઈ પરમાર")
+        ]
+      }]
+    };
+  }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d && Array.isArray(d.cities)) return d;
+    } catch (e) {}
+    const s = seed();
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+    return s;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(DB)); return true; }
+    catch (e) { alert("ડેટા સેવ થયો નથી (ફોન માં જગ્યા ભરાઈ ગઈ છે). નાનો ફોટો વાપરો."); return false; }
+  }
+  const getCity = id => DB.cities.find(c => c.id === id);
+
+  /* ---------- views ---------- */
+  function render() {
+    if (view === "city") return renderCity();
+    return renderCities();
+  }
+
+  function renderCities() {
+    $("#ttl").innerHTML = 'સમિતિ / કારોબારી<small>શહેર મુજબ પ્રમુખ, મંત્રી અને સભ્યો</small>';
+    const list = DB.cities.filter(c => !q || c.name.toLowerCase().includes(q.toLowerCase()));
+    let h = `<input class="search" id="q" type="search" placeholder="🔍 શહેર / સમિતિ શોધો..." value="${esc(q)}" oninput="WBC.search(this.value)">
+      <div class="row"><button class="btn p full" onclick="WBC.addCity()">➕ નવું શહેર / સમિતિ ઉમેરો</button></div>`;
+    if (!list.length) {
+      h += `<div class="empty">કોઈ સમિતિ મળી નથી.<br>ઉપર "નવું શહેર / સમિતિ ઉમેરો" દબાવો.</div>`;
+    } else {
+      h += `<div class="grid">` + list.map(c =>
+        `<div class="city" onclick="WBC.open('${c.id}')"><b>${esc(c.name)}</b><span class="pill">👥 ${c.members.length} સભ્યો</span></div>`
+      ).join("") + `</div>`;
+    }
+    h += `<div class="note">નોંધ: આ યાદી આ ફોનમાં સેવ થાય છે. દરેક શહેર ની સમિતિ ઉમેરો, નામ અને વિગત ભરો.</div>`;
+    $("#app").innerHTML = h;
+    const el = $("#q");
+    if (el && q) { el.focus(); try { el.setSelectionRange(q.length, q.length); } catch (e) {} }
+  }
+
+  function memberCard(m) {
+    const initial = esc((m.name || "?").trim().charAt(0));
+    const ph = m.photo ? `<img src="${m.photo}" alt="">` : initial;
+    const lines = [];
+    if (m.village) lines.push("📍 " + esc(m.village));
+    if (m.mobile) lines.push("📞 " + esc(m.mobile));
+    if (m.note) lines.push(esc(m.note));
+    const tel = (m.mobile || "").replace(/[^0-9+]/g, "");
+    return `<div class="mem">
+      <div class="ph">${ph}</div>
+      <div class="mi">
+        <span class="post">${esc(m.post)}</span>
+        <div class="nm">${esc(m.name)}</div>
+        ${lines.length ? `<div class="ln">${lines.join("<br>")}</div>` : ""}
+        <div class="act">
+          ${tel ? `<a class="call" href="tel:${esc(tel)}">📞 ફોન કરો</a>` : ""}
+          <button onclick="WBC.editMember('${m.id}')">✏️ ફેરવો</button>
+          <button onclick="WBC.delMember('${m.id}')">🗑️ કાઢો</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderCity() {
+    const c = getCity(curCity);
+    if (!c) { view = "cities"; return render(); }
+    $("#ttl").innerHTML = esc(c.name) + '<small>' + c.members.length + ' સભ્યો</small>';
+    let h = `<div class="row">
+      <button class="btn p" onclick="WBC.addMember()">➕ સભ્ય ઉમેરો</button>
+      <button class="btn w" onclick="WBC.share()">📤 શેર કરો</button>
+      <button class="btn s" onclick="WBC.renameCity()">✏️ નામ</button>
+      <button class="btn d" onclick="WBC.delCity()">🗑️ સમિતિ કાઢો</button>
+    </div>`;
+    if (!c.members.length) {
+      h += `<div class="empty">હજુ કોઈ સભ્ય ઉમેર્યા નથી.<br>"➕ સભ્ય ઉમેરો" દબાવી પ્રમુખ, મંત્રી, સભ્યો ઉમેરો.</div>`;
+    }
+    const known = new Set(POSTS);
+    const groups = POSTS.concat(Array.from(new Set(c.members.map(m => m.post).filter(p => !known.has(p)))));
+    groups.forEach(p => {
+      const ms = c.members.filter(m => m.post === p);
+      if (!ms.length) return;
+      h += `<div class="grp">${esc(POST_TITLE[p] || p)} (${ms.length})</div>` + ms.map(memberCard).join("");
+    });
+    $("#app").innerHTML = h;
+  }
+
+  /* ---------- sheet ---------- */
+  function openSheet(html) {
+    $("#sheetHost").innerHTML = `<div class="ov" id="ov"><div class="sheet">${html}</div></div>`;
+    $("#ov").addEventListener("click", e => { if (e.target.id === "ov") closeSheet(); });
+  }
+  function closeSheet() { $("#sheetHost").innerHTML = ""; }
+
+  let formPhoto = "";
+
+  function memberForm(m) {
+    m = m || { post: "કારોબારી સભ્યશ્રી", name: "", mobile: "", village: "", note: "", photo: "" };
+    formPhoto = m.photo || "";
+    const opts = POSTS.map(p => `<option ${p === m.post ? "selected" : ""}>${p}</option>`).join("");
+    return `<h3>${m.id ? "સભ્યની વિગત ફેરવો" : "નવા સભ્ય ઉમેરો"}</h3>
+      <div class="f phrow">
+        <div class="ph" id="phPrev">${formPhoto ? `<img src="${formPhoto}">` : "📷"}</div>
+        <div><label style="margin-bottom:6px">ફોટો</label>
+          <input type="file" id="fPhoto" accept="image/*" onchange="WBC.pickPhoto(this)" style="padding:8px;font-size:12px">
+        </div>
+      </div>
+      <div class="f"><label>હોદ્દો</label><select id="fPost">${opts}</select></div>
+      <div class="f"><label>પૂરું નામ (દા.ત. જસુભાઈ મનજીભાઈ પરમાર) *</label><input id="fName" type="text" value="${esc(m.name)}" placeholder="નામ લખો"></div>
+      <div class="f"><label>મોબાઈલ નંબર</label><input id="fMobile" type="tel" value="${esc(m.mobile)}" placeholder="મોબાઈલ નંબર"></div>
+      <div class="f"><label>ગામ / શહેર</label><input id="fVillage" type="text" value="${esc(m.village)}" placeholder="ગામ / શહેર"></div>
+      <div class="f"><label>બીજી વિગત (વ્યવસાય, સરનામું વગેરે)</label><textarea id="fNote" placeholder="વધુ વિગત">${esc(m.note)}</textarea></div>
+      <div class="row" style="margin:14px 0 0"><button class="btn p" style="flex:1" onclick="WBC.saveMember('${m.id || ""}')">✔ સેવ કરો</button><button class="btn s" onclick="WBC.close()">રદ</button></div>`;
+  }
+
+  /* ---------- photo resize ---------- */
+  function resizePhoto(file, cb) {
+    const r = new FileReader();
+    r.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const W = 240, H = 300, c = document.createElement("canvas");
+        c.width = W; c.height = H;
+        const ctx = c.getContext("2d");
+        const s = Math.max(W / img.width, H / img.height);
+        const w = img.width * s, h = img.height * s;
+        ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+        cb(c.toDataURL("image/jpeg", 0.8));
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  }
+
+  /* ---------- public API ---------- */
+  window.WBC = {
+    search(v) { q = v; renderCities(); },
+    open(id) { curCity = id; view = "city"; render(); window.scrollTo(0, 0); },
+    addCity() {
+      openSheet(`<h3>નવું શહેર / સમિતિ</h3>
+        <div class="f"><label>શહેર / સમિતિ નું નામ *</label><input id="fCity" type="text" placeholder="દા.ત. ભાવનગર"></div>
+        <div class="row" style="margin:14px 0 0"><button class="btn p" style="flex:1" onclick="WBC.saveCity('')">✔ સેવ કરો</button><button class="btn s" onclick="WBC.close()">રદ</button></div>`);
+    },
+    renameCity() {
+      const c = getCity(curCity); if (!c) return;
+      openSheet(`<h3>નામ ફેરવો</h3>
+        <div class="f"><label>શહેર / સમિતિ નું નામ *</label><input id="fCity" type="text" value="${esc(c.name)}"></div>
+        <div class="row" style="margin:14px 0 0"><button class="btn p" style="flex:1" onclick="WBC.saveCity('${c.id}')">✔ સેવ કરો</button><button class="btn s" onclick="WBC.close()">રદ</button></div>`);
+    },
+    saveCity(id) {
+      const name = ($("#fCity").value || "").trim();
+      if (!name) { alert("નામ લખો."); return; }
+      if (id) { getCity(id).name = name; }
+      else { const c = { id: uid(), name, members: [] }; DB.cities.push(c); curCity = c.id; view = "city"; }
+      save(); closeSheet(); render();
+    },
+    delCity() {
+      const c = getCity(curCity); if (!c) return;
+      if (!confirm('"' + c.name + '" ની આખી સમિતિ કાઢી નાખવી છે?')) return;
+      DB.cities = DB.cities.filter(x => x.id !== c.id);
+      save(); view = "cities"; render();
+    },
+    addMember() { openSheet(memberForm(null)); },
+    editMember(id) {
+      const c = getCity(curCity); const m = c && c.members.find(x => x.id === id);
+      if (m) openSheet(memberForm(m));
+    },
+    delMember(id) {
+      const c = getCity(curCity); if (!c) return;
+      const m = c.members.find(x => x.id === id); if (!m) return;
+      if (!confirm('"' + m.name + '" ને કાઢી નાખવા છે?')) return;
+      c.members = c.members.filter(x => x.id !== id);
+      save(); render();
+    },
+    pickPhoto(inp) {
+      const f = inp.files && inp.files[0]; if (!f) return;
+      resizePhoto(f, data => {
+        formPhoto = data;
+        const p = $("#phPrev"); if (p) p.innerHTML = `<img src="${data}">`;
+      });
+    },
+    saveMember(id) {
+      const c = getCity(curCity); if (!c) return;
+      const name = ($("#fName").value || "").trim();
+      if (!name) { alert("નામ લખો."); return; }
+      const rec = {
+        post: $("#fPost").value,
+        name,
+        mobile: ($("#fMobile").value || "").trim(),
+        village: ($("#fVillage").value || "").trim(),
+        note: ($("#fNote").value || "").trim(),
+        photo: formPhoto || ""
+      };
+      if (id) { Object.assign(c.members.find(x => x.id === id), rec); }
+      else { c.members.push(Object.assign({ id: uid() }, rec)); }
+      if (!save()) return;
+      closeSheet(); render();
+    },
+    share() {
+      const c = getCity(curCity); if (!c) return;
+      let t = "🏛️ *" + c.name + "*\n*કારોબારી સમિતિ*\n";
+      const known = new Set(POSTS);
+      POSTS.concat(Array.from(new Set(c.members.map(m => m.post).filter(p => !known.has(p))))).forEach(p => {
+        const ms = c.members.filter(m => m.post === p); if (!ms.length) return;
+        t += "\n*" + (POST_TITLE[p] || p) + "*\n";
+        ms.forEach(m => { t += "• " + m.name + (m.village ? " (" + m.village + ")" : "") + (m.mobile ? " - " + m.mobile : "") + "\n"; });
+      });
+      t += "\n_Wadbook_";
+      if (navigator.share) { navigator.share({ text: t }).catch(() => {}); }
+      else { window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank"); }
+    },
+    close: closeSheet
+  };
+
+  window.goBack = function () {
+    if (view === "city") { view = "cities"; render(); window.scrollTo(0, 0); }
+    else { window.location.href = "index.html"; }
+  };
+
+  DB = load();
+  render();
+})();
+</script>
+<script src="gujarati-typing.js?v=16"></script>
+</body>
+</html>
