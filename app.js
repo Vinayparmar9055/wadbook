@@ -700,6 +700,12 @@ function getFamilyList(p){
 
 function getNuclearFamily(p){
  const spouseObj=D.ps.find(x=>(p.sp&&x.id==p.sp)||x.sp==p.id);
+ // Apranit (lagna na thaya hoi) dikro/dikri: tena parivar ma mata-pita dekhai
+ const dadObj=p.f&&get(p.f);
+ const momObj=(p.m&&get(p.m))||(dadObj&&dadObj.sp&&get(dadObj.sp))||(dadObj?D.ps.find(x=>x.g=="F"&&x.sp==dadObj.id):null)||null;
+ if(!spouseObj && p.s=="u" && (dadObj||momObj)){
+  return {husb:(dadObj&&dadObj.g!="F")?dadObj:null,wife:momObj,children:[p],unmarried:true};
+ }
  let husb=null, wife=null;
  if(p.g=="F"){
   wife=p;
@@ -720,10 +726,11 @@ function getNuclearFamily(p){
 
 function showFamily(id,skipPush=false){
  cur=id;
- const p=get(id),{husb,wife,children}=getNuclearFamily(p);
+ const p=get(id),{husb,wife,children,unmarried}=getNuclearFamily(p);
  const isSelf=(id==D.me);
  const editable=canManage(p);
- const mainPerson=husb||wife||p;
+ const delOk=editable&&!unmarried;
+ const mainPerson=unmarried?p:(husb||wife||p);
  const totalCount=(husb?1:0)+(wife?1:0)+children.length;
  const famPhoto=p.famImg || (husb&&husb.famImg) || (wife&&wife.famImg) || "";
 
@@ -741,18 +748,26 @@ function showFamily(id,skipPush=false){
        <b>${esc(pre(q)+full(q,p))}</b>
        <small>${rel}${husbNote(q,p)}${q.yr?" • જન્મ "+gu(q.yr):""}</small>
      </div>
-     ${editable&&q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
+     ${delOk&&q.id!=D.me?`<button class="del-btn" onclick="delMember(${q.id},${id})" title="કાઢો">✕</button>`:""}
      <span onclick="show(${q.id})">જુઓ ›</span>
    </div>`;
 
  const leftSlot=husb
-   ? node(husb, wife?"પતિ":"પતિ / મુખ્ય")
+   ? node(husb, unmarried?"પિતા":(wife?"પતિ":"પતિ / મુખ્ય"))
+   : unmarried
+   ? (editable
+      ? `<div class="par-node add-sp" onclick="addMember(${id},'dad',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પિતા ઉમેરો</b><small>ક્લિક કરો</small></div>`
+      : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પિતા</b><small>ઉમેરેલ નથી</small></div>`)
    : (editable
       ? `<div class="par-node add-sp" onclick="addMember(${wife.id},'husb',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પતિ ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પતિ</b><small>ઉમેરેલ નથી</small></div>`);
 
  const rightSlot=wife
-   ? node(wife, husb?"પત્ની":"પત્ની / મુખ્ય")
+   ? node(wife, unmarried?"માતા":(husb?"પત્ની":"પત્ની / મુખ્ય"))
+   : unmarried
+   ? (editable
+      ? `<div class="par-node add-sp" onclick="addMember(${id},'mom',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>માતા ઉમેરો</b><small>ક્લિક કરો</small></div>`
+      : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>માતા</b><small>ઉમેરેલ નથી</small></div>`)
    : (editable
       ? `<div class="par-node add-sp" onclick="addMember(${husb.id},'wife',true)"><i class="r" style="border-style:dashed;background:#fff">+</i><b>પત્ની ઉમેરો</b><small>ક્લિક કરો</small></div>`
       : `<div class="par-node"><i class="r" style="opacity:.4">?</i><b>પત્ની</b><small>ઉમેરેલ નથી</small></div>`);
@@ -791,12 +806,14 @@ function showFamily(id,skipPush=false){
   </div>
 
   ${editable?`<div style="margin:14px 0">
-    <button class="bk" style="margin:0" onclick="addMember(${id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (${husb?"પત્ની":"પતિ"}, દીકરો, દીકરી)</button>
+    ${unmarried
+      ?`<button class="bk" style="margin:0" onclick="addMember(${id},'${p.g=="F"?"husb":"wife"}',true)">💍 ${p.g=="F"?"પતિ":"પત્ની"} ઉમેરો (લગ્ન પછી)</button>`
+      :`<button class="bk" style="margin:0" onclick="addMember(${id},'son',true)">➕ પરિવારમાં નામ ઉમેરો (${husb?"પત્ની":"પતિ"}, દીકરો, દીકરી)</button>`}
   </div>`:""}
 
   <h3 class="fh">પરિવારના સભ્યોની યાદી</h3>
-  ${husb?rowCard(husb,wife?"પતિ":"પતિ / મુખ્ય સભ્ય"):""}
-  ${wife?rowCard(wife,husb?"પત્ની":"પત્ની / મુખ્ય સભ્ય"):""}
+  ${husb?rowCard(husb,unmarried?"પિતા":(wife?"પતિ":"પતિ / મુખ્ય સભ્ય")):""}
+  ${wife?rowCard(wife,unmarried?"માતા":(husb?"પત્ની":"પત્ની / મુખ્ય સભ્ય")):""}
   ${children.map(c=>rowCard(c,c.g=="F"?"દીકરી":"દીકરો")).join("")}
 
   <button class="bk" onclick="history.back()">← પ્રોફાઇલ પર પાછા જાઓ</button>
