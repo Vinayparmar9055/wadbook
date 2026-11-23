@@ -1374,12 +1374,13 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  const me=D.me&&get(D.me);
  $("#dp").innerHTML=me?`${avHtml(me)}<div><b>${esc(full(me))}</b><small>${[D.ja&&"જાતિ: "+esc(D.ja),me.gam&&"ગામ: "+esc(me.gam)].filter(Boolean).join(" • ")}</small></div>`:"<div><b>વડબૂક</b><small>પ્રોફાઇલ બનાવો</small></div>";
  const it=[
-  ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","menu(0);showSagai()","hl"],
+  ["⚙️","સેટિંગ્સ","પ્રોફાઇલ, પ્રાઇવસી, એપ માહિતી","menu(0);showSettings()",""],
+  ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"],
   ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","location.href='directory.html'",""],
   ["🏛️","સમિતિ / કારોબારી","શહેર મુજબ પ્રમુખ, મંત્રી, સભ્યો","location.href='committee.html'",""],
-  ["📤","મારો વડ શેર કરો","વોટ્સએપ પર પરિવારની લિંક મોકલો","menu(0);shareProfile(D.me)",""],
-  ["⚙️","સેટિંગ્સ","પ્રોફાઇલ, પ્રાઇવસી, એપ માહિતી","menu(0);showSettings()",""],
-  ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]
+  ["💍","સગાઈ વિભાગ (અપરિણીત યુવાનો)","લીલા સર્કલ 🟢 ધરાવતા સભ્યો","menu(0);showSagai()","hl"],
+  ["🕊️","અવસાન નોંધ અને શ્રદ્ધાંજલિ","તાત્કાલિક પત્રિકા બનાવો અને શેર કરો","location.href='shradhanjali.html'","hl"],
+  ["📤","મારો વડ શેર કરો","વોટ્સએપ પર પરિવારની લિંક મોકલો","menu(0);shareProfile(D.me)",""]
  ];
  $("#dl").innerHTML=it.map(([i,t,s,a,c])=>`<a class="${c}" onclick="${a}"><span class="ic">${i}</span><div><b>${t}</b><small>${s}</small>${c.includes("soon")?"<em>ટૂંક સમયમાં</em>":""}</div></a>`).join("");
  $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false;

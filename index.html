@@ -151,7 +151,7 @@
         </a>`;
 
       function updateMenuCards() {
-        if (!document.getElementById('wbShradhanjaliBtn')) {
+        if (!document.getElementById('wbShradhanjaliBtn') && !dl.textContent.includes('અવસાન નોંધ')) {
           dl.insertAdjacentHTML('beforeend', cardHTML);
         }
 
