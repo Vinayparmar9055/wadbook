@@ -1403,6 +1403,62 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
  document.head.appendChild(s);
 })();
 
+// ===== બેકઅપ / રિસ્ટોર =====
+function lastBackupText(){
+ try{const t=localStorage.getItem("wadbook-last-backup");if(t)return fmtDate(t.slice(0,10));}catch(e){}
+ return "હજુ સુધી નથી";
+}
+function markBackup(){try{localStorage.setItem("wadbook-last-backup",new Date().toISOString())}catch(e){}}
+function backupData(){
+ const d=new Date();
+ return {
+  text:JSON.stringify({app:"wadbook",ver:1,saved:d.toISOString(),data:D}),
+  name:"wadbook-backup-"+d.toISOString().slice(0,10)+".json"
+ };
+}
+function backupDownload(){
+ const b=backupData();
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([b.text],{type:"application/json"}));
+ a.download=b.name;
+ document.body.appendChild(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+ markBackup();toast("✓ બેકઅપ ફાઇલ સેવ થઈ");
+ setTimeout(()=>{if(document.getElementById("setPage"))showSettings(true)},400);
+}
+async function backupShare(){
+ const b=backupData();
+ try{
+  const f=new File([b.text],b.name,{type:"application/json"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+   await navigator.share({files:[f],title:"Wadbook બેકઅપ"});
+   markBackup();
+   if(document.getElementById("setPage"))showSettings(true);
+  }else{backupDownload();}
+ }catch(e){
+  if(!e||e.name!=="AbortError")backupDownload();
+ }
+}
+function restoreFromFile(inp){
+ const f=inp.files&&inp.files[0];
+ inp.value="";
+ if(!f)return;
+ const r=new FileReader();
+ r.onload=ev=>{
+  let o;
+  try{o=JSON.parse(ev.target.result)}catch(x){alert("આ બેકઅપ ફાઇલ બરાબર નથી");return}
+  const nd=(o&&o.app==="wadbook"&&o.data)?o.data:o;
+  if(!nd||!Array.isArray(nd.ps)){alert("આ Wadbook ની બેકઅપ ફાઇલ નથી");return}
+  if(!confirm("બેકઅપમાં "+gu(nd.ps.length)+" સભ્યો છે.\nહાલનો ડેટા બદલાઈ જશે. આગળ વધવું છે?"))return;
+  try{localStorage.setItem(K+"-prev",JSON.stringify(D))}catch(x){}
+  D=nd;
+  save();
+  toast("✓ બેકઅપ પાછું આવી ગયું");
+  setTimeout(()=>location.reload(),700);
+ };
+ r.readAsText(f);
+}
+
 function setPriv(k,v){
  const me=D.me&&get(D.me);if(!me)return;
  me.priv=Object.assign(defaultPriv(me),{[k]:v});
@@ -1440,10 +1496,14 @@ function showSettings(skipPush=false){
     ${prow("tul","🌿 તુલસી ક્યારો")}
   </div>
 
-  <h3 class="fh">💾 ડેટા</h3>
+  <h3 class="fh">💾 ડેટા બેકઅપ</h3>
   <div class="st-card">
-    <div class="st-row" onclick="soon()"><span>બેકઅપ બનાવો / પાછું લાવો</span><em>ટૂંક સમયમાં</em></div>
+    <div class="st-row"><span>છેલ્લું બેકઅપ</span><b>${lastBackupText()}</b></div>
+    <div class="st-row" onclick="backupDownload()"><span>⬇️ બેકઅપ ફાઇલ સેવ કરો</span><em>›</em></div>
+    <div class="st-row" onclick="backupShare()"><span>📤 WhatsApp / Drive પર મોકલો</span><em>›</em></div>
+    <label class="file-lbl st-row"><span>♻️ બેકઅપમાંથી પાછું લાવો</span><em>›</em><input type="file" onchange="restoreFromFile(this)"></label>
   </div>
+  <p style="font-size:12.5px;font-weight:700;color:#78716c;margin:2px 4px 8px">⚠️ તમારો ડેટા આ ફોનમાં જ સેવ છે. નવું કંઈ ઉમેર્યા પછી બેકઅપ લેતા રહો.</p>
 
   <h3 class="fh">ℹ️ એપ વિશે</h3>
   <div class="st-card">
