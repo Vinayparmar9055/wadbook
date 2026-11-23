@@ -51,12 +51,12 @@ function handleFileSelect(inputEl, mode, targetType, targetId){
       openCropModal(img, mode, dataUrl=>{
         if(targetType==="quickAv"){
           const p=get(targetId);if(!p)return;
-          p.img=dataUrl;save();show(targetId,true);
+          p.img=dataUrl;save();afterEdit(targetId);
           toast("📸 પ્રોફાઇલ ફોટો સેટ થઈ ગયો");
         } else if(targetType==="quickCov"){
           const p=get(targetId);if(!p)return;
           if(targetId==D.me)D.wadCover=dataUrl;
-          p.cover=dataUrl;save();show(targetId,true);
+          p.cover=dataUrl;save();afterEdit(targetId);
           toast("🏞️ વડ / કવર ફોટો સેવ થઈ ગયો");
         } else if(targetType==="quickFam"){
           const p=get(targetId);if(!p)return;
@@ -196,6 +196,9 @@ function removeFamilyPhoto(id){
   }
 }
 
+function afterEdit(id){
+ if(document.getElementById("setPage"))showSettings(true);else show(id,true);
+}
 function toast(msg){
   const t=$("#ts");
   t.textContent=msg;
@@ -257,6 +260,7 @@ function renderState(st){
  else if(st.v==="tv")tab("tv",true,st.id,st.side||"auto");
  else if(st.v==="tul")showTulsi(st.id,true);
  else if(st.v==="sag")showSagai(true,st.id||null);
+ else if(st.v==="set")showSettings(true);
 }
 window.addEventListener("popstate",()=>{
  if(!$("#cropModal").hidden){
@@ -535,7 +539,7 @@ function edit(id){
    if(o.ja)D.ja=o.ja;
    if(o.cover)D.wadCover=o.cover;
   }
-  save();shut();show(id,true);
+  save();shut();afterEdit(id);
   if(!$("#tv").hidden)draw(treeTarget,treeSide);
  });
 }
@@ -641,7 +645,7 @@ function addMember(pid,defaultRel="son",returnToFamily=false){
     D.ps.forEach(c=>{if((c.m==pid||c.relTo==pid)&&!c.f&&(c.relType=="son"||c.relType=="dau"))c.f=id;});
   }
   save();shut();
-  if(returnToFamily==="tulsi")showTulsi(pid,true);else if(returnToFamily)showFamily(pid,true);else show(pid,true);
+  if(returnToFamily==="tulsi")showTulsi(pid,true);else if(returnToFamily)showFamily(pid,true);else afterEdit(pid);
  };
 }
 
@@ -1180,8 +1184,7 @@ function show(id,skipPush=false){
  if(isSelf){
   actionButtons=`<div class="ac2">
     <button class="pm full-w" onclick="showFamily(${id})">👨‍👩‍👧‍👦 મારો પરિવાર</button>
-    <button onclick="addMember(${id})">➕ નામ ઉમેરો</button>
-    <button onclick="edit(${id})">✏️ વિગત ફેરવો</button>
+    <button class="full-w" style="font-size:15px;padding:11px" onclick="showSettings()">⚙️ સેટિંગ્સ (ફોટો, વિગત, પ્રાઇવસી)</button>
   </div>`;
  } else if(hasSasri){
   actionButtons=`<div class="ac2">
@@ -1227,7 +1230,7 @@ function show(id,skipPush=false){
   canSee("kul") ? rw("સાસરીપક્ષ", esc(p.sas), true) : ""
  ].filter(Boolean).join("");
 
- const avBlock=editable
+ const avBlock=(editable&&!isSelf)
    ? `<label class="file-lbl av-wrap">
         <i class="r big ${c}" style="${bigRingStyle}">${bigAvInner}</i>
         <span class="cam-badge">📷</span>
@@ -1236,7 +1239,7 @@ function show(id,skipPush=false){
    : `<div class="av-wrap"><i class="r big ${c}" style="${bigRingStyle}">${bigAvInner}</i></div>`;
 
  $("#pf").innerHTML=`<div class="cv" ${coverStyle}>
-   ${editable?`<label class="file-lbl cv-btn">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}<input type="file" accept="image/*" onchange="handleFileSelect(this,'banner','quickCov',${id})"></label>`:""}
+   ${(editable&&!isSelf)?`<label class="file-lbl cv-btn">🏞️ ${coverUrl?"કવર બદલો":"વડ / કવર ફોટો"}<input type="file" accept="image/*" onchange="handleFileSelect(this,'banner','quickCov',${id})"></label>`:""}
  </div>
  <div class="pr">
  ${avBlock}
@@ -1375,11 +1378,85 @@ function menu(o){const d=$("#dr");if(!o){d.hidden=true;return}
   ["🏡","ગામ અને શાખ મુજબ શોધો","બનાસકાંઠાના ગામોની યાદી","location.href='directory.html'",""],
   ["🏛️","સમિતિ / કારોબારી","શહેર મુજબ પ્રમુખ, મંત્રી, સભ્યો","location.href='committee.html'",""],
   ["📤","મારો વડ શેર કરો","વોટ્સએપ પર પરિવારની લિંક મોકલો","menu(0);shareProfile(D.me)",""],
+  ["⚙️","સેટિંગ્સ","પ્રોફાઇલ, પ્રાઇવસી, એપ માહિતી","menu(0);showSettings()",""],
   ["🛡️","એડમિન પેનલ","નવા સભ્યોની મંજૂરી","soon()","ad soon"]
  ];
  $("#dl").innerHTML=it.map(([i,t,s,a,c])=>`<a class="${c}" onclick="${a}"><span class="ic">${i}</span><div><b>${t}</b><small>${s}</small>${c.includes("soon")?"<em>ટૂંક સમયમાં</em>":""}</div></a>`).join("");
  $("#df").textContent=(D.ja?D.ja+" • ":"")+"Wadbook";d.hidden=false;
  try{history.pushState({menu:1},"");}catch(e){}
+}
+
+// ===== સેટિંગ્સ પેજ =====
+(function(){
+ if(document.getElementById("set-css"))return;
+ const s=document.createElement("style");s.id="set-css";
+ s.textContent=".st-card{background:#fdfbf7;border:1.5px solid #e7d8be;border-radius:18px;padding:6px 14px;margin:8px 0;box-shadow:0 3px 12px rgba(120,53,15,.06)}"
+ +".st-me{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}"
+ +".st-me b{display:block;font-size:16px;font-weight:800;color:#3b0a0e}"
+ +".st-me small{display:block;color:#9a3412;font-weight:700;font-size:13px;margin-top:2px}"
+ +".st-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px dashed #e7d8be;font-size:14.5px;font-weight:700;color:#1c1917}"
+ +".st-row:last-child{border-bottom:0}"
+ +".st-row select{max-width:52%;border:1.5px solid #fde68a;background:#fffbeb;border-radius:12px;padding:7px 8px;font:inherit;font-size:13px;font-weight:700;color:#3b0a0e}"
+ +".st-row b{color:#3b0a0e;font-weight:800;text-align:right}"
+ +".st-row em{font-style:normal;background:#f5f5f4;color:#78716c;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:800}";
+ document.head.appendChild(s);
+})();
+
+function setPriv(k,v){
+ const me=D.me&&get(D.me);if(!me)return;
+ me.priv=Object.assign(defaultPriv(me),{[k]:v});
+ save();toast("✓ સેવ થઈ ગયું");
+}
+
+function showSettings(skipPush=false){
+ const me=D.me&&get(D.me);
+ if(!me)return empty();
+ cur=D.me;
+ const pv=defaultPriv(me);
+ const prow=(k,t)=>`<div class="st-row"><span>${t}</span><select onchange="setPriv('${k}',this.value)">${privSel(k,pv[k])}</select></div>`;
+ $("#pf").innerHTML=`<div class="pad" id="setPage">
+  <div class="hd"><h2>⚙️ સેટિંગ્સ</h2><p>પ્રોફાઇલ, પ્રાઇવસી અને એપની માહિતી</p></div>
+
+  <div class="st-card st-me" style="cursor:default">
+    ${avHtml(me,"sm")}
+    <div><b>${esc(pre(me)+full(me))}</b><small>તમારી પ્રોફાઇલ</small></div>
+  </div>
+
+  <h3 class="fh">👤 પ્રોફાઇલ</h3>
+  <div class="st-card">
+    <label class="file-lbl st-row"><span>📷 પ્રોફાઇલ ફોટો બદલો</span><em>›</em><input type="file" accept="image/*" onchange="handleFileSelect(this,'circle','quickAv',${me.id})"></label>
+    <label class="file-lbl st-row"><span>🏞️ કવર / વડ ફોટો બદલો</span><em>›</em><input type="file" accept="image/*" onchange="handleFileSelect(this,'banner','quickCov',${me.id})"></label>
+    <div class="st-row" onclick="addMember(${me.id},'son',true)"><span>➕ નામ ઉમેરો (પરિવારમાં)</span><em>›</em></div>
+    <div class="st-row" onclick="edit(${me.id})"><span>✏️ વિગત ફેરવો</span><em>›</em></div>
+  </div>
+
+  <h3 class="fh">🔒 પ્રાઇવસી (કોને શું દેખાડવું?)</h3>
+  <div class="st-card">
+    ${prow("mob","📞 મોબાઇલ નંબર")}
+    ${prow("dob","🎂 જન્મ તારીખ અને ઉંમર")}
+    ${prow("kul","🌾 મોસાળ / પોહાળ / સાસરી")}
+    ${prow("fam","👨‍👩‍👧‍👦 મારો પરિવાર")}
+    ${prow("tul","🌿 તુલસી ક્યારો")}
+  </div>
+
+  <h3 class="fh">💾 ડેટા</h3>
+  <div class="st-card">
+    <div class="st-row" onclick="soon()"><span>બેકઅપ બનાવો / પાછું લાવો</span><em>ટૂંક સમયમાં</em></div>
+  </div>
+
+  <h3 class="fh">ℹ️ એપ વિશે</h3>
+  <div class="st-card">
+    <div class="st-row"><span>એપ</span><b>Wadbook</b></div>
+    <div class="st-row"><span>સમાજ</span><b>શ્રી બનાસકાંઠા ગુર્જર પ્રજાપતિ સમાજ</b></div>
+    <div class="st-row"><span>કુલ સભ્યો</span><b>${gu(D.ps.length)}</b></div>
+  </div>
+
+  <button class="bk" onclick="history.back()">← પાછા જાઓ</button>
+ </div>`;
+ $("#tv").hidden=true;$("#pf").hidden=false;
+ setNav("");
+ $("#pf").scrollTop=0;
+ if(!skipPush)pushView({v:"set"});
 }
 
 // ===== તુલસી ક્યારો (માતૃપક્ષ) =====
